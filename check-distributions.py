@@ -2,7 +2,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 
-a = 100
+a = 1
 
 Theta = np.linspace(0, np.pi, 1000)
 W = 0.5*a*np.sin(Theta)*np.exp(a*np.cos(Theta))/np.sinh(a)

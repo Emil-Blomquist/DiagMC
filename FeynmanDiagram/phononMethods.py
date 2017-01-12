@@ -3,8 +3,8 @@ import sys
 sys.path.append('../')
 from Propagator import D
 
-def addInternalPhonon(self, v1, v2, momentum, sinTheta):
-  d = D(momentum, sinTheta)
+def addInternalPhonon(self, v1, v2, momentum):
+  d = D(momentum)
 
   if v1.position > v2.position:
     print('ERROR: Phonon cannot run backwards')
@@ -21,6 +21,10 @@ def addInternalPhonon(self, v1, v2, momentum, sinTheta):
   while g.start != v2:
     g.addMomentum(-momentum)
     g = g.end.G[1]
+
+  # tell phonon propagator to recalculate it's sinTheta
+  # needs to happen last
+  d.recalculateSinTheta()
 
   # return phonon
   return d
@@ -40,10 +44,7 @@ def removeInternalPhonon(self, dIndex):
   # remove from Ds list                                                            <-- takes time => hash table
   del self.Ds[dIndex]
 
-def setInternalPhononMomentum(self, d, momentum, sinTheta):
-  # sinTheta needed for Jacobian
-  d.setSinTheta(sinTheta)
-
+def setInternalPhononMomentum(self, d, momentum):
   dP = momentum - d.momentum
 
   # add momentum difference
@@ -55,9 +56,17 @@ def setInternalPhononMomentum(self, d, momentum, sinTheta):
     g.addMomentum(-dP)
     g = g.end.G[1]
 
+  # tell phonon propagator to recalculate it's sinTheta
+  # needs to happen last
+  d.recalculateSinTheta()
+
   # return changed phonon
   return d
 
+
+##
+## take a look at this when simply reversing phonon
+##
 def swapPhononEnds(self, v1, v2):
   # order temporally
   if v1.position > v2.position:
@@ -93,3 +102,12 @@ def swapPhononEnds(self, v1, v2):
       d2.setStart(v1)
     else:
       d2.setEnd(v1)
+
+  ##
+  ## no, we should only recalculate when changing the angle!
+  ##
+
+  # tell phonon propagator to recalculate it's sinTheta
+  # needs to happen last
+  # d1.recalculateSinTheta()
+  # d2.recalculateSinTheta()

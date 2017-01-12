@@ -82,7 +82,7 @@ def changePhononMomentum(fd):
     q*np.cos(theta)
   ]);
 
-  fd.setInternalPhononMomentum(d, Q, np.sin(theta))
+  fd.setInternalPhononMomentum(d, Q)
 
   Diag = fd()
 
@@ -131,6 +131,7 @@ def shiftVertexPosition(fd):
 def changePhononMomentumDirection(fd):
   # choose phonon propagator on random
   d = np.random.choice(fd.Ds)
+  # d = fd.Ds[0]
 
 
   q = np.linalg.norm(d.momentum)
@@ -151,24 +152,37 @@ def changePhononMomentumDirection(fd):
   ##
   a = q*p0*(d.end.position - d.start.position)
 
-  if a > 0:
-    print('a>0')
+  # 10^-10 to handle rounding errors
+  if p0 > 10**-10:
+    print('DMC, p0>0')
     cosTheta = 1 + np.log(1 - r*(1 - np.exp(-2*a)))/a
     theta = np.arccos(cosTheta)
 
     Ep = P0/p0
-    Eo = np.cross(Ep, Ep - 1)/np.linalg.norm(np.cross(Ep, Ep - 1))
+
+    # generate a temporary vector used to obtain two other vectors in order to span the rest of R^3
+    tempVector = Ep - np.array([1, 0, 0])
+    if np.linalg.norm(tempVector) < 10**-10:
+      tempVector = Ep + np.array([1, 0, 0])
+
+    Eo1 = np.cross(Ep, tempVector)
+    Eo1 = Eo1/np.linalg.norm(Eo1)
+    Eo2 = np.cross(Ep, Eo1)
 
     Qp = Ep * q*cosTheta
-    Qo = Eo * q*np.sin(theta)
+    Qo = (Eo1*np.cos(phi) + Eo2*np.sin(phi)) * q*np.sin(theta)
 
     Q = Qp + Qo
 
-    # temp
-    thetaOld = np.arccos(np.dot(d.momentum, P0)/(q*p0))
+    # print(np.dot(d.momentum, P0)/(q*p0))
+    cosThetaOld = np.dot(d.momentum, P0)/(q*p0)
+    if cosThetaOld <= -1:
+      thetaOld = np.pi
+    else:
+      thetaOld = np.arccos(cosThetaOld)
 
   else:
-    print('a=0')
+    print('DMC, p0=0')
     # since p_0 might be zero...
     cosTheta = 1 - 2*r
     theta = np.arccos(cosTheta)
@@ -183,31 +197,54 @@ def changePhononMomentumDirection(fd):
       q*np.cos(theta)
     ]);
 
-    print(Q)
+    cosThetaOld = d.momentum[2]/q
+    if cosThetaOld <= -1:
+      thetaOld = np.pi
+    else:
+      thetaOld = np.arccos(cosThetaOld)
 
-    # temp
-    thetaOld = np.arccos(d.momentum[2]/q)
 
   ##
   ## temp
   ##
+
+  ##
+  ## "d.sinTheta" is outdated since the diagram might have changed in the sense that
+  ## it is no longer valid for comparing Q with a new Q'. Even the same Q might be
+  ## more/less preffered. "d.sinTheta" is only good for evaluating the diagram.
+  ##
+
+  # we need to update the old angle to be valid for the new diagram before we compare with a proposed one
+  # d.recalculateSinTheta()
+
+
+  sinThetaOld = d.recalculateSinTheta()
   diagOld = fd()
 
-  fd.setInternalPhononMomentum(d, Q, np.sin(theta))
+
+  fd.setInternalPhononMomentum(d, Q)
+
+
+  sinThetaOld = np.sin(thetaOld)
+
 
   ##
   ## temp
   ##
   diag = fd()
-  R = diag/diagOld
-  R *= np.sin(thetaOld)/np.sin(theta) * np.exp(-a*(np.cos(theta) - np.cos(thetaOld))) 
+  # print(diagOld)
+  # thetaOld = np.arcsin(sinThetaOld) 
 
-  # r1 = diag/(np.sin(theta)*np.exp(a*np.cos(theta)))
-  # r2 = diagOld/(np.sin(thetaOld)*np.exp(a*np.cos(thetaOld)))
+  if abs(diagOld) > 0 and np.sin(theta) > 0:
+    R = diag/diagOld
+    R *= sinThetaOld/np.sin(theta)
+    R *= np.exp(-a*(np.cos(theta) - np.cos(thetaOld))) 
+  else:
+    R = 1
 
-  # print(r1, r2, r1/r2)
 
-  print(thetaOld, '->', theta, '   ', R)
+  print(sinThetaOld, '->', np.sin(theta), '   ', R)
+  print('---------')
 
   return R
 
@@ -216,26 +253,25 @@ def DMC(t, N):
   # create second order diagram
   feynmanDiagram = FeynmanDiagram(t, np.array([0, 0, 0]))
 
-  t1 = np.random.uniform(0, t)
-  t2 = np.random.uniform(t1, t)
-
-  v1 = feynmanDiagram.insertVertex(0, 0.5)
-  v2 = feynmanDiagram.insertVertex(1, 0.5)
-  # v3 = feynmanDiagram.insertVertex(2, 0.5)
-  # v4 = feynmanDiagram.insertVertex(3, 0.5)
+  v1 = feynmanDiagram.insertVertex(0, 0.0005)
+  v2 = feynmanDiagram.insertVertex(1, 0.0005)
+  v3 = feynmanDiagram.insertVertex(2, 0.0005)
+  v4 = feynmanDiagram.insertVertex(3, 0.0005)
 
   ##
   ## insert first phonon propagator with momentum only in z-direction so that sinTheta = 1
   ## 
-  feynmanDiagram.addInternalPhonon(v1, v2, np.array([1, 0, 0]), 1) 
-  # feynmanDiagram.addInternalPhonon(v2, v3, np.array([1, 0, 0]), 1)
+  feynmanDiagram.addInternalPhonon(v1, v2, np.array([1, 1, 1])) 
+  feynmanDiagram.addInternalPhonon(v3, v4, np.array([1, 1, 1]))
 
   # to reach some sense of randomness
-  # for i in range(0, 1000):
+  # for i in range(0, 10):
     # changePhononMomentumDirection(feynmanDiagram)
     # shiftVertexPosition(feynmanDiagram)
     # swapPhononEnds(feynmanDiagram)
     # changePhononMomentum(feynmanDiagram)
+
+  print('--------')
 
   wInv = 1
   bins = {}
@@ -246,7 +282,7 @@ def DMC(t, N):
 
     # nameOld = feynmanDiagram.structure()
 
-    # update = np.random.choice([shiftVertexPosition, swapPhononEnds, changePhononMomentum, changePhononMomentumDirection])
+    # update = np.random.choice([shiftVertexPosition, swapPhononEnds, changePhononMomentum])
     update = changePhononMomentumDirection
     # update = np.random.choice([swapPhononEnds, changePhononMomentumDirection])
     r = update(feynmanDiagram)
@@ -328,8 +364,8 @@ T = T
 t1122 = []
 t1212 = []
 t1221 = []
-N = 100
-for t in [2.5]:#T:
+N = 10000
+for t in [2]:
   bins = DMC(t, N)
 
   # print(bins)
@@ -338,21 +374,21 @@ for t in [2.5]:#T:
   # print(t, bins[1122], bins[1212], bins[1221])
 
 
-#   t1122.append(bins[1122])
-#   t1212.append(bins[1212])
-#   t1221.append(bins[1221])
+  t1122.append(bins[1122])
+  t1212.append(bins[1212])
+  t1221.append(bins[1221])
 
 
-#   plt.plot(T[0:len(t1122)], t1122, 'b.-')
-#   plt.plot(T[0:len(t1122)], t1212, 'r.-')
-#   plt.plot(T[0:len(t1122)], t1221, 'g.-')
-#   plt.pause(0.05)
+  # plt.plot(T[0:len(t1122)], t1122, 'b.-')
+  # plt.plot(T[0:len(t1122)], t1212, 'r.-')
+  # plt.plot(T[0:len(t1122)], t1221, 'g.-')
+  # plt.pause(0.05)
 
 # plt.ioff()
 
-plt.plot(T[0:len(t1122)], t1122, 'b-', label='1122')
-plt.plot(T[0:len(t1122)], t1212, 'r-', label='1212')
-plt.plot(T[0:len(t1122)], t1221, 'g-', label='1221')
+# plt.plot(T[0:len(t1122)], t1122, 'b-', label='1122')
+# plt.plot(T[0:len(t1122)], t1212, 'r-', label='1212')
+# plt.plot(T[0:len(t1122)], t1221, 'g-', label='1221')
 
 # plt.xlim(0, 5)
 # plt.xlabel(r'$\tau$')

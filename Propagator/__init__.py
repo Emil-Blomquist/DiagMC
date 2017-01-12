@@ -2,18 +2,17 @@ import numpy as np
 
 class Propagator(object):
   
-  def __init__(self, which, momentum, sinTheta = None):
+  def __init__(self, which, momentum):
     self.type = which
     self.momentum = momentum
     self.start = None
     self.end = None
 
-    # used for jacobian, for phonons only
-    self.sinTheta = sinTheta
+    # used to include Jacobian
+    self.sinTheta = None
 
     # saved variables
     self.momentumSaved = None
-    self.sinThetaSaved = None
     self.startSaved = None
     self.endSaved = None
 
@@ -46,15 +45,15 @@ class Propagator(object):
 
   def save(self):
     self.momentumSaved = self.momentum[:]
-    self.sinThetaSaved = self.sinTheta
     self.startSaved = self.start
     self.endSaved = self.end
+    self.sinThetaSaved = self.sinTheta
 
   def revert(self):
     self.momentum = self.momentumSaved
-    self.sinTheta = self.sinThetaSaved
     self.start = self.startSaved
     self.end = self.endSaved
+    self.sinTheta = self.sinThetaSaved
 
   def __call__(self):
     k2 = np.linalg.norm(self.momentum)**2
@@ -69,6 +68,8 @@ class Propagator(object):
     else:
       # coupling constant
       a = 2
+
+      print('call', self.momentum, self.sinTheta)
 
       if True:
         # internal phonon
@@ -92,11 +93,8 @@ class G(Propagator):
     Propagator.__init__(self, 'G', momentum)
 
 class D(Propagator):
-  def __init__(self, momentum, sinTheta):
-    Propagator.__init__(self, 'D', momentum, sinTheta)
-
-  def setSinTheta(self, sinTheta):
-    self.sinTheta = sinTheta
+  def __init__(self, momentum):
+    Propagator.__init__(self, 'D', momentum)
 
   def getP0(self):
     dt = self.end.position - self.start.position
@@ -114,9 +112,32 @@ class D(Propagator):
 
     return P0
 
-  def sinTheta(self):
-    ##
-    ## if P0 = 0 we use that theta is the angle against the z-axis
-    ##
+  def recalculateSinTheta(self):
+    P0 = self.getP0()
+    p0 = np.linalg.norm(P0)
+    q = np.linalg.norm(self.momentum)
+
+    # if P0 = 0 we use that theta is the angle against the z-axis
+    # we need 10^-10 to handle rounding errors
+    if p0 > 10**-10:
+      print('p0>0', p0)
+      print('WAT?', np.dot(self.momentum, P0)/(q*p0))
+      cosTheta = np.dot(self.momentum, P0)/(q*p0)
+    else:
+      print('p0=0', p0)
+      cosTheta = self.momentum[2]/q
+
+    # rounding error
+    if cosTheta**2 > 1:
+      sinTheta = 0
+    else:
+      sinTheta = (1 - cosTheta**2)**0.5
+
+    self.sinTheta = sinTheta
+
+    # need to return
+    return sinTheta
+
+    
 
 
