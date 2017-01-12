@@ -9,7 +9,7 @@ from Propagator import G, D
 class FeynmanDiagram(object):
 
   from .plot import plot
-  from .phononMethods import addInternalPhonon, removeInternalPhonon, setInternalPhononMomentum, swapPhononEnds
+  from .phononMethods import addInternalPhonon, removeInternalPhonon, setInternalPhononMomentum, setInternalPhononMomentumAngle, swapPhononEnds
   from .vertexMethods import insertVertex, removeVertex, setVertexPosition
   from .structure import structure
 

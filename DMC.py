@@ -128,125 +128,112 @@ def shiftVertexPosition(fd):
 
   return 1
 
+def calculateP0(d):
+  dt = d.end.position - d.start.position
+
+  P0 = np.array([0, 0, 0])
+
+  # loop through electrons under phonon arc
+  g = d.start.G[1]
+  while g.start != d.end:
+    P0 = P0 + g.momentum*(g.end.position - g.start.position)
+    g = g.end.G[1]
+
+  # add own momentum as well
+  P0 = P0/dt + d.momentum
+
+  return P0
+
 def changePhononMomentumDirection(fd):
   # choose phonon propagator on random
   d = np.random.choice(fd.Ds)
-  # d = fd.Ds[0]
-
 
   q = np.linalg.norm(d.momentum)
-
-  P0 = d.getP0()
+  P0 = calculateP0(d)
   p0 = np.linalg.norm(P0)
   
   r = np.random.rand()
   phi = np.random.uniform(0, 2*np.pi)
-  # phi = 0
-
-  ##
-  ## need to take int account phi
-  ##
-
-  ##
-  ## can move inside after
-  ##
-  a = q*p0*(d.end.position - d.start.position)
 
   # 10^-10 to handle rounding errors
   if p0 > 10**-10:
-    print('DMC, p0>0')
+    a = q*p0*(d.end.position - d.start.position)
+
     cosTheta = 1 + np.log(1 - r*(1 - np.exp(-2*a)))/a
     theta = np.arccos(cosTheta)
 
     Ep = P0/p0
-
-    # generate a temporary vector used to obtain two other vectors in order to span the rest of R^3
-    tempVector = Ep - np.array([1, 0, 0])
-    if np.linalg.norm(tempVector) < 10**-10:
-      tempVector = Ep + np.array([1, 0, 0])
-
-    Eo1 = np.cross(Ep, tempVector)
-    Eo1 = Eo1/np.linalg.norm(Eo1)
-    Eo2 = np.cross(Ep, Eo1)
-
-    Qp = Ep * q*cosTheta
-    Qo = (Eo1*np.cos(phi) + Eo2*np.sin(phi)) * q*np.sin(theta)
-
-    Q = Qp + Qo
-
-    # print(np.dot(d.momentum, P0)/(q*p0))
-    cosThetaOld = np.dot(d.momentum, P0)/(q*p0)
-    if cosThetaOld <= -1:
-      thetaOld = np.pi
-    else:
-      thetaOld = np.arccos(cosThetaOld)
-
   else:
-    print('DMC, p0=0')
-    # since p_0 might be zero...
     cosTheta = 1 - 2*r
     theta = np.arccos(cosTheta)
 
-
+    # since P0 has no length we choose this as the direction
     Ep = np.array([0, 0, 1])
-    Eo = np.array([1, 0, 0]) 
 
-    Q = np.array([
-      q*np.sin(theta)*np.cos(phi),
-      q*np.sin(theta)*np.sin(phi),
-      q*np.cos(theta)
-    ]);
+  # generate a temporary vector used to obtain two other vectors in order to span the rest of R^3
+  tempVector = Ep + np.array([1, 0, 0])
+  Eo1 = np.cross(Ep, tempVector)
+  if np.linalg.norm(Eo1) < 10**-10:
+    tempVector = Ep + np.array([0, 1, 0])
+    Eo1 = np.cross(Ep, tempVector)
 
-    cosThetaOld = d.momentum[2]/q
+  Eo1 = Eo1/np.linalg.norm(Eo1)
+  Eo2 = np.cross(Ep, Eo1)
+
+  Qp = Ep * q*cosTheta
+  Qo = (Eo1*np.cos(phi) + Eo2*np.sin(phi)) * q*np.sin(theta)
+
+  Q = Qp + Qo
+  
+
+  if False:
+    ##
+    ## temp
+    ##
+    a = q*p0*(d.end.position - d.start.position)
+
+    # if P0 = 0 we use that theta is the angle against the z-axis
+    # we need 10^-10 to handle rounding errors
+    if p0 > 10**-10:
+      cosThetaOld = np.dot(d.momentum, P0)/(q*p0)
+    else:
+      cosThetaOld = d.momentum[2]/q
+
     if cosThetaOld <= -1:
       thetaOld = np.pi
     else:
       thetaOld = np.arccos(cosThetaOld)
 
+    ##
+    ## "d.sinTheta" is outdated since the diagram might have changed in the sense that
+    ## it is no longer valid for comparing Q with a new Q'. Even the same Q might be
+    ## more/less preffered. "d.sinTheta" is only good for evaluating the diagram.
+    ##
+    fd.setInternalPhononMomentumAngle(d, np.sin(thetaOld))
 
-  ##
-  ## temp
-  ##
+    diagOld = fd()
 
-  ##
-  ## "d.sinTheta" is outdated since the diagram might have changed in the sense that
-  ## it is no longer valid for comparing Q with a new Q'. Even the same Q might be
-  ## more/less preffered. "d.sinTheta" is only good for evaluating the diagram.
-  ##
-
-  # we need to update the old angle to be valid for the new diagram before we compare with a proposed one
-  # d.recalculateSinTheta()
-
-
-  sinThetaOld = d.recalculateSinTheta()
-  diagOld = fd()
-
-
+  # update diagram
   fd.setInternalPhononMomentum(d, Q)
+  fd.setInternalPhononMomentumAngle(d, np.sin(theta))
 
+  if False:
+    ##
+    ## temp
+    ##
+    diag = fd()
+    a = q*p0*(d.end.position - d.start.position)
 
-  sinThetaOld = np.sin(thetaOld)
+    if abs(diagOld) > 0 and np.sin(theta) > 0:
+      R = diag/diagOld
+      R *= np.sin(thetaOld)/np.sin(theta)
+      R *= np.exp(-a*(np.cos(theta) - np.cos(thetaOld))) 
+    else:
+      R = 1
 
+    print(np.sin(thetaOld), '->', np.sin(theta), '   ', R)
 
-  ##
-  ## temp
-  ##
-  diag = fd()
-  # print(diagOld)
-  # thetaOld = np.arcsin(sinThetaOld) 
-
-  if abs(diagOld) > 0 and np.sin(theta) > 0:
-    R = diag/diagOld
-    R *= sinThetaOld/np.sin(theta)
-    R *= np.exp(-a*(np.cos(theta) - np.cos(thetaOld))) 
-  else:
-    R = 1
-
-
-  print(sinThetaOld, '->', np.sin(theta), '   ', R)
-  print('---------')
-
-  return R
+  return 1
 
 def DMC(t, N):
 
@@ -261,17 +248,15 @@ def DMC(t, N):
   ##
   ## insert first phonon propagator with momentum only in z-direction so that sinTheta = 1
   ## 
-  feynmanDiagram.addInternalPhonon(v1, v2, np.array([1, 1, 1])) 
-  feynmanDiagram.addInternalPhonon(v3, v4, np.array([1, 1, 1]))
+  feynmanDiagram.addInternalPhonon(v1, v3, np.random.rand(3), 1) 
+  feynmanDiagram.addInternalPhonon(v2, v4, np.random.rand(3), 1)
 
   # to reach some sense of randomness
-  # for i in range(0, 10):
-    # changePhononMomentumDirection(feynmanDiagram)
-    # shiftVertexPosition(feynmanDiagram)
-    # swapPhononEnds(feynmanDiagram)
-    # changePhononMomentum(feynmanDiagram)
-
-  print('--------')
+  for i in range(0, 10):
+    changePhononMomentumDirection(feynmanDiagram)
+    shiftVertexPosition(feynmanDiagram)
+    swapPhononEnds(feynmanDiagram)
+    changePhononMomentum(feynmanDiagram)
 
   wInv = 1
   bins = {}
@@ -282,9 +267,7 @@ def DMC(t, N):
 
     # nameOld = feynmanDiagram.structure()
 
-    # update = np.random.choice([shiftVertexPosition, swapPhononEnds, changePhononMomentum])
-    update = changePhononMomentumDirection
-    # update = np.random.choice([swapPhononEnds, changePhononMomentumDirection])
+    update = np.random.choice([shiftVertexPosition, swapPhononEnds, changePhononMomentum, changePhononMomentumDirection])
     r = update(feynmanDiagram)
 
     # (fd, invProb) = feynmanDiagram()
@@ -308,14 +291,14 @@ def DMC(t, N):
     #     print(nameOld, '->', name, R, fd/fdOld, abs(R - fd/fdOld))
 
 
-    feynmanDiagram.plot()
+    # feynmanDiagram.plot()
 
 
     a = min(1, r)
 
-    # if np.random.rand() > a:
-    #   # reject step
-    #   feynmanDiagram.revert()
+    if np.random.rand() > a:
+      # reject step
+      feynmanDiagram.revert()
 
 
     struct = feynmanDiagram.structure()
@@ -350,22 +333,22 @@ c = (c1 + c2 + c3)/3
 tot = a + b + c
 
 T = np.linspace(0, 5, num = 250) + 0.01;
-T = T
+T = T[::-1]
 
 
-# plt.ion()
+plt.ion()
 
 
-# plt.plot(T, a/tot, 'b--')
-# plt.plot(T, b/tot, 'r--')
-# plt.plot(T, c/tot, 'g--')
+plt.plot(T[::-1], a/tot, 'b--')
+plt.plot(T[::-1], b/tot, 'r--')
+plt.plot(T[::-1], c/tot, 'g--')
 
 
 t1122 = []
 t1212 = []
 t1221 = []
-N = 10000
-for t in [2]:
+N = 100000
+for t in T:
   bins = DMC(t, N)
 
   # print(bins)
@@ -379,20 +362,20 @@ for t in [2]:
   t1221.append(bins[1221])
 
 
-  # plt.plot(T[0:len(t1122)], t1122, 'b.-')
-  # plt.plot(T[0:len(t1122)], t1212, 'r.-')
-  # plt.plot(T[0:len(t1122)], t1221, 'g.-')
-  # plt.pause(0.05)
+  plt.plot(T[0:len(t1122)], t1122, 'b-')
+  plt.plot(T[0:len(t1122)], t1212, 'r-')
+  plt.plot(T[0:len(t1122)], t1221, 'g-')
+  plt.pause(0.05)
 
-# plt.ioff()
+plt.ioff()
 
-# plt.plot(T[0:len(t1122)], t1122, 'b-', label='1122')
-# plt.plot(T[0:len(t1122)], t1212, 'r-', label='1212')
-# plt.plot(T[0:len(t1122)], t1221, 'g-', label='1221')
+plt.plot(T[0:len(t1122)], t1122, 'b-', label='1122')
+plt.plot(T[0:len(t1122)], t1212, 'r-', label='1212')
+plt.plot(T[0:len(t1122)], t1221, 'g-', label='1221')
 
-# plt.xlim(0, 5)
-# plt.xlabel(r'$\tau$')
-# plt.legend(loc=2)
-# plt.savefig('plot.pdf')
+plt.xlim(0, 5)
+plt.xlabel(r'$\tau$')
+plt.legend(loc=2)
+plt.savefig('plot.pdf')
 
 plt.show()
