@@ -9,7 +9,8 @@ class Propagator(object):
     self.end = None
 
     # used to include Jacobian
-    self.sinTheta = None
+    self.theta = None
+    self.phi = None
 
     # saved variables
     self.momentumSaved = None
@@ -47,13 +48,15 @@ class Propagator(object):
     self.momentumSaved = self.momentum[:]
     self.startSaved = self.start
     self.endSaved = self.end
-    self.sinThetaSaved = self.sinTheta
+    self.thetaSaved = self.theta
+    self.phiSaved = self.phi
 
   def revert(self):
     self.momentum = self.momentumSaved
     self.start = self.startSaved
     self.end = self.endSaved
-    self.sinTheta = self.sinThetaSaved
+    self.theta = self.thetaSaved
+    self.phi = self.phiSaved
 
   def __call__(self):
     k2 = np.linalg.norm(self.momentum)**2
@@ -74,7 +77,7 @@ class Propagator(object):
 
         # Jacobian and vertex contribution
         # omit minus sign here since it will cancel with another one when summing diagrams together
-        contr = 8**0.5 * a * np.pi * self.sinTheta
+        contr = 8**0.5 * a * np.pi * np.sin(self.theta)
 
         return contr * np.exp(-t)
 
@@ -94,8 +97,11 @@ class D(Propagator):
   def __init__(self, momentum):
     Propagator.__init__(self, 'D', momentum)
 
-  def setSinTheta(self, sinTheta):
-    self.sinTheta = sinTheta
+  def setTheta(self, theta):
+    self.theta = theta
+
+  def setPhi(self, phi):
+    self.phi = phi
 
     
 

@@ -2,367 +2,89 @@ from __future__ import division
 import numpy as np
 import matplotlib.pyplot as plt
 
-from scipy.special import erfinv, erf
-
-import warnings
-warnings.filterwarnings('error')
-
 from FeynmanDiagram import FeynmanDiagram
 
-# print(sys.float_info.max, np.log(sys.float_info.max))
-
-
-##
-##
-## If we use the proper probability distribution when sampling
-## internal variables we wont need to save the invProb in the
-## feynmanDiagram object since all of that will be taken care of here
-##
-##
-
-
-##
-## swap phonon ends
-##
-def swapPhononEnds(fd):
-  # pick an internal electron propagator on random
-  g = np.random.choice(fd.Gs[1:-1])
-
-  v1 = g.start
-  v2 = g.end
-
-  c1 = 1 if v1.D[1] else -1
-  c2 = 1 if v2.D[1] else -1
-
-  d1 = v1.D[0] or v1.D[1]
-  d2 = v2.D[0] or v2.D[1]
-
-  t = v2.position - v1.position
-  Eafter = 0.5*np.linalg.norm((g.momentum + c1*d1.momentum - c2*d2.momentum))**2
-  Ebefore = 0.5*np.linalg.norm(g.momentum)**2
-
-  # if both vertices belong to the same phonon
-  # same amount of phonon is still present above after the swap in this case
-  if d1 == d2:
-    dw = 0
-  else:
-    dw = c2 - c1
-
-  try:
-    R = np.exp(-t*(Eafter - Ebefore + dw))
-  except Warning:
-    R = 1
-    print('ERROR: swapPhononEnds', -t*(Eafter - Ebefore + dw))
-
-  fd.swapPhononEnds(v1, v2)
-
-  return R
-
-
-##
-## change phonon momentum
-##
-def changePhononMomentum(fd):
-  # pick an internal phonon propagator on random
-  d = np.random.choice(fd.Ds)
-
-  ##
-  ## to calculate R (not unity here)
-  ##
-  DiagOld = fd()
-  qOld = np.linalg.norm(d.momentum)
-
-  standDev = (d.end.position - d.start.position)**-0.5;
-  q = np.abs(np.random.normal(0, standDev));
-
-  theta = np.random.uniform(0, np.pi);
-  phi = np.random.uniform(0, 2*np.pi);
-
-  Q = np.array([
-    q*np.sin(theta)*np.cos(phi),
-    q*np.sin(theta)*np.sin(phi),
-    q*np.cos(theta)
-  ]);
-
-  fd.setInternalPhononMomentum(d, Q)
-  fd.setInternalPhononMomentumAngle(d, theta, phi)
-
-  Diag = fd()
-
-  # R = np.exp(0.5*(q/standDev)**2)*Diag / (np.exp(0.5*(qOld/standDev)**2)*DiagOld)
-
-  ##
-  ## build try catch:
-  ## RuntimeWarning: divide by zero encountered in double_scalars
-  ## RuntimeWarning: invalid value encountered in double_scalars
-  ##
-
-  if DiagOld == 0:
-    R = 1
-  else:
-    try:
-      R = np.exp(np.log(Diag) - np.log(DiagOld) + 0.5*(q/standDev)**2 - 0.5*(qOld/standDev)**2)
-    except Warning:
-      print('ERROR: changePhononMomentum', Diag, DiagOld, np.exp(0.5*(q/standDev)**2 - 0.5*(qOld/standDev)**2))
-      R = 1
-
-  return R
-
-def shiftVertexPosition(fd):
-  # pick a vertex on random
-  g = np.random.choice(fd.Gs[0:-1])
-  v = g.end
-
-  # fetch available time interval
-  t1 = g.start.position
-  t2 = v.G[1].end.position
-
-  c = -1 if v.D[0] else 1
-  dE = 0.5*np.linalg.norm(v.G[0].momentum)**2 - 0.5*np.linalg.norm(v.G[1].momentum)**2 - c
-
-  # approximation (good one) to solve "RuntimeWarning: overflow encountered in exp"
-  r = np.random.rand()
-  if -(t2 - t1)*dE > 100:
-    t = t2 - np.log(r)/dE
-  else:
-    t = t1 - np.log(1 - r*(1 - np.exp(-(t2 - t1)*dE)))/dE
-
-  fd.setVertexPosition(v, t)
-
-  return 1
-
-def calculateP0(d):
-  dt = d.end.position - d.start.position
-
-  P0 = np.array([0, 0, 0])
-
-  # loop through electrons under phonon arc
-  g = d.start.G[1]
-  while g.start != d.end:
-    P0 = P0 + g.momentum*(g.end.position - g.start.position)
-    g = g.end.G[1]
-
-  # add own momentum as well
-  P0 = P0/dt + d.momentum
-
-  return P0
-
-def changePhononMomentumDirection(fd):
-  # choose phonon propagator on random
-  d = np.random.choice(fd.Ds)
-
-  q = np.linalg.norm(d.momentum)
-  P0 = calculateP0(d)
-  p0 = np.linalg.norm(P0)
+def DMC(t, N):
   
-  r = np.random.rand()
-  phi = np.random.uniform(0, 2*np.pi)
-
-  # 10^-10 to handle rounding errors
-  if p0 > 10**-10:
-    a = q*p0*(d.end.position - d.start.position)
-
-    cosTheta = 1 + np.log(1 - r*(1 - np.exp(-2*a)))/a
-    theta = np.arccos(cosTheta)
-
-    Ep = P0/p0
-  else:
-    cosTheta = 1 - 2*r
-    theta = np.arccos(cosTheta)
-
-    # since P0 has no length we choose this as the direction
-    Ep = np.array([0, 0, 1])
-
-  # generate a temporary vector used to obtain two other vectors in order to span the rest of R^3
-  tempVector = Ep + np.array([1, 0, 0])
-  Eo1 = np.cross(Ep, tempVector)
-  if np.linalg.norm(Eo1) < 10**-10:
-    tempVector = Ep + np.array([0, 1, 0])
-    Eo1 = np.cross(Ep, tempVector)
-
-  Eo1 = Eo1/np.linalg.norm(Eo1)
-  Eo2 = np.cross(Ep, Eo1)
-
-  Qp = Ep * q*cosTheta
-  Qo = (Eo1*np.cos(phi) + Eo2*np.sin(phi)) * q*np.sin(theta)
-
-  Q = Qp + Qo
-  
-
-  if False:
-    ##
-    ## temp
-    ##
-    a = q*p0*(d.end.position - d.start.position)
-
-    # if P0 = 0 we use that theta is the angle against the z-axis
-    # we need 10^-10 to handle rounding errors
-    if p0 > 10**-10:
-      cosThetaOld = np.dot(d.momentum, P0)/(q*p0)
-    else:
-      cosThetaOld = d.momentum[2]/q
-
-    if cosThetaOld <= -1:
-      thetaOld = np.pi
-    else:
-      thetaOld = np.arccos(cosThetaOld)
-
-    ##
-    ## "d.theta" is outdated since the diagram might have changed in the sense that
-    ## it is no longer valid for comparing Q with a new Q'. Even the same Q might be
-    ## more/less preffered. "d.theta" is only good for evaluating the diagram.
-    ##
-    fd.setInternalPhononMomentumAngle(d, thetaOld, d.phi)
-
-    diagOld = fd()
-
-  # update diagram
-  fd.setInternalPhononMomentum(d, Q)
-  fd.setInternalPhononMomentumAngle(d, theta, phi)
-
-  if False:
-    ##
-    ## temp
-    ##
-    diag = fd()
-    a = q*p0*(d.end.position - d.start.position)
-
-    if abs(diagOld) > 0 and np.sin(theta) > 0:
-      R = diag/diagOld
-      R *= np.sin(thetaOld)/np.sin(theta)
-      R *= np.exp(-a*(np.cos(theta) - np.cos(thetaOld))) 
-    else:
-      R = 1
-
-    print(np.sin(thetaOld), '->', np.sin(theta), '   ', R)
-
-  return 1
-
-def QofP0(P0, q, theta, phi):
-  p0 = np.linalg.norm(P0)
-
-  # 10^-10 to handle rounding errors
-  if p0 > 10**-10:
-    Ep = P0/p0
-  else:
-    # since P0 has no length we choose this as the direction
-    Ep = np.array([0, 0, 1])
-
-  # generate a temporary vector used to obtain two other vectors in order to span the rest of R^3
-  tempVector = Ep + np.array([1, 0, 0])
-  Eo1 = np.cross(Ep, tempVector)
-  if np.linalg.norm(Eo1) < 10**-10:
-    tempVector = Ep + np.array([0, 1, 0])
-    Eo1 = np.cross(Ep, tempVector)
-
-  Eo1 = Eo1/np.linalg.norm(Eo1)
-  Eo2 = np.cross(Ep, Eo1)
-
-  Qp = Ep * q*np.cos(theta)
-  Qo = (Eo1*np.cos(phi) + Eo2*np.sin(phi)) * q*np.sin(theta)
-
-  return Qp + Qo
-
-def changePhononMomentumMagnitud(fd):
-  # choose phonon propagator on random
-  d = np.random.choice(fd.Ds)
-
-  P0 = calculateP0(d)
-  p0 = np.linalg.norm(P0)
-
-  sqrta = (0.5*(d.end.position - d.start.position))**0.5
-  b = p0*np.cos(d.theta)
-  r = np.random.rand()
-  q = b + erfinv(r + (r - 1)*erf(sqrta*b))/sqrta
-  Q = QofP0(P0, q, d.theta, d.phi)
-
-  if False:
-    qOld = np.linalg.norm(d.momentum)
-    QOld = QofP0(P0, qOld, d.theta, d.phi)
-    fd.setInternalPhononMomentum(d, QOld)
-    diagOld = fd()
-
-  # update diagram
-  fd.setInternalPhononMomentum(d, Q)
-  diag = fd()
-
-  if False:
-    R = diag/diagOld
-    R *= np.exp(-sqrta**2 * ((qOld - b)**2 - (q - b)**2))
-
-    print(R)
-
-  return 1
-
-
-
-
-def DMC(t, N, sofisticated = True):
-
-  # create second order diagram
-  feynmanDiagram = FeynmanDiagram(t, np.array([0, 0, 0]))
-
-  dt = t/5
-
-  v1 = feynmanDiagram.insertVertex(0, dt)
-  v2 = feynmanDiagram.insertVertex(1, dt)
-  v3 = feynmanDiagram.insertVertex(2, dt)
-  v4 = feynmanDiagram.insertVertex(3, dt)
-
-  ##
-  ## insert first phonon propagator with momentum only in z-direction so that theta = 1
-  ## 
-  feynmanDiagram.addInternalPhonon(v1, v3, np.random.rand(3), 1, 1) 
-  feynmanDiagram.addInternalPhonon(v2, v4, np.random.rand(3), 1, 1)
-
-  # to reach some sense of randomness
-  for i in range(0, 10):
-    if sofisticated:
-      changePhononMomentumDirection(feynmanDiagram)
-      changePhononMomentumMagnitud(feynmanDiagram)
-    else:
-      changePhononMomentum(feynmanDiagram)
-    shiftVertexPosition(feynmanDiagram)
-    swapPhononEnds(feynmanDiagram)
-
-
-
-  if sofisticated:
-    updates = [shiftVertexPosition, swapPhononEnds, changePhononMomentumMagnitud, changePhononMomentumDirection]
-  else:
-    updates = [shiftVertexPosition, swapPhononEnds, changePhononMomentum]
-
-
-
-  wInv = 1
   bins = {}
-  for i in range(0, N):
-    feynmanDiagram.save()
+  for i in range(-1, N):
 
+    if i >= 0:
+      feynmanDiagramOld = feynmanDiagram
 
-    update = np.random.choice(updates)
-    r = update(feynmanDiagram)
+    # create second order diagram
+    feynmanDiagram = FeynmanDiagram(t, np.array([0, 0, 0]))
+    
+    t1 = np.random.uniform(0, t);
+    t2 = np.random.uniform(t1, t);
+    t3 = np.random.uniform(t2, t);
+    t4 = np.random.uniform(t3, t);
 
-    a = min(1, r)
+    v1 = feynmanDiagram.insertVertex(0, t1, t)
+    v2 = feynmanDiagram.insertVertex(1, t2 - t1, t - t1)
+    v3 = feynmanDiagram.insertVertex(2, t3 - t2, t - t2)
+    v4 = feynmanDiagram.insertVertex(3, t4 - t3, t - t3)
 
-    if np.random.rand() > a:
-      # reject step
-      feynmanDiagram.revert()
+    V = [v2, v3, v4]
+    j = np.random.randint(0, len(V))
+    v2 = V[j]
 
+    del V[j]
 
-    struct = feynmanDiagram.structure()
-    if struct in bins:
-      bins[struct] += 1
-    else:
-      bins[struct] = 1
+    (v3, v4) = (V[0], V[1])
+    if v3.position > v4.position:
+      (v3, v4) = (v4, v3)
+
+    standDev_q1 = (v2.position - v1.position)**-0.5;
+    q1 = np.abs(np.random.normal(0, standDev_q1));
+    theta_q1 = np.random.uniform(0, np.pi);
+    phi_q1 = np.random.uniform(0, 2*np.pi);
+
+    standDev_q2 = (v4.position - v3.position)**-0.5;
+    q2 = np.abs(np.random.normal(0, standDev_q2));
+    theta_q2 = np.random.uniform(0, np.pi);
+    phi_q2 = np.random.uniform(0, 2*np.pi);
+
+    INVprobDist_q1 = np.pi**2 * (2*np.pi*standDev_q1**2)**0.5*np.exp(0.5*(q1/standDev_q1)**2);
+    INVprobDist_q2 = np.pi**2 * (2*np.pi*standDev_q2**2)**0.5*np.exp(0.5*(q2/standDev_q2)**2);
+
+    Q1 = np.array([
+      q1*np.sin(theta_q1)*np.cos(phi_q1),
+      q1*np.sin(theta_q1)*np.sin(phi_q1),
+      q1*np.cos(theta_q1)
+    ]);
+    Q2 = np.array([
+      q2*np.sin(theta_q2)*np.cos(phi_q2),
+      q2*np.sin(theta_q2)*np.sin(phi_q2),
+      q2*np.cos(theta_q2)
+    ]);
+
+    feynmanDiagram.addInternalPhonon(v1, v2, Q1, np.sin(theta_q1), INVprobDist_q1)
+    feynmanDiagram.addInternalPhonon(v3, v4, Q2, np.sin(theta_q2), INVprobDist_q2)
+
+    # first run to generate random initial diagram
+    if i >= 0:
+
+      (val, invProb) = feynmanDiagram()
+      (valOld, invProbOld) = feynmanDiagramOld()
+
+      r = val*invProb / (valOld*invProbOld)
+      a = min(1, r)
+
+      if np.random.rand() > a:
+        # reject proposed step
+        feynmanDiagram = feynmanDiagramOld
+
+      struct = feynmanDiagram.structure()
+      if struct in bins:
+        bins[struct] += 1
+      else:
+        bins[struct] = 1
 
   for key in bins:
     bins[key] = bins[key]/N
 
   return bins
-
-
-
 
 
 a1 = np.array([6.4275945481787691e-07, 1.6657017726465213e-05, 7.4081279679240255e-05, 0.00019655865237051676, 0.00038971516198280971, 0.00068807245171688804, 0.0010962605480559914, 0.0015887959175129628, 0.0021854098610674757, 0.0028816521751615981, 0.0037824489047629628, 0.0048597580012027441, 0.0058416986136842364, 0.0067422451632395686, 0.0081375937619233406, 0.0093210162886547838, 0.010575943949540796, 0.012185901547509754, 0.013753233364331263, 0.015510755986108, 0.01673974280705778, 0.018253898277985233, 0.020714488495175147, 0.021891012605055087, 0.023920963268284183, 0.025240923730452936, 0.027187311112221741, 0.02900443203384662, 0.031271275105943928, 0.032974789924831972, 0.034696670741428765, 0.036026611506831299, 0.037710350251140674, 0.039108895138213223, 0.040996144645882894, 0.041764274898379791, 0.043583090341206242, 0.044756431845182437, 0.046337295208644401, 0.052124374522575935, 0.048923802526226093, 0.050850105742177104, 0.052846353413541686, 0.051596343654978997, 0.054123048238306895, 0.055034131928528872, 0.055434669054723801, 0.056677123081570961, 0.056532390057377715, 0.057838109787505497, 0.059139289326346135, 0.061106981033764163, 0.059855868136655228, 0.061525838234643568, 0.061808421629532762, 0.061773235478048562, 0.06141090904610888, 0.063026012278505947, 0.061385974033297541, 0.061531325197720609, 0.06257421012240677, 0.063202853816027776, 0.061850344288388384, 0.062530509818461741, 0.063054804055150293, 0.063063370021506332, 0.060935317319561547, 0.060648430227590269, 0.062075638643765266, 0.062063653757089367, 0.059880378694844236, 0.060104786519159861, 0.060457546568726081, 0.058173744581994556, 0.059964789717010192, 0.058250797670540894, 0.057448262639849895, 0.056976448938957369, 0.058381084195100817, 0.055667657050688234, 0.057179082424399501, 0.054284282450446038, 0.054213897593112279, 0.054037300459359207, 0.053262485081444599, 0.053645777776645115, 0.052877883524032658, 0.051192578633049143, 0.050694396855188478, 0.049330264973323087, 0.049006533433446957, 0.048560213458000615, 0.047213988654391588, 0.047361537261579198, 0.047138065635305579, 0.046359833070227487, 0.044776313447103505, 0.050184716380457517, 0.043497630572758968, 0.042720126030697386, 0.041117370493191988, 0.041858079934258573, 0.039781693806052718, 0.038931010837936895, 0.039054906712099491, 0.03746756903016403, 0.037189620568756847, 0.038065092623368761, 0.036568209173685695, 0.034648684572369602, 0.034611819567236787, 0.033744521564224889, 0.032791068726109963, 0.032490798194617129, 0.031847304941209305, 0.030766223767942712, 0.029814820786138719, 0.02888022898765601, 0.029890014540492987, 0.02803360142157817, 0.027967343664161138, 0.026842638836928303, 0.026873861279008798, 0.026054802523981652, 0.025607385644627903, 0.02464313597029124, 0.02374786805248345, 0.025992595640321664, 0.022499171184502519, 0.022328639719144144, 0.021899293744356254, 0.021143298178030821, 0.020963384757253206, 0.019943381829622964, 0.020182954371871373, 0.01898170621954421, 0.024485036378169858, 0.018044560806727821, 0.017374069975967747, 0.017154770407978984, 0.016419516577421019, 0.016043758069674136, 0.016096494278199085, 0.016599025211918649, 0.015330902751744686, 0.014883433412484033, 0.014700076707479613, 0.013626707630969497, 0.013827644413028408, 0.013140201274096253, 0.012571796816534796, 0.012532250764801722, 0.012261430598522919, 0.011708847863580802, 0.011770974915548817, 0.011092557913026197, 0.010808395215624109, 0.010734243385959841, 0.010441593081441252, 0.010071181909724124, 0.0097071128320350385, 0.0093179574455196697, 0.008868970555110876, 0.0087307290856419792, 0.0086537639235122494, 0.0080525067677731117, 0.0081246295854472891, 0.0083025977961552113, 0.007800856369925265, 0.007523762262176735, 0.0071243549205496047, 0.0070835031138670309, 0.0071389559707344353, 0.0064268960844990376, 0.0063310573898024093, 0.0063521911685884671, 0.0061604469334818968, 0.0059723292759167844, 0.0057542854954308132, 0.0055493961846153706, 0.0052363292949733579, 0.005212744217636611, 0.0050327808573396061, 0.0050557389501895951, 0.0049779576140717941, 0.0046969900298246088, 0.0044749156755296091, 0.0043067024068354767, 0.0042309355621413212, 0.0040049071633045307, 0.0041136656880980818, 0.0039353603119970304, 0.0036225579307552248, 0.0035871722424289875, 0.0035105884329440979, 0.0040942903784322686, 0.0032214058363296185, 0.0032042906986117503, 0.0029728508627386379, 0.0030518314170353807, 0.0028118746109800641, 0.0027872730777446053, 0.0028232508477075559, 0.0026121331045455866, 0.00249078381982785, 0.0024264415120718165, 0.0023331578644972817, 0.0022827453112178649, 0.0023485017878846614, 0.0022089946618107873, 0.0020560326981479303, 0.0019949632169705589, 0.001882953107054374, 0.0018453237724591672, 0.0018220284115588229, 0.0018472985850852184, 0.0016701759424965802, 0.0017110147486937722, 0.0016125944408597061, 0.0014921034381928289, 0.0014757218161677891, 0.0014311362362870493, 0.0013808732332765271, 0.0013223516536585973, 0.0013056548298017139, 0.0012744330585890971, 0.0012448893917721895, 0.0011949272405039095, 0.001133339841325144, 0.0011085485393570855, 0.0010922351859986076, 0.00099797659873759968, 0.0010059581947494411, 0.00094916280359390586, 0.001007843184740139, 0.00087572019199082848, 0.00086217786119241935, 0.00082333689287085617, 0.00085484458403772791, 0.00079424446665138143, 0.00075618229870158169, 0.00071535227243166018, 0.00070675763980654154, 0.0006678068723672563, 0.00064399872122090983, 0.00063577819694726301, 0.00065010695698654091, 0.00059755698752983336, 0.00058837836127002417, 0.00056609067272247993]);
@@ -396,30 +118,22 @@ plt.plot(T, c/tot, 'g--')
 t1122 = []
 t1212 = []
 t1221 = []
-N = 10000
+
+N = 100000
 for t in T:
   bins = DMC(t, N)
-
 
   t1122.append(bins[1122])
   t1212.append(bins[1212])
   t1221.append(bins[1221])
 
+  print(t, bins[1122], bins[1212], bins[1221])
 
-  plt.plot(T[0:len(t1122)], t1122, 'b-')
-  plt.plot(T[0:len(t1122)], t1212, 'r-')
-  plt.plot(T[0:len(t1122)], t1221, 'g-')
+
+  plt.plot(T[0:len(t1122)], t1122, 'b')
+  plt.plot(T[0:len(t1122)], t1212, 'r')
+  plt.plot(T[0:len(t1122)], t1221, 'g')
   plt.pause(0.05)
 
 plt.ioff()
-
-plt.plot(T[0:len(t1122)], t1122, 'b-', label='1122')
-plt.plot(T[0:len(t1122)], t1212, 'r-', label='1212')
-plt.plot(T[0:len(t1122)], t1221, 'g-', label='1221')
-
-plt.xlim(0, 5)
-plt.xlabel(r'$\tau$')
-plt.legend(loc=2)
-plt.savefig('plot.pdf')
-
 plt.show()

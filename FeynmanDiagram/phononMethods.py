@@ -3,7 +3,7 @@ import sys
 sys.path.append('../')
 from Propagator import D
 
-def addInternalPhonon(self, v1, v2, momentum, sinTheta):
+def addInternalPhonon(self, v1, v2, momentum, theta, phi):
   d = D(momentum)
 
   if v1.position > v2.position:
@@ -25,7 +25,7 @@ def addInternalPhonon(self, v1, v2, momentum, sinTheta):
   ##
   ## NEED TO ALSO GIVE THE PHONON ITS ANGLE
   ##
-  self.setInternalPhononMomentumAngle(d, sinTheta)
+  self.setInternalPhononMomentumAngle(d, theta, phi)
 
   # return phonon
   return d
@@ -60,9 +60,10 @@ def setInternalPhononMomentum(self, d, momentum):
   # return changed phonon
   return d
 
-def setInternalPhononMomentumAngle(self, d, sinTheta):
+def setInternalPhononMomentumAngle(self, d, theta, phi):
   # here we assume that the momentum has already been updated by the method above
-  d.setSinTheta(sinTheta)
+  d.setTheta(theta)
+  d.setPhi(phi)
 
 ##
 ## take a look at this when simply reversing phonon
