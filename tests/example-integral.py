@@ -12,9 +12,6 @@ sys.path.append('../')
 
 from FeynmanDiagram import FeynmanDiagram
 
-# print(sys.float_info.max, np.log(sys.float_info.max))
-
-
 ##
 ##
 ## If we use the proper probability distribution when sampling
@@ -23,42 +20,43 @@ from FeynmanDiagram import FeynmanDiagram
 ##
 ##
 
+
 ##
 ## swap phonon ends
 ##
-def swapPhononEnds(fd):
-  # pick an internal electron propagator on random
-  g = np.random.choice(fd.Gs[1:-1])
+# def swapPhononEnds(fd):
+#   # pick an internal electron propagator on random
+#   g = np.random.choice(fd.Gs[1:-1])
 
-  v1 = g.start
-  v2 = g.end
+#   v1 = g.start
+#   v2 = g.end
 
-  c1 = 1 if v1.D[1] else -1
-  c2 = 1 if v2.D[1] else -1
+#   c1 = 1 if v1.D[1] else -1
+#   c2 = 1 if v2.D[1] else -1
 
-  d1 = v1.D[0] or v1.D[1]
-  d2 = v2.D[0] or v2.D[1]
+#   d1 = v1.D[0] or v1.D[1]
+#   d2 = v2.D[0] or v2.D[1]
 
-  t = v2.position - v1.position
-  Eafter = 0.5*np.linalg.norm((g.momentum + c1*d1.momentum - c2*d2.momentum))**2
-  Ebefore = 0.5*np.linalg.norm(g.momentum)**2
+#   t = v2.position - v1.position
+#   Eafter = 0.5*np.linalg.norm((g.momentum + c1*d1.momentum - c2*d2.momentum))**2
+#   Ebefore = 0.5*np.linalg.norm(g.momentum)**2
 
-  # if both vertices belong to the same phonon
-  # same amount of phonon is still present above after the swap in this case
-  if d1 == d2:
-    dw = 0
-  else:
-    dw = c2 - c1
+#   # if both vertices belong to the same phonon
+#   # same amount of phonon is still present above after the swap in this case
+#   if d1 == d2:
+#     dw = 0
+#   else:
+#     dw = c2 - c1
 
-  try:
-    R = np.exp(-t*(Eafter - Ebefore + dw))
-  except Warning:
-    R = 1
-    print('ERROR: swapPhononEnds', -t*(Eafter - Ebefore + dw))
+#   try:
+#     R = np.exp(-t*(Eafter - Ebefore + dw))
+#   except Warning:
+#     R = 1
+#     print('ERROR: swapPhononEnds', -t*(Eafter - Ebefore + dw))
 
-  fd.swapPhononEnds(v1, v2)
+#   fd.swapPhononEnds(v1, v2)
 
-  return R
+#   return R
 
 
 ##
@@ -84,6 +82,14 @@ def changePhononMomentumMagnitudeNaive(fd):
   fd.setInternalPhononMomentum(d, Q)
 
   diag = fd()
+
+  # R = np.exp(0.5*(q/standDev)**2)*diag / (np.exp(0.5*(qOld/standDev)**2)*diagOld)
+
+  ##
+  ## build try catch:
+  ## RuntimeWarning: divide by zero encountered in double_scalars
+  ## RuntimeWarning: invalid value encountered in double_scalars
+  ##
 
   if diagOld == 0 and diag == 0:
     R = 0.5
@@ -126,9 +132,6 @@ def changePhononMomentumDirectionNaive(fd):
     R = diag/diagOld
 
   return R
-
-
-
 
 def shiftVertexPosition(fd):
   # pick a vertex on random
@@ -268,7 +271,7 @@ def changePhononMomentumDirection(fd):
     else:
       R = 1
 
-    # print('Momentum Direction', R)
+    print('Momentum Direction', R)
 
   return 1
 
@@ -306,9 +309,9 @@ def changePhononMomentumMagnitud(fd):
       print(diag, diagOld, np.exp(-sqrta**2 * ((qOld - b)**2 - (q - b)**2)))
 
 
-    # print('Momentum Magnitude', R)
+    print('Momentum Magnitude', R)
 
-  return 1
+  # return 1, diag/
 
 
 
@@ -326,81 +329,44 @@ def changePhononMomentumMagnitud(fd):
 
 
 
-def DMC(t, P0, N, sophisticated = True):
-
-  # create second order diagram
-  feynmanDiagram = FeynmanDiagram(t, P0)
-
-  dt = t/5
-  v1 = feynmanDiagram.insertVertex(0, dt)
-  v2 = feynmanDiagram.insertVertex(1, dt)
-  v3 = feynmanDiagram.insertVertex(2, dt)
-  v4 = feynmanDiagram.insertVertex(3, dt)
-  feynmanDiagram.addInternalPhonon(v1, v3, P0, 1, 1) 
-  feynmanDiagram.addInternalPhonon(v2, v4, P0, 1, 1)
-
-  # to reach some sense of randomness
-  # for i in range(0, 10):
-  #   if sophisticated:
-  #     changePhononMomentumDirection(feynmanDiagram)
-  #     changePhononMomentumMagnitud(feynmanDiagram)
-  #   else:
-  #     changePhononMomentumDirectionNaive(feynmanDiagram)
-  #     changePhononMomentumMagnitudeNaive(feynmanDiagram)
-
-  #   shiftVertexPosition(feynmanDiagram)
-  #   swapPhononEnds(feynmanDiagram)
-
+def MC(fd, N, sophisticated = True):
   if sophisticated:
-    updates = [shiftVertexPosition, swapPhononEnds, changePhononMomentumMagnitud, changePhononMomentumDirection]
+    updates = [changePhononMomentumMagnitud, changePhononMomentumDirection]
   else:
-    updates = [shiftVertexPosition, swapPhononEnds, changePhononMomentumMagnitudeNaive, changePhononMomentumDirectionNaive]
+    updates = [changePhononMomentumMagnitudeNaive, changePhononMomentumDirectionNaive]
 
-  # updates = [swapPhononEnds]
+  D = []
+  M = []
+  T = []
+  P = []
 
-  Rnaive = []
-  Rswap = []
-
-  bins = {}
+  feynmanDiagram.save()
   for i in range(0, N):
-    feynmanDiagram.save()
+
 
     update = np.random.choice(updates)
 
-    r = update(feynmanDiagram)
-
-    if update == changePhononMomentumMagnitudeNaive or update == changePhononMomentumDirectionNaive:
-      Rnaive.append(r)
-    elif update == swapPhononEnds:
-      Rswap.append(r)
+    
+    r = update(fd)
 
     if np.random.rand() > min(1, r):
       # reject step
-      feynmanDiagram.revert()
-
-    struct = feynmanDiagram.structure()
-    if struct in bins:
-      bins[struct] += 1
+      fd.revert()
     else:
-      bins[struct] = 1
+      fd.save()
 
-  for key in bins:
-    bins[key] = bins[key]/N
+    D.append(fd())
+    M.append(np.linalg.norm(fd.Ds[0].momentum))
+    T.append(fd.Ds[0].theta)
+    P.append(fd.Ds[0].phi)
 
-  return bins, Rnaive, Rswap
-
-
-
-
-
-
+  return D, M, T, P
 
 
 
 ##
+## divide by W and then append to count
 ##
-##
-
 
 
 
@@ -410,72 +376,46 @@ def DMC(t, P0, N, sophisticated = True):
 
 debug = False
 
+t = 1
+P = np.array([0, 0, 0])
+dt = t/3
 
-P0 = np.array([0, 0, 6])
-
-n = 20
-N = 1000
-
-a1122 = []
-a1212 = []
-a1221 = []
-b1122 = []
-b1212 = []
-b1221 = []
-
-plt.ion()
-
-for i in range(0, n):
-  bins = DMC(1, P0, N, True)
-
-  a1122.append(bins[1122])
-  a1212.append(bins[1212])
-  a1221.append(bins[1221])
-
-  plt.plot(a1122, 'b-')
-  plt.plot(a1212, 'b-')
-  plt.plot(a1221, 'b-')
-  plt.pause(0.05)
-
-print([a1122, a1212, a1221])
+nNaive = 100000
+nSoph = 100000
 
 
-for i in range(0, n):
-  bins = DMC(1, P0, N, False)
 
-  b1122.append(bins[1122]) if 1122 in bins else b1122.append(0)
-  b1212.append(bins[1212]) if 1212 in bins else b1212.append(0)
-  b1221.append(bins[1221]) if 1221 in bins else b1221.append(0)
+feynmanDiagram = FeynmanDiagram(t, P)
+v1 = feynmanDiagram.insertVertex(0, dt)
+v2 = feynmanDiagram.insertVertex(1, dt)
+feynmanDiagram.addInternalPhonon(v1, v2, np.array([1, 1, 1]), 1, 1)
+Da, Ma, Ta, Pa = MC(feynmanDiagram, nSoph, True)
 
-  plt.plot(b1122, 'r-')
-  plt.plot(b1212, 'r-')
-  plt.plot(b1221, 'r-')
-  plt.pause(0.05)
-
-print([b1122, b1212, b1221])
-print(num)
-
-plt.ioff()
-
-plt.plot([0, n], [np.mean(a1122)] * 2, 'b--')
-plt.plot([0, n], [np.mean(a1212)] * 2, 'b--')
-plt.plot([0, n], [np.mean(a1221)] * 2, 'b--')
-plt.plot([0, n], [np.mean(b1122)] * 2, 'r--')
-plt.plot([0, n], [np.mean(b1212)] * 2, 'r--')
-plt.plot([0, n], [np.mean(b1221)] * 2, 'r--')
+feynmanDiagram = FeynmanDiagram(t, P)
+v1 = feynmanDiagram.insertVertex(0, dt)
+v2 = feynmanDiagram.insertVertex(1, dt)
+feynmanDiagram.addInternalPhonon(v1, v2, np.array([1, 1, 1]), 1, 1)
+Db, Mb, Tb, Pb = MC(feynmanDiagram, nNaive, False)
 
 
-plt.plot(a1122, 'b-', label='a1122')
-plt.plot(a1212, 'b-', label='a1212')
-plt.plot(a1221, 'b-', label='a1221')
-plt.plot(b1122, 'r-', label='b1122')
-plt.plot(b1212, 'r-', label='b1212')
-plt.plot(b1221, 'r-', label='b1221')
 
-print(np.mean(a1122), np.mean(b1122))
-print(np.std(a1122), np.std(b1122))
-print(np.std(a1212), np.std(b1212))
-print(np.std(a1221), np.std(b1221))
+
+print(np.mean(Da), np.mean(Db))
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 

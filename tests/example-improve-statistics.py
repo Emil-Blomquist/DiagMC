@@ -326,7 +326,7 @@ def changePhononMomentumMagnitud(fd):
 
 
 
-def DMC(t, P0, N, sophisticated = True):
+def DMC(t, P0, N, size):
 
   # create second order diagram
   feynmanDiagram = FeynmanDiagram(t, P0)
@@ -351,28 +351,34 @@ def DMC(t, P0, N, sophisticated = True):
   #   shiftVertexPosition(feynmanDiagram)
   #   swapPhononEnds(feynmanDiagram)
 
-  if sophisticated:
-    updates = [shiftVertexPosition, swapPhononEnds, changePhononMomentumMagnitud, changePhononMomentumDirection]
-  else:
-    updates = [shiftVertexPosition, swapPhononEnds, changePhononMomentumMagnitudeNaive, changePhononMomentumDirectionNaive]
 
-  # updates = [swapPhononEnds]
+  updates = [
+    [1, shiftVertexPosition],
+    [size, swapPhononEnds],
+    [1, changePhononMomentumMagnitud],
+    [1, changePhononMomentumDirection]
+  ]
 
-  Rnaive = []
-  Rswap = []
+  lst = []
+  for update in updates:
+    lst.append(update[0])
+
+  lst = np.array(lst)
+  lst = lst/np.sum(lst)
 
   bins = {}
   for i in range(0, N):
     feynmanDiagram.save()
 
-    update = np.random.choice(updates)
+    rand = np.random.rand()
+    ind = 0
+    while rand > 0:
+      rand -= lst[ind]
+      ind += 1
+    ind -= 1
+    update = updates[ind][1]
 
     r = update(feynmanDiagram)
-
-    if update == changePhononMomentumMagnitudeNaive or update == changePhononMomentumDirectionNaive:
-      Rnaive.append(r)
-    elif update == swapPhononEnds:
-      Rswap.append(r)
 
     if np.random.rand() > min(1, r):
       # reject step
@@ -387,7 +393,7 @@ def DMC(t, P0, N, sophisticated = True):
   for key in bins:
     bins[key] = bins[key]/N
 
-  return bins, Rnaive, Rswap
+  return bins
 
 
 
@@ -414,7 +420,7 @@ debug = False
 P0 = np.array([0, 0, 6])
 
 n = 20
-N = 1000
+N = 10000
 
 a1122 = []
 a1212 = []
@@ -426,7 +432,7 @@ b1221 = []
 plt.ion()
 
 for i in range(0, n):
-  bins = DMC(1, P0, N, True)
+  bins = DMC(1, P0, N, 1)
 
   a1122.append(bins[1122])
   a1212.append(bins[1212])
@@ -437,11 +443,9 @@ for i in range(0, n):
   plt.plot(a1221, 'b-')
   plt.pause(0.05)
 
-print([a1122, a1212, a1221])
-
 
 for i in range(0, n):
-  bins = DMC(1, P0, N, False)
+  bins = DMC(1, P0, N, 3)
 
   b1122.append(bins[1122]) if 1122 in bins else b1122.append(0)
   b1212.append(bins[1212]) if 1212 in bins else b1212.append(0)
@@ -452,8 +456,6 @@ for i in range(0, n):
   plt.plot(b1221, 'r-')
   plt.pause(0.05)
 
-print([b1122, b1212, b1221])
-print(num)
 
 plt.ioff()
 

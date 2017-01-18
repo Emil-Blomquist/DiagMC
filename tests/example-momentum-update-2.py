@@ -1,4 +1,5 @@
 from __future__ import division
+import sys
 import numpy as np
 import matplotlib.pyplot as plt
 
@@ -6,6 +7,8 @@ from scipy.special import erfinv, erf
 
 import warnings
 warnings.filterwarnings('error')
+
+sys.path.append('../')
 
 from FeynmanDiagram import FeynmanDiagram
 
@@ -79,14 +82,6 @@ def changePhononMomentumMagnitudeNaive(fd):
   fd.setInternalPhononMomentum(d, Q)
 
   diag = fd()
-
-  # R = np.exp(0.5*(q/standDev)**2)*diag / (np.exp(0.5*(qOld/standDev)**2)*diagOld)
-
-  ##
-  ## build try catch:
-  ## RuntimeWarning: divide by zero encountered in double_scalars
-  ## RuntimeWarning: invalid value encountered in double_scalars
-  ##
 
   if diagOld == 0 and diag == 0:
     R = 0.5
@@ -378,7 +373,7 @@ P = np.array([1, 0, 1])
 dt = t/3
 
 nNaive = 100000
-nSoph = 10000
+nSoph = 100000
 
 
 
@@ -472,7 +467,7 @@ sub33.hist2d(Ta, Pa, bins=40, normed=True)
 
 
 
-
+print(np.mean(Da), np.mean(Db))
 
 
 
