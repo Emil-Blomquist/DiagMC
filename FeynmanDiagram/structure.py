@@ -2,6 +2,9 @@ def structure(self):
   Ds = dict()
   name = ''
 
+  if len(self.Ds) == 0:
+    return '0'
+
   for g in self.Gs[0:-1]:
     v = g.end
 

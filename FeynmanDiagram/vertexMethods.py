@@ -24,22 +24,24 @@ def insertVertex(self, g2splitIndex, dt):
   # returns the inserted vertex
   return g1.end
 
-def removeVertex(self, vertexIndex):
-  v = self.Gs[vertexIndex].end
+def removeVertex(self, v):
 
   if v.D[0] or v.D[1]:
     print('ERROR: Phonon line still attatched to vertex')
     return False
 
-  if np.linalg.norm(v.G[1].momentum - v.G[0].momentum) != 0:
+  if np.linalg.norm(v.G[1].momentum - v.G[0].momentum) < 10*-10:
     print('ERROR: Electron lines do not conserve momentum over vertex')
     return False
+
+  # temporarily save electron propagator to remove
+  g = v.G[1]
 
   # relink
   v.G[0].setEnd(v.G[1].end)
 
-  # remove second G from Gs
-  del self.Gs[vertexIndex + 1]
+  # remove second G (g) from Gs                                               <-- implement hash table?
+  self.Gs.remove(g)
 
 def setVertexPosition(self, v, position):
   if not v.G[0].start.position < position < v.G[1].end.position:

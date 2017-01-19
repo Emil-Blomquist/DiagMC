@@ -72,7 +72,8 @@ def plot(self):
     if not (v.G[0] and v.G[1] and bool(v.D[0]) ^ bool(v.D[1])):
       invalid = True
       print(i, 'DIAGRAM ERROR: Not exactly three lines connected to a vertex')
-      for g in v.G + v.D:
+      propagators = list(filter(None, v.G + v.D))
+      for g in propagators:
         startTime = str(roundNumber(g.start.position)) if g.start else '?'
         endTime = str(roundNumber(g.end.position)) if g.start else '?'
         print('\t' + g.type + ': ' + startTime + ' -> ' + endTime, g.momentum)

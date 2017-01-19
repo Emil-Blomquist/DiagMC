@@ -30,7 +30,7 @@ if  False:
 ##
 ## W(q)
 ##
-if True:
+if False:
   a = 0.1
   b = 3
 
@@ -56,3 +56,51 @@ if True:
   plt.plot(q, W)
   plt.show()
 
+
+
+##
+## insert new phonon: W(t)
+##
+if False:
+  dt = 1
+
+
+  t = np.linspace(0, dt, 1000)
+  W = np.exp(-t)/(1 - np.exp(-dt))
+  plt.plot(t, W)
+
+
+  C = []
+  for i in range(0, 100000):
+    r = np.random.rand()
+    t = -np.log(1 - r*(1 - np.exp(-dt)))
+
+    C.append(t)
+
+
+  plt.hist(C, 100, normed=True)
+  plt.xlim(0, dt)
+  plt.show()
+
+##
+## insert new phonon: W(q)
+##
+if True:
+  std = 1
+  qm = 5
+
+  q = np.linspace(0, qm, 1000)
+  W = (np.pi/2*std**2)**-0.5*np.exp(-0.5*(q/std)**2)
+  plt.plot(q, W)
+
+
+  C = []
+  for i in range(0, 10000):
+    q = abs(np.random.normal(0, std))
+
+    C.append(q)
+
+
+  plt.hist(C, 100, normed=True)
+  plt.xlim(0, qm)
+  plt.show()

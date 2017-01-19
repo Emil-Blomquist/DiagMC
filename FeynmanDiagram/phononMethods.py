@@ -40,9 +40,9 @@ def removeInternalPhonon(self, dIndex):
     g = g.end.G[1]
 
   # will unlink from vertices
-  d.remove()
+  d.unlink()
 
-  # remove from Ds list                                                            <-- takes time => hash table
+  # remove from Ds list
   del self.Ds[dIndex]
 
 def setInternalPhononMomentum(self, d, momentum):

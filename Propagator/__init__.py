@@ -39,7 +39,7 @@ class Propagator(object):
   def setMomentum(self, p):
     self.momentum = p
 
-  def remove(self):
+  def unlink(self):
     # unlink from vertices
     getattr(self.start, self.type)[1] = None
     getattr(self.end, self.type)[0] = None
@@ -77,7 +77,7 @@ class Propagator(object):
 
         # Jacobian and vertex contribution
         # omit minus sign here since it will cancel with another one when summing diagrams together
-        contr = 8**0.5 * a * np.pi * np.sin(self.theta)
+        contr = a/(8**0.5*np.pi**2) * np.sin(self.theta)
 
         return contr * np.exp(-t)
 
