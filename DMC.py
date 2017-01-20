@@ -45,7 +45,7 @@ for t in [1]:#T:
     'mu': -123,
     'a': 321,
     'P': np.array([0, 0, 0]),
-    'minOrder': 1,
+    'minOrder': 0,
     'maxOrder': 2
   })
 
@@ -55,13 +55,13 @@ for t in [1]:#T:
   print(orderBins)
   print(diagBins)
 
-  print('-----')
-  print(0, diagBins['0'])
-  for order in range(1, 4):
-    print('-----')
-    for diag, count in diagBins.items():
-      if order*2 == len(str(diag)):
-        print(diag, count)
+  # print('-----')
+  # print(0, diagBins['0'])
+  # for order in range(1, 4):
+  #   print('-----')
+  #   for diag, count in diagBins.items():
+  #     if order*2 == len(str(diag)):
+  #       print(diag, count)
 
 
 #   t1122.append(bins[1122])

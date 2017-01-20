@@ -46,4 +46,6 @@ def swapPhononConnections(self):
     else:
       print('Connection Swap', R*diagOld/diag)
 
+  R = 1
+
   return R

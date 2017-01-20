@@ -47,7 +47,7 @@ class DiagrammaticMonteCarlo(object):
 
     self.FD.addInternalPhonon(v1, v2, np.random.rand(3), 1, 1) 
     # self.FD.addInternalPhonon(v3, v4, np.random.rand(3), 1, 1)
-    # self.FD.addInternalPhonon(v5, v6, np.random.rand(3), 1, 1)
+    # self.FD.addInternalPhonon(v4, v6, np.random.rand(3), 1, 1)
 
   def run(self, N):
     ##
@@ -69,8 +69,8 @@ class DiagrammaticMonteCarlo(object):
     updates = [
       # self.changeInternalPhononMomentumDirection,
       # self.changeInternalPhononMomentumMagnitude,
-      # self.swapPhononConnections
       # self.shiftVertexPosition,
+      self.swapPhononConnections,
       self.raiseOrder,
       self.lowerOrder
     ]
@@ -82,20 +82,22 @@ class DiagrammaticMonteCarlo(object):
 
       update = np.random.choice(updates)
 
-      if len(self.FD.Ds) == self.minOrder and (update == self.lowerOrder):
+      if len(self.FD.Ds) == 0 and update == self.swapPhononConnections:
+        r = 1
+      elif len(self.FD.Ds) == self.minOrder and (update == self.lowerOrder):
         r = 1
       elif len(self.FD.Ds) == self.maxOrder and (update == self.raiseOrder):
         r = 1
       else:
         r = update()
 
-      # print(r, len(self.FD.Ds), update)
-
       # r = update()
 
       if np.random.rand() > min(1, r):
         # reject step
         self.FD.revert()
+
+      # self.FD.plot()
 
       ##
       ## temp

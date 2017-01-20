@@ -30,8 +30,8 @@ def addInternalPhonon(self, v1, v2, momentum, theta, phi):
   # return phonon
   return d
 
-def removeInternalPhonon(self, dIndex):
-  d = self.Ds[dIndex]
+def removeInternalPhonon(self, d):
+  # d = self.Ds[dIndex]
 
   # change momentum for electrons under phonon for conservation of momentum
   g = d.start.G[1]
@@ -42,8 +42,8 @@ def removeInternalPhonon(self, dIndex):
   # will unlink from vertices
   d.unlink()
 
-  # remove from Ds list
-  del self.Ds[dIndex]
+  # remove from Ds list                 <-- how to speed up
+  self.Ds.remove(d)
 
 def setInternalPhononMomentum(self, d, momentum):
   dP = momentum - d.momentum

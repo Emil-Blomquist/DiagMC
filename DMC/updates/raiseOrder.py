@@ -1,56 +1,56 @@
+# import sys
 import numpy as np
-from math import factorial
+# from math import factorial
+
+# sys.path.append('/dependencies')
+# from .dependencies.numDiagramsWithPhonon import numDiagramsWithPhonon
+# from .dependencies.numDiagramsWithoutPhonon import numDiagramsWithoutPhonon
 
 def raiseOrder(self):
   # save old diagram value
   diagOld = self.FD()
-  # save diagarm order
+  # save diagarm order and how many diagrams we might go to
   n = len(self.FD.Ds)
+  # nUpp = numDiagramsWithPhonon(self.FD)
 
-  # select two electron propagator on random
-  i1, i2 = tuple(np.random.randint(0, len(self.FD.Gs), 2))
-  if i1 > i2:
-    i1, i2 = i2, i1
-
-  ##
-  ## temp
-  ##
-  # i1, i2 = 0, 0
-
-  g1 = self.FD.Gs[i1]
+  # select two neighbouring electron propagators on random
+  if n == 0:
+    i1, i2 = 0, 1
+  else:
+    i1, i2 = 0, 2
 
   # uniformly select a time to split the electron line
+  g1 = self.FD.Gs[i1]
   t1 = np.random.uniform(g1.start.position, g1.end.position)
   dt1 = t1 - g1.start.position
   wInvt1 = g1.end.position - g1.start.position
-
-  # split electron
   v1 = self.FD.insertVertex(i1, dt1)
 
-  # after inserting the electron propagator the list got longer
-  i2 += 1
   g2 = self.FD.Gs[i2]
-
-  # uniformly select a time to split the electron line
   t2 = np.random.uniform(g2.start.position, g2.end.position)
   dt2 = t2 - g2.start.position
   wInvt2 = g2.end.position - g2.start.position
-
-  # split electron
   v2 = self.FD.insertVertex(i2, dt2)
 
   # add phonon
   self.FD.addInternalPhonon(v1, v2, np.random.rand(3), 1, 1)
 
+  # number of diagrams of lower order we might go to from the new diagram
+  # nDown = numDiagramsWithoutPhonon(self.FD)
+
   # take into permutations of i1 and i2 leading to the same diagram
-  perm = 1
-  if i1 + 1 != i2:
-    perm = np.random.randint(0, 2)
+  # perm = 1
+  # if i1 + 1 != i2:
+  #   perm = np.random.randint(0, 2)
 
-  r = factorial(2*n + 1)/(n + 1)
+  # if n == 0:
+  #   r = 1
+  # else:
+  #   r = 2*n/(n + 1) * nUpp/nDown
 
+  r = 1
 
-  R = perm * r
+  R = r
 
   return R
 
