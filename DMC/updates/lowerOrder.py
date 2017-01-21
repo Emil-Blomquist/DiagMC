@@ -1,47 +1,31 @@
-# import sys
 import numpy as np
-# from math import factorial
-
-# sys.path.append('/dependencies')
-# from .dependencies.numDiagramsWithPhonon import numDiagramsWithPhonon
-# from .dependencies.numDiagramsWithoutPhonon import numDiagramsWithoutPhonon
 
 def lowerOrder(self):
-  # save old diagram value
+  # old diagram value
   diagOld = self.FD()
-  # save number of diagrams we might go to by removing a phonon
-  # nDown = numDiagramsWithoutPhonon(self.FD)
 
-  # choose phonon on random
-  # dIndex = np.random.randint(0, len(self.FD.Ds))
-  # d = self.FD.Ds[dIndex]
-
-  n = len(self.FD.Ds)
-
-  # requirement for lowering: first and third vertex belong to the same phonon
-  if n > 1 and self.FD.Gs[0].end.D[1] != self.FD.Gs[2].end.D[0]:
-    return 0
-
-
+  # first encountered phonon line
   d = self.FD.Gs[0].end.D[1]
 
+  # requirement to lower: first and third vertex belong to the same phonon
+  if len(self.FD.Ds) > 1 and d != self.FD.Gs[2].end.D[0]:
+    return 0
 
-
+  # vertices
+  v1 = d.start
+  v2 = d.end
 
   # inverse probabilities for internal parameters
   wInvt1 = d.start.G[1].end.position - d.start.G[0].start.position
+  wInvt2 = d.end.G[1].end.position - d.end.G[0].start.position
 
-  dt = self.FD.time - d.start.position
-  t = d.end.position - d.start.position
-  wInvt = (1 - np.exp(-dt))*np.exp(t)
+        # dt = self.FD.time - d.start.position
+        # t = d.end.position - d.start.position
+        # wInvt = (1 - np.exp(-dt))*np.exp(t)
 
-  std = t**-0.5;
+  std = (v2.position - v1.position)**-0.5;
   q = np.linalg.norm(d.momentum)
-  # wInvQ = 2*np.pi**2 * (np.pi/2*std**2)**0.5*np.exp(0.5*(q/std)**2)
-
-  # temporarily save vertices
-  v1 = d.start
-  v2 = d.end
+  wInvQ = 2*np.pi**2 * (np.pi*std**2 / 2)**0.5 * np.exp(0.5*(q/std)**2)
 
   # remove phonon
   self.FD.removeInternalPhonon(d)
@@ -50,22 +34,13 @@ def lowerOrder(self):
   self.FD.removeVertex(v1)
   self.FD.removeVertex(v2)
 
-  # diagarm order and how many diagrams we might go to
-  # n = len(self.FD.Ds)
-  # nUpp = numDiagramsWithPhonon(self.FD)
-
-  # # ration
-  # if n == 0:
-  #   r = 1
-  # else:
-  #   r = (n + 1)/(2*n) * nDown/nUpp
-
   # get current diagram value
   diag = self.FD()
 
-  r = 1
-
-  # R = r*diag/diagOld / (wInvt1 * wInvt * wInvQ)
-  R = r
+  # acceptance ratio
+  if diagOld == 0 or wInvQ == 0:
+    R = 1
+  else:
+    R = diag/diagOld / (wInvt1 * wInvt2 * wInvQ)
 
   return R

@@ -53,27 +53,29 @@ class DiagrammaticMonteCarlo(object):
     ##
     ## here the actual DMC takes place
     ##
-    
-
-    # to reach some sense of randomness
-    # for i in range(0, 10):
-    #   if sofisticated:
-    #     changePhononMomentumDirection(feynmanDiagram)
-    #     changePhononMomentumMagnitud(feynmanDiagram)
-    #   else:
-    #     changePhononMomentum(feynmanDiagram)
-    #   shiftVertexPosition(feynmanDiagram)
-    #   swapPhononConnections(feynmanDiagram)
-
 
     updates = [
       # self.changeInternalPhononMomentumDirection,
       # self.changeInternalPhononMomentumMagnitude,
       # self.shiftVertexPosition,
-      self.swapPhononConnections,
+      # self.swapPhononConnections,
       self.raiseOrder,
       self.lowerOrder
     ]
+    
+
+    # to reach some sense of randomness
+    for i in range(0, 10):
+      for update in updates:
+        if len(self.FD.Ds) == 0 and update != self.raiseOrder:
+          r = 1
+        elif len(self.FD.Ds) == self.minOrder and (update == self.lowerOrder):
+          r = 1
+        elif len(self.FD.Ds) == self.maxOrder and (update == self.raiseOrder):
+          r = 1
+        else:
+          update()
+   
 
     diagBins = {}
     orderBins = {}
@@ -82,7 +84,7 @@ class DiagrammaticMonteCarlo(object):
 
       update = np.random.choice(updates)
 
-      if len(self.FD.Ds) == 0 and update == self.swapPhononConnections:
+      if len(self.FD.Ds) == 0 and update != self.raiseOrder:
         r = 1
       elif len(self.FD.Ds) == self.minOrder and (update == self.lowerOrder):
         r = 1

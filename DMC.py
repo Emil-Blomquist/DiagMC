@@ -4,6 +4,16 @@ import matplotlib.pyplot as plt
 
 from DMC import DiagrammaticMonteCarlo
 
+def zerothOrder(t, P, mu):
+
+    # mu = -2.2
+    p2 = np.linalg.norm(P)**2
+
+    g0 = np.exp(mu*t)
+    g0 *= np.exp(-0.5*p2*t)
+
+    return g0
+
 
 
 
@@ -23,66 +33,64 @@ from DMC import DiagrammaticMonteCarlo
 
 # tot = a + b + c
 
-# T = np.linspace(0, 5, num = 250) + 0.01;
+T = np.linspace(0, 5, num = 250) + 0.01;
 # T = T[::1]
 
 
-# plt.ion()
+plt.ion()
 
 
 # plt.plot(T[::1], a/tot, 'b--')
 # plt.plot(T[::1], b/tot, 'r--')
 # plt.plot(T[::1], c/tot, 'g--')
 
-
-# t1122 = []
-# t1212 = []
-# t1221 = []
+b0 = []
+b11 = []
+b1122 = []
+b1212 = []
+b1221 = []
 N = 100000
-for t in [1]:#T:
+for t in T:
   DMC = DiagrammaticMonteCarlo({
     't': t,
     'mu': -123,
     'a': 321,
     'P': np.array([0, 0, 0]),
     'minOrder': 0,
-    'maxOrder': 2
+    'maxOrder': 1
   })
-
 
   diagBins, orderBins = DMC.run(N)
 
-  print(orderBins)
-  print(diagBins)
+  g0 = zerothOrder(t, np.array([0, 0, 0]), -2.2)
 
-  # print('-----')
-  # print(0, diagBins['0'])
-  # for order in range(1, 4):
-  #   print('-----')
-  #   for diag, count in diagBins.items():
-  #     if order*2 == len(str(diag)):
-  #       print(diag, count)
+  b0.append(diagBins[0]*g0/diagBins[0]) if 0 in diagBins else b0.append(0)
+  b11.append(diagBins[11]*g0/diagBins[0]) if 11 in diagBins else b11.append(0)
+  b1122.append(diagBins[1122]*g0/diagBins[0]) if 1122 in diagBins else b1122.append(0)
+  b1212.append(diagBins[1212]*g0/diagBins[0]) if 1212 in diagBins else b1212.append(0)
+  b1221.append(diagBins[1221]*g0/diagBins[0]) if 1221 in diagBins else b1221.append(0)
 
 
-#   t1122.append(bins[1122])
-#   t1212.append(bins[1212])
-#   t1221.append(bins[1221])
+  plt.plot(T[0:len(b0)], b0, 'b-')
+  plt.plot(T[0:len(b11)], b11, 'r-')
+  plt.plot(T[0:len(b1122)], b1122, 'g-')
+  plt.plot(T[0:len(b1212)], b1212, 'r-')
+  plt.plot(T[0:len(b1221)], b1221, 'g-')
+  plt.pause(0.05)
+
+plt.ioff()
 
 
-#   plt.plot(T[0:len(t1122)], t1122, 'b-')
-#   plt.plot(T[0:len(t1122)], t1212, 'r-')
-#   plt.plot(T[0:len(t1122)], t1221, 'g-')
-#   plt.pause(0.05)
+plt.plot(T[0:len(b0)], b0, 'b-', label='0')
+plt.plot(T[0:len(b11)], b11, 'r-', label='11')
+plt.plot(T[0:len(b1122)], b1122, 'g-', label='1122')
+plt.plot(T[0:len(b1212)], b1212, 'r-', label='1212')
+plt.plot(T[0:len(b1221)], b1221, 'g-', label='1221')
 
-# plt.ioff()
 
-# plt.plot(T[0:len(t1122)], t1122, 'b-', label='1122')
-# plt.plot(T[0:len(t1122)], t1212, 'r-', label='1212')
-# plt.plot(T[0:len(t1122)], t1221, 'g-', label='1221')
+plt.xlim(0, 5)
+plt.xlabel(r'$\tau$')
+plt.legend(loc=2)
+plt.savefig('plot.pdf')
 
-# plt.xlim(0, 5)
-# plt.xlabel(r'$\tau$')
-# plt.legend(loc=2)
-# plt.savefig('plot.pdf')
-
-# plt.show()
+plt.show()
