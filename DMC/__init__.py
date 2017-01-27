@@ -55,10 +55,10 @@ class DiagrammaticMonteCarlo(object):
     ##
 
     updates = [
-      # self.changeInternalPhononMomentumDirection,
-      # self.changeInternalPhononMomentumMagnitude,
-      # self.shiftVertexPosition,
-      # self.swapPhononConnections,
+      self.changeInternalPhononMomentumDirection,
+      self.changeInternalPhononMomentumMagnitude,
+      self.shiftVertexPosition,
+      self.swapPhononConnections,
       self.raiseOrder,
       self.lowerOrder
     ]

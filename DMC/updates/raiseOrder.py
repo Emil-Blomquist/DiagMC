@@ -31,7 +31,7 @@ def raiseOrder(self):
   q = np.abs(np.random.normal(0, std))
   theta = np.random.uniform(0, np.pi)
   phi = np.random.uniform(0, 2*np.pi)
-  wInvQ = 2*np.pi**2 * (np.pi*std**2 / 2)**0.5 * np.exp(0.5*(q/std)**2)
+  wInvQ = 2*np.pi**2 * (0.5*np.pi*std**2)**0.5 * np.exp(0.5*(q/std)**2)
 
   Q = np.array([
     q*np.sin(theta)*np.cos(phi),

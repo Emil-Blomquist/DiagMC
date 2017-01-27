@@ -48,13 +48,15 @@ class FeynmanDiagram(object):
 
     greens = 1
 
+    ##
+    ## not necesarry
+    ##
     # chemical potential
-    mu = -2.2
-    greens *= np.exp(mu*self.time)
+    # mu = -2.2
+    # greens *= np.exp(mu*self.time)
 
     # electrons
-    greens *= self.end.G[0]()
-    for g in self.Gs[0:-1]:
+    for g in self.Gs:
       greens *= g()
 
     # phonons
