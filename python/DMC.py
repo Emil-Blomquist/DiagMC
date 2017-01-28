@@ -48,10 +48,10 @@ plt.ion()
 
 
 plt.plot(T, zeroth[0:len(T)], '--', color='blue')
-plt.plot(T, first[0:len(T)], '--', color='red')
-plt.plot(T, seconda[0:len(T)], '--', color='green')
-plt.plot(T, secondb[0:len(T)], '--', color='cyan')
-plt.plot(T, secondc[0:len(T)], '--', color='orange')
+# plt.plot(T, first[0:len(T)], '--', color='red')
+# plt.plot(T, seconda[0:len(T)], '--', color='green')
+# plt.plot(T, secondb[0:len(T)], '--', color='cyan')
+# plt.plot(T, secondc[0:len(T)], '--', color='orange')
 
 
 b0 = []
@@ -59,7 +59,14 @@ b11 = []
 b1122 = []
 b1212 = []
 b1221 = []
-N = 10000
+
+o0 = []
+o1 = []
+o2 = []
+o3 = []
+
+
+N = 100000
 for t in T:
   DMC = DiagrammaticMonteCarlo({
     't': t,
@@ -67,7 +74,7 @@ for t in T:
     'a': 321,
     'P': np.array([0, 0, 0]),
     'minOrder': 0,
-    'maxOrder': 2
+    'maxOrder': 3
   })
 
   diagBins, orderBins = DMC.run(N)
@@ -81,22 +88,40 @@ for t in T:
   b1212.append(diagBins[1212]*g0/diagBins[0]) if 1212 in diagBins else b1212.append(0)
   b1221.append(diagBins[1221]*g0/diagBins[0]) if 1221 in diagBins else b1221.append(0)
 
+  o0.append(orderBins[0]*g0/orderBins[0]) if 0 in orderBins else o0.append(0)
+  o1.append(orderBins[1]*g0/orderBins[0]) if 1 in orderBins else o1.append(0)
+  o2.append(orderBins[2]*g0/orderBins[0]) if 2 in orderBins else o2.append(0)
+  o3.append(orderBins[3]*g0/orderBins[0]) if 3 in orderBins else o3.append(0)
 
-  plt.plot(T[0:len(b0)], b0, color='blue')
-  plt.plot(T[0:len(b11)], b11, color='red')
-  plt.plot(T[0:len(b1122)], b1122, color='green')
-  plt.plot(T[0:len(b1212)], b1212, color='cyan')
-  plt.plot(T[0:len(b1221)], b1221, color='orange')
+
+  # plt.plot(T[0:len(b0)], b0, color='blue')
+  # plt.plot(T[0:len(b11)], b11, color='red')
+  # plt.plot(T[0:len(b1122)], b1122, color='green')
+  # plt.plot(T[0:len(b1212)], b1212, color='cyan')
+  # plt.plot(T[0:len(b1221)], b1221, color='orange')
+
+
+  plt.plot(T[0:len(o0)], o0, color='blue')
+  plt.plot(T[0:len(o1)], o1, color='green')
+  plt.plot(T[0:len(o2)], o2, color='red')
+  plt.plot(T[0:len(o3)], o3, color='orange')
+
   plt.pause(0.05)
 
 plt.ioff()
 
 
-plt.plot(T[0:len(b0)], b0, color='blue')
-plt.plot(T[0:len(b11)], b11, color='red')
-plt.plot(T[0:len(b1122)], b1122, color='green')
-plt.plot(T[0:len(b1212)], b1212, color='cyan')
-plt.plot(T[0:len(b1221)], b1221, color='orange')
+# plt.plot(T[0:len(b0)], b0, color='blue')
+# plt.plot(T[0:len(b11)], b11, color='red')
+# plt.plot(T[0:len(b1122)], b1122, color='green')
+# plt.plot(T[0:len(b1212)], b1212, color='cyan')
+# plt.plot(T[0:len(b1221)], b1221, color='orange')
+
+
+plt.plot(T[0:len(o0)], o0, color='blue')
+plt.plot(T[0:len(o1)], o1, color='green')
+plt.plot(T[0:len(o2)], o2, color='red')
+plt.plot(T[0:len(o3)], o3, color='orange')
 
 
 plt.xlim(0, 5)
