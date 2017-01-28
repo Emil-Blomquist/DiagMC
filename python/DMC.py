@@ -64,9 +64,10 @@ o0 = []
 o1 = []
 o2 = []
 o3 = []
+o4 = []
 
 
-N = 100000
+N = 500000
 for t in T:
   DMC = DiagrammaticMonteCarlo({
     't': t,
@@ -74,7 +75,7 @@ for t in T:
     'a': 321,
     'P': np.array([0, 0, 0]),
     'minOrder': 0,
-    'maxOrder': 3
+    'maxOrder': 4
   })
 
   diagBins, orderBins = DMC.run(N)
@@ -82,16 +83,17 @@ for t in T:
   g0 = G0(t, np.array([0, 0, 0]), -2.2)
 
 
-  b0.append(orderBins[0]*g0/orderBins[0]) if 0 in orderBins else b0.append(0)
-  b11.append(orderBins[1]*g0/orderBins[0]) if 1 in orderBins else b11.append(0)
-  b1122.append(diagBins[1122]*g0/diagBins[0]) if 1122 in diagBins else b1122.append(0)
-  b1212.append(diagBins[1212]*g0/diagBins[0]) if 1212 in diagBins else b1212.append(0)
-  b1221.append(diagBins[1221]*g0/diagBins[0]) if 1221 in diagBins else b1221.append(0)
+  # b0.append(orderBins[0]*g0/orderBins[0]) if 0 in orderBins else b0.append(0)
+  # b11.append(orderBins[1]*g0/orderBins[0]) if 1 in orderBins else b11.append(0)
+  # b1122.append(diagBins[1122]*g0/diagBins[0]) if 1122 in diagBins else b1122.append(0)
+  # b1212.append(diagBins[1212]*g0/diagBins[0]) if 1212 in diagBins else b1212.append(0)
+  # b1221.append(diagBins[1221]*g0/diagBins[0]) if 1221 in diagBins else b1221.append(0)
 
   o0.append(orderBins[0]*g0/orderBins[0]) if 0 in orderBins else o0.append(0)
   o1.append(orderBins[1]*g0/orderBins[0]) if 1 in orderBins else o1.append(0)
   o2.append(orderBins[2]*g0/orderBins[0]) if 2 in orderBins else o2.append(0)
   o3.append(orderBins[3]*g0/orderBins[0]) if 3 in orderBins else o3.append(0)
+  o4.append(orderBins[4]*g0/orderBins[0]) if 4 in orderBins else o4.append(0)
 
 
   # plt.plot(T[0:len(b0)], b0, color='blue')
@@ -105,6 +107,8 @@ for t in T:
   plt.plot(T[0:len(o1)], o1, color='green')
   plt.plot(T[0:len(o2)], o2, color='red')
   plt.plot(T[0:len(o3)], o3, color='orange')
+  plt.plot(T[0:len(o4)], o4, color='cyan')
+  plt.plot(T[0:len(o4)], np.array(o0) + np.array(o1) + np.array(o2) + np.array(o3) + np.array(o4), color='magenta')
 
   plt.pause(0.05)
 
@@ -122,11 +126,13 @@ plt.plot(T[0:len(o0)], o0, color='blue')
 plt.plot(T[0:len(o1)], o1, color='green')
 plt.plot(T[0:len(o2)], o2, color='red')
 plt.plot(T[0:len(o3)], o3, color='orange')
+plt.plot(T[0:len(o3)], o3, color='cyan')
+plt.plot(T[0:len(o4)], np.array(o0) + np.array(o1) + np.array(o2) + np.array(o3) + np.array(o4), color='magenta')
 
 
 plt.xlim(0, 5)
 plt.xlabel(r'$\tau$')
-plt.legend(loc=2)
+# plt.legend(loc=2)
 plt.savefig('plot.pdf')
 
 plt.show()

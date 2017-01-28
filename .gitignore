@@ -5,5 +5,10 @@ __pycache__
 *.pdf
 **/*.pdf
 
+*.o
+**/*.o
+
+c++/output
+
 DiagMC.sublime-project
 DiagMC.sublime-workspace
