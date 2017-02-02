@@ -7,20 +7,18 @@
 using namespace Eigen;
 using namespace std;
 
-class Vertex;
+// needed since we will call methods
+#include "../Vertex/Vertex.h"
 
 class Propagator {
-    Vector3d savedMomentum;
-
   public:
     int type;
 
     Vector3d momentum;
-    double theta, phi;
 
-    Vertex * start, * end;
+    Vertex *start, *end;
 
-    Propagator (int, Vector3d, double, double);
+    Propagator (int, Vector3d);
     // ~Propagator();
 
     void setMomentum (Vector3d);

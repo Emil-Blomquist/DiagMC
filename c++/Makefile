@@ -6,15 +6,10 @@ MAKE = make
 
 objects = main.o \
 		  $(PROPAGATOR_DIR)/Propagator.o \
-<<<<<<< HEAD
 		  $(PROPAGATOR_DIR)/Electron.o \
 		  $(PROPAGATOR_DIR)/Phonon.o \
 		  $(VERTEX_DIR)/Vertex.o \
 		  $(FEYNMAN_DIAGRAM_DIR)/FeynmanDiagram.o
-=======
-		  $(PROPAGATOR_DIR)/G.o \
-		  $(VERTEX_DIR)/Vertex.o
->>>>>>> parent of c8cac05... temp save
 
 run: output
 	@echo "----------"
