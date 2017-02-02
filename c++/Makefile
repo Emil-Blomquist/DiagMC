@@ -5,7 +5,8 @@ MAKE = make
 
 objects = main.o \
 		  $(PROPAGATOR_DIR)/Propagator.o \
-		  $(PROPAGATOR_DIR)/G.o \
+		  $(PROPAGATOR_DIR)/Electron.o \
+		  $(PROPAGATOR_DIR)/Phonon.o \
 		  $(VERTEX_DIR)/Vertex.o
 
 run: output
