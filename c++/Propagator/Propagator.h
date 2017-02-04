@@ -7,25 +7,22 @@
 using namespace Eigen;
 using namespace std;
 
-// needed since we will call methods
 #include "../Vertex/Vertex.h"
 
 class Propagator {
   public:
     int type;
+    bool dummy;
 
     Vector3d momentum;
 
     Vertex *start, *end;
 
+    Propagator ();
     Propagator (int, Vector3d);
-    // ~Propagator();
 
     void setMomentum (Vector3d);
-    void setStart (Vertex *);
-    void setEnd (Vertex *);
-    
-    void print ();
+    void addMomentum (Vector3d);
 };
 
 #endif

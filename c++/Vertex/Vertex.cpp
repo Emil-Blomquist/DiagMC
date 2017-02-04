@@ -1,18 +1,29 @@
 #include "Vertex.h"
 
-Vertex::Vertex (double _position) {
-  position = _position;
+Vertex::Vertex (double position) {
+  this->position = position;
 
-  G[0] = NULL; G[1] = NULL;
-  D[0] = NULL; D[1] = NULL;
+  this->G[0] = NULL;
+  this->G[1] = NULL;
+  this->D[0] = NULL;
+  this->D[1] = NULL;
 }
 
 void Vertex::print () {
-  cout << "Vertex:" << endl
+  cout << "Vertex: " << this << endl
        << "\tposition: " << position << endl
-       << "\tingoing g: " << G[0] << endl
-       << "\toutgoing g: " << G[1] << endl
-       << "\tingoing d:" << D[0] << endl
-       << "\toutgoing d:" << D[1] << endl;
-
+       << "\tG in: " << this->G[0] << endl
+       << "\tG out: " << this->G[1] << endl
+       << "\tD in: " << this->D[0] << endl
+       << "\tD out: " << this->D[1] << endl;
 }
+
+// void Vertex::setPosition (double t) {
+//   if (this->G[0] == NULL or this->G[1] == NULL) {
+//     cout << "ERROR at Vertex::setPosition: cannot change position of first nor last vertex";
+//     return;
+//   }
+
+//   double tmin = this->G[0]->start.position, tmax = this->G[1]->end.position;
+
+// }

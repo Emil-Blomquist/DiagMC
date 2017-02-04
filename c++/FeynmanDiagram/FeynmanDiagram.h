@@ -2,8 +2,9 @@
 #define FEYNMAN_DIAGRAM_H
 
 #include <iostream>
-#include <vector>
+#include <list>
 #include <eigen3/Eigen/Dense>
+#include <SFML/Graphics.hpp>
 
 using namespace Eigen;
 using namespace std;
@@ -17,12 +18,18 @@ class FeynmanDiagram {
     double length, couplingConstant, chemicalPotential;
     Vector3d externalMomentum;
 
-    vector<Electron*> Gs;
-    vector<Phonon*> Ds;
-
-    Vertex *start, *end;
+    list<Vertex> Vs;
+    list<Electron> Gs;
+    list<Phonon> Ds;
 
     FeynmanDiagram (Vector3d, double, double, double);
+
+    void print ();
+
+    Vertex *insertVertex (list<Vertex>::iterator, double);
+    Phonon *addInternalPhonon (list<Vertex>::iterator, list<Vertex>::iterator, Vector3d, double, double);
+
+    void plot ();
 };
 
 #endif

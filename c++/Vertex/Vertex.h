@@ -5,24 +5,26 @@
 
 using namespace std;
 
-class Propagator;
+class Electron;
+class Phonon;
 
 class Vertex {
   public:
     double position;
 
-    Propagator *G[2];
-    Propagator *D[2];
+    Electron *G[2];
+    Phonon *D[2];
 
     Vertex (double);
 
-    void setIngoingG (Propagator *g) { G[0] = g; }
-    void setOutgoingG (Propagator *g) { G[1] = g; }
-    void setIngoingD (Propagator *d) { D[0] = d; }
-    void setOutgoingD (Propagator *d) { D[1] = d; }
-
-
     void print ();
+
+    void setIngoingG (Electron *prop) {this->G[0] = prop;}
+    void setOutgoingG (Electron *prop) {this->G[1] = prop;}
+    void setIngoingD (Phonon *prop) {this->D[0] = prop;}
+    void setOutgoingD (Phonon *prop) {this->D[1] = prop;}
+
+    // void setPosition (double);
 };
 
 #endif

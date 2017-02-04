@@ -5,15 +5,17 @@
 
 class Phonon: public Propagator {
     Vector3d savedMomentum;
-    double savedTheta, savedPhi;
+    // double savedTheta, savedPhi;
   public:
 
     double theta, phi;
 
     Phonon (Vector3d _p, double _theta, double _phi);
 
-    // void save ();
-    // void revert ();
+    void print ();
+
+    void setStart (Vertex *);
+    void setEnd (Vertex *);
 };
 
 #endif
