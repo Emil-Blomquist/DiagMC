@@ -14,6 +14,14 @@ using namespace std;
 #include "../Vertex/Vertex.h"
 
 class FeynmanDiagram {
+  private:
+    // used for plotting feynman diagram
+    int width, height;
+    double thickness;
+    void drawElectron (sf::RenderWindow*, int, int);
+    void drawPhonon (sf::RenderWindow*, int, int);
+    void drawVertex (sf::RenderWindow*, int);
+
   public:
     double length, couplingConstant, chemicalPotential;
     Vector3d externalMomentum;
