@@ -3,6 +3,7 @@
 
 #include <iostream>
 #include <list>
+#include <sstream>
 #include <eigen3/Eigen/Dense>
 #include <SFML/Graphics.hpp>
 
@@ -21,6 +22,7 @@ class FeynmanDiagram {
     void drawElectron (sf::RenderWindow*, double, double, double);
     void drawPhonon (sf::RenderWindow*, double, double, double);
     void drawVertex (sf::RenderWindow*, double, double, bool);
+    void drawText (sf::RenderWindow*, sf::Font*, double, double, double, double);
     int longestPhonon ();
 
   public:
