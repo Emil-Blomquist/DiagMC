@@ -16,11 +16,12 @@ using namespace std;
 class FeynmanDiagram {
   private:
     // used for plotting feynman diagram
-    int width, height;
+    int windowWidth, windowHeight, horizontalMargin, verticalMargin;
     double thickness;
-    void drawElectron (sf::RenderWindow*, int, int);
-    void drawPhonon (sf::RenderWindow*, int, int);
-    void drawVertex (sf::RenderWindow*, int);
+    void drawElectron (sf::RenderWindow*, double, double, double);
+    void drawPhonon (sf::RenderWindow*, double, double, double);
+    void drawVertex (sf::RenderWindow*, double, double, bool);
+    int longestPhonon ();
 
   public:
     double length, couplingConstant, chemicalPotential;

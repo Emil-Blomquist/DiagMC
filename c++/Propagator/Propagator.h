@@ -12,7 +12,7 @@ using namespace std;
 class Propagator {
   public:
     int type;
-    bool dummy;
+    bool removed;
 
     Vector3d momentum;
 
