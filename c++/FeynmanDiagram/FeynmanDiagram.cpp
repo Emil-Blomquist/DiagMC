@@ -84,21 +84,13 @@ shared_ptr<Phonon> FeynmanDiagram::addInternalPhonon (shared_ptr<Vertex> v1, sha
   this->Ds.back()->setStart(v1);
   this->Ds.back()->setEnd(v2);
 
-  //
-  // conserve total momentum
-  //
+  // momentum conservation
   shared_ptr<Electron> g = v1->G[1];
   while (g->start != v2) {
     g->addMomentum(-Q);
 
     g = g->end->G[1];
   }
-
-
-  // for (list<Vertex>::iterator i = v1; i != v2; ++i) {
-  //   i->G[1]->addMomentum(-Q);
-  // }
-
 
   return this->Ds.back();
 }
