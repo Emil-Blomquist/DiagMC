@@ -30,6 +30,7 @@ LIBS=-lsfml-graphics -lsfml-window -lsfml-system
 
 #SRC=$(wildcard **/*.cpp)
 SRC=$(wildcard *.cpp) $(wildcard */*.cpp)
+# SRC=main.cpp
 OBJ=$(SRC:%.cpp=%.o)
 
 all: $(OBJ)

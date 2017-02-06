@@ -11,44 +11,42 @@ FeynmanDiagram::FeynmanDiagram (
   this->couplingConstant = _couplingConstant;
   this->chemicalPotential = _chemicalPotential;
 
-  // create first and last vertex
-  this->Vs.emplace_back(0);
-  this->Vs.emplace_back(length);
-
-  // create a electronic propagator
-  this->Gs.emplace_back(externalMomentum);
+  // create vertices
+  this->start.reset(new Vertex(0));
+  this->end.reset(new Vertex(length));
+  
+  // create electronic propagator
+  this->Gs.emplace_back(new Electron(externalMomentum));
 
   // link propagator to vertices
-  this->Gs.begin()->setStart(&this->Vs.front());
-  this->Gs.begin()->setEnd(&this->Vs.back());
+  this->Gs[0]->setStart(this->start);
+  this->Gs[0]->setEnd(this->end);
 }
 
 void FeynmanDiagram::print () {
-  // print vertexes
-  for (list<Vertex>::iterator i = this->Vs.begin(); i != this->Vs.end(); ++i) {
-    i->print();
+  this->start->print();
+  this->end->print();
+
+  for (auto g : this->Gs) {
+    g->print();
   }
 
-  // print electronic propagators
-  for (list<Electron>::iterator j = this->Gs.begin(); j != this->Gs.end(); ++j) {
-    j->print();
-  }
-
-  // print phonon propagators
-  for (list<Phonon>::iterator k = this->Ds.begin(); k != this->Ds.end(); ++k) {
-    k->print();
+  for (auto d : this->Ds) {
+    d->print();
   }
 }
 
 
-Vertex *FeynmanDiagram::insertVertex (list<Vertex>::iterator i, double dt) {
+shared_ptr<Vertex> FeynmanDiagram::insertVertex (int gIndex, double dt) {
   if (dt <= 0) {
     cout << "ERROR at FeynmanDiagram::insertVertex: dt <= 0" << endl;
     return NULL;
   }
 
-  double t = i->position + dt;
-  double tmax = (++i)->position;
+  shared_ptr<Electron> g = this->Gs[gIndex];
+
+  double t = g->start->position + dt;
+  double tmax = g->end->position;
 
   if (tmax <= t) {
     cout << "ERROR at FeynmanDiagram::insertVertex: tmax <= t" << endl;
@@ -56,15 +54,11 @@ Vertex *FeynmanDiagram::insertVertex (list<Vertex>::iterator i, double dt) {
   }
 
   // create new vertex
-  Vertex *v;
-  this->Vs.emplace(i, t);
-  v = &(*--i);
+  shared_ptr<Vertex> v(new Vertex(t));
 
-  // create new electronic propagator
-  Electron *g1, *g2;
-  g1 = (--i)->G[1];
-  this->Gs.emplace_back(g1->momentum);
-  g2 = &this->Gs.back();
+  // create electronic propagator
+  this->Gs.emplace(this->Gs.begin() + gIndex + 1, new Electron(externalMomentum));
+  auto g1 = this->Gs[gIndex], g2 = this->Gs[gIndex + 1];
 
   // link them accordingly
   g2->setEnd(g1->end);
@@ -76,7 +70,7 @@ Vertex *FeynmanDiagram::insertVertex (list<Vertex>::iterator i, double dt) {
 }
 
 
-Phonon *FeynmanDiagram::addInternalPhonon (list<Vertex>::iterator v1, list<Vertex>::iterator v2, Vector3d Q, double theta, double phi) {
+shared_ptr<Phonon> FeynmanDiagram::addInternalPhonon (shared_ptr<Vertex> v1, shared_ptr<Vertex> v2, Vector3d Q, double theta, double phi) {
   // first make sure that v1 and v2 does not already are attached to a phonon
   if (v1->D[0] != NULL or v1->D[1] != NULL or v2->D[0] != NULL or v2->D[1] != NULL) {
     cout << "ERROR at FeynmanDiagram::addInternalPhonon: a phonon is already attached to either/both of these vertices" << endl;
@@ -84,20 +78,27 @@ Phonon *FeynmanDiagram::addInternalPhonon (list<Vertex>::iterator v1, list<Verte
   }
 
   // create new phonon
-  Phonon *d;
-  this->Ds.emplace_back(Q, theta, phi);
-  d = &this->Ds.back();
+  this->Ds.emplace_back(new Phonon(Q, theta, phi));
 
   // attach to vertices
-  d->setStart(&(*v1));
-  d->setEnd(&(*v2));
+  this->Ds.back()->setStart(v1);
+  this->Ds.back()->setEnd(v2);
 
   //
   // conserve total momentum
   //
-  for (list<Vertex>::iterator i = v1; i != v2; ++i) {
-    i->G[1]->addMomentum(-Q);
+  shared_ptr<Electron> g = v1->G[1];
+  while (g->start != v2) {
+    g->addMomentum(-Q);
+
+    g = g->end->G[1];
   }
 
-  return d;
+
+  // for (list<Vertex>::iterator i = v1; i != v2; ++i) {
+  //   i->G[1]->addMomentum(-Q);
+  // }
+
+
+  return this->Ds.back();
 }

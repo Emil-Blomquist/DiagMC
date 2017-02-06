@@ -6,7 +6,7 @@ Phonon::Phonon (Vector3d _p, double theta, double phi) : Propagator(1, _p) {
 }
 
 void Phonon::print () {
-  cout << "Phonon: " << this << endl
+  cout << "Phonon: " << this->shared_from_this() << endl
        << "\tmomentum: " << this->momentum.transpose() << endl
        << "\ttheta: " << this->theta << endl
        << "\tphi: " << this->phi << endl
@@ -14,34 +14,34 @@ void Phonon::print () {
        << "\tend: " << this->end << endl;
 }
 
-void Phonon::setStart (Vertex *v) {
+void Phonon::setStart (shared_ptr<Vertex> v) {
   // unlink propagator from previous vertex
   if (this->start) {
-    start->setOutgoingD(NULL);
+    start->setD(1, NULL);
   }
 
   // unlink propagator linked to new vertex
   if (v->D[1] && v->D[1]->start) {
-    v->D[1]->start = NULL;
+    v->D[1]->start.reset();
   }
 
   // relink
-  v->setOutgoingD(this);
+  v->setD(1, this->shared_from_this());
   this->start = v;
 }
 
-void Phonon::setEnd (Vertex *v) {
+void Phonon::setEnd (shared_ptr<Vertex> v) {
   // unlink this propagator from previous vertex
   if (this->end) {
-    this->end->setIngoingD(NULL);
+    this->end->setD(0, NULL);
   }
 
   // unlink propagator linked to new vertex
   if (v->D[0] && v->D[0]->end) {
-    v->D[0]->end = NULL;
+    v->D[0]->end.reset();
   }
 
   // relink
-  v->setIngoingD(this);
+  v->setD(0, this->shared_from_this());
   this->end = v;
 }

@@ -2,6 +2,7 @@
 #define PROPAGATOR_H
 
 #include <iostream>
+#include <memory>
 #include <eigen3/Eigen/Dense>
 
 using namespace Eigen;
@@ -16,9 +17,8 @@ class Propagator {
 
     Vector3d momentum;
 
-    Vertex *start, *end;
+    shared_ptr<Vertex> start, end;
 
-    Propagator ();
     Propagator (int, Vector3d);
 
     void setMomentum (Vector3d);
