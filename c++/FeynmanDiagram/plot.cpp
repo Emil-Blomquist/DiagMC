@@ -1,14 +1,14 @@
 #include "FeynmanDiagram.h"
 
-void FeynmanDiagram::drawElectron (sf::RenderWindow *window, double yPos, double start, double end) {
+void FeynmanDiagram::drawElectron (sf::RenderWindow *window, double yPos, double start, double end, sf::Color color) {
   sf::RectangleShape rectangle(sf::Vector2f(end - start, thickness));
-  rectangle.setFillColor(sf::Color(0, 255, 255));
+  rectangle.setFillColor(color);
   rectangle.setPosition(this->horizontalMargin + start, this->verticalMargin + yPos - 0.5*thickness);
 
   window->draw(rectangle);
 }
 
-void FeynmanDiagram::drawPhonon (sf::RenderWindow *window, double yPos, double start, double end) {
+void FeynmanDiagram::drawPhonon (sf::RenderWindow *window, double yPos, double start, double end, sf::Color color) {
   double radius = 0.5*(end - start - this->thickness);
 
   sf::CircleShape circle(radius, (int) 2*radius);
@@ -17,7 +17,7 @@ void FeynmanDiagram::drawPhonon (sf::RenderWindow *window, double yPos, double s
 
   circle.setFillColor(sf::Color(255, 255, 255, 0));
   circle.setOutlineThickness(this->thickness);
-  circle.setOutlineColor(sf::Color(255, 0, 0));
+  circle.setOutlineColor(color);
 
   window->draw(circle);
 
@@ -92,6 +92,15 @@ int FeynmanDiagram::longestPhonon () {
   return longestPhonon;
 }
 
+sf::Color FeynmanDiagram::colorCode (double pMin, double pMax, Vector3d P) {
+  if (pMin == pMax) {
+    return sf::Color(0, 0, 255);
+  } else {
+    double r = (P.norm() - pMin)/(pMax - pMin);
+    return sf::Color(255*r, 0, 255*(1 - r));
+  }
+}
+
 void FeynmanDiagram::plot () {
   this->windowWidth = 2000;
   this->windowHeight = 1000;
@@ -146,6 +155,22 @@ void FeynmanDiagram::plot () {
   sf::Font font;
   font.loadFromFile("OpenSans-Regular.ttf");
 
+  // 
+  // find max and min momentum
+  //
+  double p = this->Vs.begin()->G[1]->momentum.norm(), pMin = p, pMax = p;
+  for (list<Vertex>::iterator i = this->Vs.begin(); i != prev(this->Vs.end(), 1); ++i) {
+    p = i->G[1]->momentum.norm();
+    pMin = min(pMin, p);
+    pMax = max(pMax, p);
+
+    if (i->D[1]) {
+      p = i->D[1]->momentum.norm();
+      pMin = min(pMin, p);
+      pMax = max(pMax, p);
+    }
+  }
+
   //
   // rendering loop
   //
@@ -173,7 +198,7 @@ void FeynmanDiagram::plot () {
           end = start + 1;
           for (list<Vertex>::iterator j = next(i, 1); j != this->Vs.end(); ++j) {
             if (i->D[1]->end == &(*j)) {
-              this->drawPhonon(&window, bottom, start*gLength, end*gLength);
+              this->drawPhonon(&window, bottom, start*gLength, end*gLength, this->colorCode(pMin, pMax, i->D[1]->momentum));
               this->drawText(&window, &font, i->D[1]->momentum.norm(), 0.5*(start + end)*gLength, bottom - 0.5*(end - start)*gLength, -1);
               break;
             }
@@ -187,7 +212,7 @@ void FeynmanDiagram::plot () {
 
       int count = 0;
       for (list<Vertex>::iterator i = this->Vs.begin(); i != prev(this->Vs.end(), 1); ++i) {
-        this->drawElectron(&window, bottom, count*gLength, (count + 1)*gLength);
+        this->drawElectron(&window, bottom, count*gLength, (count + 1)*gLength, this->colorCode(pMin, pMax, i->G[1]->momentum));
         this->drawText(&window, &font, i->G[1]->momentum.norm(), (count + 0.5)*gLength, bottom, -1);
 
         count++;

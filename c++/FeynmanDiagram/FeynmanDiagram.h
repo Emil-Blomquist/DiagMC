@@ -19,10 +19,11 @@ class FeynmanDiagram {
     // used for plotting feynman diagram
     int windowWidth, windowHeight, horizontalMargin, verticalMargin;
     double thickness;
-    void drawElectron (sf::RenderWindow*, double, double, double);
-    void drawPhonon (sf::RenderWindow*, double, double, double);
+    void drawElectron (sf::RenderWindow*, double, double, double, sf::Color);
+    void drawPhonon (sf::RenderWindow*, double, double, double, sf::Color);
     void drawVertex (sf::RenderWindow*, double, double, bool);
     void drawText (sf::RenderWindow*, sf::Font*, double, double, double, double);
+    sf::Color colorCode (double, double, Vector3d);
     int longestPhonon ();
 
   public:
