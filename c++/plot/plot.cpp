@@ -120,16 +120,71 @@ void plot::render () {
         this->drawText(&window, &font, g->momentum.norm(), (i + 0.5)*gLength, bottom, -1);
       }
 
+      // 
+      // validate vertices
+      //
       shared_ptr<Vertex> v;
+      Vector3d dP;
+      bool validVertex;
+      for (int i = 1; i < this->FD->Gs.size(); i++) {
+        validVertex = true;
+        v = this->FD->Gs[i]->start;
+
+        // three lines connected
+        if ( ! (v->G[0] && v->G[1] && ((v->D[0] != NULL) ^ (v->D[1] != NULL)))) {
+          cout << i << ": DIAGRAM ERROR: Not exactly three lines connected to a vertex" << endl;
+          v->print();
+          validVertex = false;
+        }
+
+        // momentum conservation
+        dP = v->G[1]->momentum - v->G[0]->momentum;
+        if (v->D[1]) {
+          dP += v->D[1]->momentum;
+        } else if (v->D[0]) {
+          dP -= v->D[0]->momentum;
+        }
+        if (dP.norm() > pow(10.0, -10.0)) {
+          cout << i << ": DIAGRAM ERROR: Momentum nonconservation at vertex" << endl;
+          v->print();
+          validVertex = false;
+        }
+
+        // increasing vertex times
+        if ( ! (v->G[0]->start->position < v->position && v->position < v->G[1]->end->position)) {
+          cout << i << ": DIAGRAM ERROR: Vertices not chronologically ordered" << endl;
+          v->print();
+          validVertex = false;
+        }
+
+        // plot invalid vertex
+        if ( ! validVertex) {
+          this->markVertex(&window, i*gLength, bottom);
+        }
+      }
+
       for (int i = 0; i < this->FD->Gs.size(); i++) {
         v = this->FD->Gs[i]->end;
 
-        this->drawVertex(&window, bottom, (i + 1)*gLength, i < this->FD->Gs.size() - 1);
+        this->drawVertex(&window, (i + 1)*gLength, bottom, i < this->FD->Gs.size() - 1);
         this->drawText(&window, &font, v->position, (i + 1)*gLength, bottom, 1);
       }
-      this->drawVertex(&window, bottom, 0, false);
+      this->drawVertex(&window, 0, bottom, false);
       this->drawText(&window, &font, 0, 0, bottom, 1);
 
+      //
+      // validate phonon propagators
+      //
+      double validPhonon;
+      for (auto d : this->FD->Ds) {
+        validPhonon = true;
+
+        if (d->end->position <= d->start->position) {
+          cout << "DIAGRAM ERROR: Phonon propagating backwards" << endl;
+          d->print();
+          validPhonon = false;
+        }
+      }
 
       window.display();
     }
@@ -167,7 +222,7 @@ void plot::drawElectron (sf::RenderWindow *window, double yPos, double start, do
 }
 
 void plot::drawPhonon (sf::RenderWindow *window, double yPos, double start, double end, sf::Color color) {
-  double radius = 0.5*(end - start - this->thickness);
+  double radius = abs(0.5*(end - start - this->thickness));
 
   sf::CircleShape circle(radius, (int) 2*radius);
   circle.setOrigin(-0.5*this->thickness, radius);
@@ -186,9 +241,9 @@ void plot::drawPhonon (sf::RenderWindow *window, double yPos, double start, doub
   window->draw(rectangle);
 }
 
-void plot::drawVertex (sf::RenderWindow *window, double yPos, double center, bool solid) {
+void plot::drawVertex (sf::RenderWindow *window, double xPos, double yPos, bool solid) {
   sf::CircleShape circle(this->thickness, (int) 2*thickness);
-  circle.setPosition(this->horizontalMargin + center, this->verticalMargin + yPos);
+  circle.setPosition(this->horizontalMargin + xPos, this->verticalMargin + yPos);
 
   if (solid) {
     circle.setFillColor(sf::Color(0, 0, 0));
@@ -200,6 +255,18 @@ void plot::drawVertex (sf::RenderWindow *window, double yPos, double center, boo
     circle.setOutlineColor(sf::Color(0, 0, 0));
     circle.setOrigin(this->thickness - 2, this->thickness - 2);
   }
+
+  window->draw(circle);
+}
+
+void plot::markVertex (sf::RenderWindow *window, double xPos, double yPos) {
+  sf::CircleShape circle(this->thickness, (int) 2*thickness);
+  circle.setOrigin(this->thickness, this->thickness);
+  circle.setPosition(this->horizontalMargin + xPos, this->verticalMargin + yPos);
+
+  circle.setOutlineThickness(3*this->thickness);
+  circle.setFillColor(sf::Color(255, 255, 255, 0));
+  circle.setOutlineColor(sf::Color(42, 252, 92));
 
   window->draw(circle);
 }

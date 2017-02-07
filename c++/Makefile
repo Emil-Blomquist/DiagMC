@@ -35,6 +35,7 @@ OBJ=$(SRC:%.cpp=%.o)
 
 all: $(OBJ)
 	$(CXX) -o $(BIN) $(LIBS) $^
+	@echo "-------"
 	@./$(BIN)
 
 %.o: %.c

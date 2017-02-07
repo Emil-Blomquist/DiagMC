@@ -9,8 +9,8 @@ int main() {
   auto v3 = FD.insertVertex(2, 0.1);
   auto v4 = FD.insertVertex(3, 0.1);
 
-  FD.addInternalPhonon(v1, v3, Vector3d(1,2,1), 1, 2);
-  FD.addInternalPhonon(v2, v4, Vector3d(3,4,5), 1, 2);
+  auto d1 = FD.addInternalPhonon(v1, v3, Vector3d(1,2,1), 1, 2);
+  auto d2 = FD.addInternalPhonon(v2, v4, Vector3d(3,4,5), 1, 2);
 
   plot plt(&FD);
   plt.render();
