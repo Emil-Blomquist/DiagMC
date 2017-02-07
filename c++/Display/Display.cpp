@@ -1,6 +1,6 @@
-#include "plot.h"
+#include "Display.h"
 
-plot::plot (FeynmanDiagram *FD) {
+Display::Display (FeynmanDiagram *FD) {
   this->FD = FD;
 
   // settings
@@ -11,7 +11,7 @@ plot::plot (FeynmanDiagram *FD) {
   this->thickness = 10;
 }
 
-void plot::render () {
+void Display::render () {
   // antialiasing
   sf::ContextSettings settings;
   settings.antialiasingLevel = 8;
@@ -57,7 +57,7 @@ void plot::render () {
   // declare font
   //
   sf::Font font;
-  font.loadFromFile("plot/OpenSans-Regular.ttf");
+  font.loadFromFile("Display/OpenSans-Regular.ttf");
 
   // 
   // find max and min momentum
@@ -211,9 +211,9 @@ void plot::render () {
 
 
 //
-// methods used in plot::render
+// methods used in Display::render
 //
-void plot::drawElectron (sf::RenderWindow *window, double yPos, double start, double end, sf::Color color) {
+void Display::drawElectron (sf::RenderWindow *window, double yPos, double start, double end, sf::Color color) {
   sf::RectangleShape rectangle(sf::Vector2f(end - start, thickness));
   rectangle.setFillColor(color);
   rectangle.setPosition(this->horizontalMargin + start, this->verticalMargin + yPos - 0.5*thickness);
@@ -221,7 +221,7 @@ void plot::drawElectron (sf::RenderWindow *window, double yPos, double start, do
   window->draw(rectangle);
 }
 
-void plot::drawPhonon (sf::RenderWindow *window, double yPos, double start, double end, sf::Color color) {
+void Display::drawPhonon (sf::RenderWindow *window, double yPos, double start, double end, sf::Color color) {
   double radius = abs(0.5*(end - start - this->thickness));
 
   sf::CircleShape circle(radius, (int) 2*radius);
@@ -241,7 +241,7 @@ void plot::drawPhonon (sf::RenderWindow *window, double yPos, double start, doub
   window->draw(rectangle);
 }
 
-void plot::drawVertex (sf::RenderWindow *window, double xPos, double yPos, bool solid) {
+void Display::drawVertex (sf::RenderWindow *window, double xPos, double yPos, bool solid) {
   sf::CircleShape circle(this->thickness, (int) 2*thickness);
   circle.setPosition(this->horizontalMargin + xPos, this->verticalMargin + yPos);
 
@@ -259,7 +259,7 @@ void plot::drawVertex (sf::RenderWindow *window, double xPos, double yPos, bool 
   window->draw(circle);
 }
 
-void plot::markVertex (sf::RenderWindow *window, double xPos, double yPos) {
+void Display::markVertex (sf::RenderWindow *window, double xPos, double yPos) {
   sf::CircleShape circle(this->thickness, (int) 2*thickness);
   circle.setOrigin(this->thickness, this->thickness);
   circle.setPosition(this->horizontalMargin + xPos, this->verticalMargin + yPos);
@@ -271,7 +271,7 @@ void plot::markVertex (sf::RenderWindow *window, double xPos, double yPos) {
   window->draw(circle);
 }
 
-void plot::drawText (sf::RenderWindow *window, sf::Font* font, double toStr, double xPos, double yPos, double aboveOrBelow) {
+void Display::drawText (sf::RenderWindow *window, sf::Font* font, double toStr, double xPos, double yPos, double aboveOrBelow) {
   int fontSize = 30;
 
   // round to three decimals
@@ -296,7 +296,7 @@ void plot::drawText (sf::RenderWindow *window, sf::Font* font, double toStr, dou
   window->draw(text);
 }
 
-int plot::longestPhonon () {
+int Display::longestPhonon () {
   int longestPhonon = 0;
 
   for (int i = 0; i < this->FD->Gs.size(); i++) {
@@ -318,7 +318,7 @@ int plot::longestPhonon () {
   return longestPhonon;
 }
 
-sf::Color plot::colorCode (double pMin, double pMax, Vector3d P) {
+sf::Color Display::colorCode (double pMin, double pMax, Vector3d P) {
   if (pMin == pMax) {
     return sf::Color(0, 0, 255);
   } else {

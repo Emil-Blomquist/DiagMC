@@ -1,5 +1,5 @@
-#ifndef PLT_H
-#define PLT_H
+#ifndef DISPLAY_H
+#define DISPLAY_H
 
 #include <iostream>
 #include <sstream>
@@ -13,7 +13,7 @@ using namespace std;
 
 #include "../FeynmanDiagram/FeynmanDiagram.h"
 
-class plot {
+class Display {
   private:
     // used for plotting feynman diagram
     FeynmanDiagram *FD;
@@ -29,7 +29,7 @@ class plot {
 
   public:
     int test;
-    plot (FeynmanDiagram*);
+    Display (FeynmanDiagram*);
     
     void render ();
 };
