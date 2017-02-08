@@ -17,16 +17,16 @@ void Phonon::print () {
 void Phonon::setStart (shared_ptr<Vertex> v) {
   // unlink propagator from previous vertex
   if (this->start) {
-    start->setD(1, NULL);
+    this->start->setD(1, NULL);
   }
 
   // unlink propagator linked to new vertex
-  if (v->D[1] && v->D[1]->start) {
+  if (v && v->D[1] && v->D[1]->start) {
     v->D[1]->start.reset();
   }
 
   // relink
-  v->setD(1, this->shared_from_this());
+  if (v) v->setD(1, this->shared_from_this());
   this->start = v;
 }
 
@@ -37,11 +37,19 @@ void Phonon::setEnd (shared_ptr<Vertex> v) {
   }
 
   // unlink propagator linked to new vertex
-  if (v->D[0] && v->D[0]->end) {
+  if (v && v->D[0] && v->D[0]->end) {
     v->D[0]->end.reset();
   }
 
   // relink
-  v->setD(0, this->shared_from_this());
+  if (v) v->setD(0, this->shared_from_this());
   this->end = v;
+}
+
+void Phonon::setTheta (double theta) {
+  this->theta = theta;
+}
+
+void Phonon::setPhi (double phi) {
+  this->phi = phi;
 }

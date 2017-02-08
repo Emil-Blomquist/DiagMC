@@ -28,8 +28,17 @@ class FeynmanDiagram {
 
     void print ();
 
+    // vertex methods
     shared_ptr<Vertex> insertVertex (int, double);
+    void removeVertex (shared_ptr<Vertex>);
+    void setVertexPosition (shared_ptr<Vertex>, double);
+    void swapPhonons (shared_ptr<Vertex>, shared_ptr<Vertex>);
+    // phonon methods
     shared_ptr<Phonon> addInternalPhonon (shared_ptr<Vertex>, shared_ptr<Vertex>, Vector3d, double, double);
+    void removeInternalPhonon (shared_ptr<Phonon>);
+    void setInternalPhononMomentum (shared_ptr<Phonon>, Vector3d);
+    void setInternalPhononMomentumDirection (shared_ptr<Phonon>, double, double);
+
 };
 
 #endif

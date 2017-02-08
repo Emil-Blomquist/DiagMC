@@ -16,12 +16,12 @@ void Electron::setStart (shared_ptr<Vertex> v) {
   }
 
   // unlink propagator linked to new vertex
-  if (v->G[1] && v->G[1]->start) {
+  if (v && v->G[1] && v->G[1]->start) {
     v->G[1]->start.reset();
   }
 
   // relink
-  v->setG(1, this->shared_from_this());
+  if (v) v->setG(1, this->shared_from_this());
   this->start = v;
 }
 
@@ -32,11 +32,11 @@ void Electron::setEnd (shared_ptr<Vertex> v) {
   }
 
   // unlink propagator linked to new vertex
-  if (v->G[0] && v->G[0]->end) {
+  if (v && v->G[0] && v->G[0]->end) {
     v->G[0]->end.reset();
   }
 
   // relink
-  v->setG(0, this->shared_from_this());
+  if (v) v->setG(0, this->shared_from_this());
   this->end = v;
 }

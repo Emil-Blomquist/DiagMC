@@ -15,6 +15,8 @@ class Phonon: public Propagator, public enable_shared_from_this<Phonon> {
 
     void setStart (shared_ptr<Vertex>);
     void setEnd (shared_ptr<Vertex>);
+    void setTheta (double);
+    void setPhi (double);
 };
 
 #endif
