@@ -66,6 +66,8 @@ o2 = []
 o3 = []
 o4 = []
 
+total = []
+
 
 N = 500000
 for t in T:
@@ -89,11 +91,17 @@ for t in T:
   # b1212.append(diagBins[1212]*g0/diagBins[0]) if 1212 in diagBins else b1212.append(0)
   # b1221.append(diagBins[1221]*g0/diagBins[0]) if 1221 in diagBins else b1221.append(0)
 
-  o0.append(orderBins[0]*g0/orderBins[0]) if 0 in orderBins else o0.append(0)
-  o1.append(orderBins[1]*g0/orderBins[0]) if 1 in orderBins else o1.append(0)
-  o2.append(orderBins[2]*g0/orderBins[0]) if 2 in orderBins else o2.append(0)
-  o3.append(orderBins[3]*g0/orderBins[0]) if 3 in orderBins else o3.append(0)
-  o4.append(orderBins[4]*g0/orderBins[0]) if 4 in orderBins else o4.append(0)
+  p0 = orderBins[0] if 0 in orderBins else -g0
+
+  o0.append(g0) if 0 in orderBins else o0.append(0)
+  o1.append(orderBins[1]*g0/p0) if 1 in orderBins else o1.append(0)
+  o2.append(orderBins[2]*g0/p0) if 2 in orderBins else o2.append(0)
+  o3.append(orderBins[3]*g0/p0) if 3 in orderBins else o3.append(0)
+  o4.append(orderBins[4]*g0/p0) if 4 in orderBins else o4.append(0)
+
+  # if (orderBins[0] == 0)
+
+  total.append(g0/p0)
 
 
   # plt.plot(T[0:len(b0)], b0, color='blue')
@@ -108,9 +116,18 @@ for t in T:
   plt.plot(T[0:len(o2)], o2, color='red')
   plt.plot(T[0:len(o3)], o3, color='orange')
   plt.plot(T[0:len(o4)], o4, color='cyan')
-  plt.plot(T[0:len(o4)], np.array(o0) + np.array(o1) + np.array(o2) + np.array(o3) + np.array(o4), color='magenta')
+  # plt.plot(T[0:len(o4)], np.array(o0) + np.array(o1) + np.array(o2) + np.array(o3) + np.array(o4), color='magenta')
+  plt.plot(T[0:len(total)], total, color='magenta')
 
   plt.pause(0.05)
+
+  print('------')
+  print(t)
+  print('0:\t', o0)
+  print('1:\t', o1)
+  print('2:\t', o2)
+  print('3:\t', o3)
+  print('4:\t', o4)
 
 plt.ioff()
 
@@ -127,7 +144,17 @@ plt.plot(T[0:len(o1)], o1, color='green')
 plt.plot(T[0:len(o2)], o2, color='red')
 plt.plot(T[0:len(o3)], o3, color='orange')
 plt.plot(T[0:len(o3)], o3, color='cyan')
-plt.plot(T[0:len(o4)], np.array(o0) + np.array(o1) + np.array(o2) + np.array(o3) + np.array(o4), color='magenta')
+# plt.plot(T[0:len(o4)], np.array(o0) + np.array(o1) + np.array(o2) + np.array(o3) + np.array(o4), color='magenta')
+plt.plot(T[0:len(total)], total, color='magenta')
+
+
+print('------ COMPLETE ------')
+print(t)
+print('0:\t', o0)
+print('1:\t', o1)
+print('2:\t', o2)
+print('3:\t', o3)
+print('4:\t', o4)
 
 
 plt.xlim(0, 5)
