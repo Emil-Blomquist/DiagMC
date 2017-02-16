@@ -10,6 +10,9 @@ class Electron;
 class Phonon;
 
 class Vertex : public enable_shared_from_this<Vertex> {
+    double savedPosition;
+    shared_ptr<Electron> savedG[2];
+    shared_ptr<Phonon> savedD[2];
   public:
     double position;
 
@@ -24,6 +27,9 @@ class Vertex : public enable_shared_from_this<Vertex> {
     void setD (int, shared_ptr<Phonon>);
 
     void setPosition (double);
+
+    void save ();
+    void revert ();
 };
 
 #endif

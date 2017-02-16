@@ -40,3 +40,11 @@ void Electron::setEnd (shared_ptr<Vertex> v) {
   if (v) v->setG(0, this->shared_from_this());
   this->end = v;
 }
+
+double Electron::operator() () {
+  double E, t;
+  E = 0.5*this->momentum.squaredNorm();
+  t = this->end->position - this->start->position;
+
+  return exp(-E*t);
+}

@@ -48,3 +48,15 @@ void Vertex::setPosition (double t) {
 
   this->position = t;
 }
+
+void Vertex::save () {
+  this->savedPosition = this->position;
+  this->savedG[0] = this->G[0]; this->savedG[1] = this->G[1]; 
+  this->savedD[0] = this->D[0]; this->savedD[1] = this->D[1];
+}
+
+void Vertex::revert () {
+  this->position = this->savedPosition;
+  this->G[0] = this->savedG[0]; this->G[1] = this->savedG[1];
+  this->D[0] = this->savedD[0]; this->D[1] = this->savedD[1];
+}

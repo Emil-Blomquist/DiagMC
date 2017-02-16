@@ -53,3 +53,23 @@ void Phonon::setTheta (double theta) {
 void Phonon::setPhi (double phi) {
   this->phi = phi;
 }
+
+double Phonon::operator() (double alpha) {
+  double E, t;
+  E = 1;
+  t = this->end->position - this->start->position;
+
+  return alpha/(sqrt(8)*M_PI*M_PI) * sin(this->theta) * exp(-E*t);
+}
+
+void Phonon::save () {
+  Propagator::save();
+  this->savedTheta = this->theta;
+  this->savedPhi = this->phi;
+}
+
+void Phonon::revert () {
+  Propagator::revert();
+  this->theta = this->savedTheta;
+  this->phi = this->savedPhi;
+}

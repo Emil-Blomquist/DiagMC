@@ -11,9 +11,11 @@ using namespace std;
 #include "../Vertex/Vertex.h"
 
 class Propagator {
+    Vector3d savedMomentum;
+    shared_ptr<Vertex> savedStart, savedEnd;
+
   public:
     int type;
-    bool removed;
 
     Vector3d momentum;
 
@@ -23,6 +25,9 @@ class Propagator {
 
     void setMomentum (Vector3d);
     void addMomentum (Vector3d);
+
+    void save ();
+    void revert ();
 };
 
 #endif

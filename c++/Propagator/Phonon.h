@@ -4,8 +4,7 @@
 #include "Propagator.h"
 
 class Phonon: public Propagator, public enable_shared_from_this<Phonon> {
-    Vector3d savedMomentum;
-    // double savedTheta, savedPhi;
+    double savedTheta, savedPhi;
   public:
     double theta, phi;
 
@@ -17,6 +16,11 @@ class Phonon: public Propagator, public enable_shared_from_this<Phonon> {
     void setEnd (shared_ptr<Vertex>);
     void setTheta (double);
     void setPhi (double);
+
+    double operator() (double);
+
+    void save ();
+    void revert ();
 };
 
 #endif

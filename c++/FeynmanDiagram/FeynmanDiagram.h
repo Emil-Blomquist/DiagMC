@@ -15,6 +15,8 @@ using namespace std;
 #include "../Vertex/Vertex.h"
 
 class FeynmanDiagram {
+    vector<shared_ptr<Electron>> savedGs;
+    vector<shared_ptr<Phonon>> savedDs;
   public:
     double length, couplingConstant, chemicalPotential;
     Vector3d externalMomentum;
@@ -39,6 +41,10 @@ class FeynmanDiagram {
     void setInternalPhononMomentum (shared_ptr<Phonon>, Vector3d);
     void setInternalPhononMomentumDirection (shared_ptr<Phonon>, double, double);
 
+    double operator() ();
+
+    void save ();
+    void revert ();
 };
 
 #endif
