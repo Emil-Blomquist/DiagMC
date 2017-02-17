@@ -20,7 +20,7 @@ shared_ptr<Vertex> FeynmanDiagram::insertVertex (int gIndex, double dt) {
   shared_ptr<Vertex> v(new Vertex(t));
 
   // create electronic propagator
-  this->Gs.emplace(this->Gs.begin() + gIndex + 1, new Electron(externalMomentum));
+  this->Gs.emplace(this->Gs.begin() + gIndex + 1, new Electron(g->momentum));
   auto g1 = this->Gs[gIndex], g2 = this->Gs[gIndex + 1];
 
   // link them accordingly
@@ -50,7 +50,7 @@ void FeynmanDiagram::removeVertex (shared_ptr<Vertex> v) {
   v->G[0]->setEnd(g->end);
 
   // remove g from Gs
-  for (auto i = this->Gs.begin(); i != prev(this->Gs.end(), 1); ++i) {
+  for (auto i = this->Gs.begin(); i != this->Gs.end(); ++i) {
     if (*i == g) {
       this->Gs.erase(i);
       break;

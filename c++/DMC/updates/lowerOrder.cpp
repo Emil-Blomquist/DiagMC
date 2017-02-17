@@ -10,7 +10,7 @@ double DiagrammaticMonteCarlo::lowerOrder () {
   shared_ptr<Phonon> d = this->FD.Gs[0]->end->D[1];
 
   // requirement to lower: first and third vertex must connect to the same phonon
-  if (d != this->FD.Gs[2]->end->D[0]) {
+  if (this->FD.Ds.size() > 1 && d != this->FD.Gs[2]->end->D[0]) {
     return 0;
   }
 
@@ -58,24 +58,12 @@ double DiagrammaticMonteCarlo::lowerOrder () {
   if (this->debug) {
     if (val == 0 || wInvQ == 0) {
       cout << "--------------------------------------------------------------------" << endl
-           << "overflow at DMC::lowerOrder " << a << endl
+           << "overflow at DMC::lowerOrder " << this->FD.Ds.size() << " " << a << endl
            << "--------------------------------------------------------------------" << endl;
     } else {
-      cout << "lowerOrder: " << a << endl;
+      if (this->loud) { cout << "lowerOrder: "  << this->FD.Ds.size() << " " << a << endl; }
     }
   }
   
   return a;
 }
-
-
-// # get current diagram value
-// diag = self.FD()
-
-// # acceptance ratio
-// # if diagOld == 0 or wInvQ == 0:
-// #   R = 1
-// # else:
-// R = diag/diagOld / (wInvt1 * wInvt2 * wInvQ)
-
-// return R

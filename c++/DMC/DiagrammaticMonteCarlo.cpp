@@ -10,64 +10,67 @@ DiagrammaticMonteCarlo::DiagrammaticMonteCarlo (
   unsigned seed1 = std::chrono::system_clock::now().time_since_epoch().count();
   this->mt.seed(seed1);
 
-  // will print acceptance ratios etc.
-  this->debug = true;
+  // will print overflow exceptions etc.
+  this->debug = false;
+  // will print acceptance ratios etc. (debug must be true)
+  this->loud = false;
 
   this->maxOrder = 3;
-
-  //
-  // TEMP
-  //
-  auto v1 = FD.insertVertex(0, 0.1);
-  auto v2 = FD.insertVertex(1, 0.1);
-  auto v3 = FD.insertVertex(2, 0.1);
-  auto v4 = FD.insertVertex(3, 0.1);
-
-  auto d1 = FD.addInternalPhonon(v1, v3, Vector3d(1,2,1), 1, 2);
-  auto d2 = FD.addInternalPhonon(v2, v4, Vector3d(3,4,5), 1, 2);
+}
 
 
-
-  //
-  // run the algorithm
-  //
-
-  Display display(&this->FD);
-
+vector<double> DiagrammaticMonteCarlo::run (int numIterations) {
+   // Display display(&this->FD);
 
   // vector of pointers to member function of Phonon
   vector<double (DiagrammaticMonteCarlo::*)(void)> updateMethods = {
-    // &DiagrammaticMonteCarlo::shiftVertexPosition,
-    // &DiagrammaticMonteCarlo::swapPhononConnections,
-    // &DiagrammaticMonteCarlo::changeInternalPhononMomentumDirection,
+    &DiagrammaticMonteCarlo::shiftVertexPosition,
+    &DiagrammaticMonteCarlo::swapPhononConnections,
+    &DiagrammaticMonteCarlo::changeInternalPhononMomentumDirection,
     &DiagrammaticMonteCarlo::changeInternalPhononMomentumMagnitude,
-    // &DiagrammaticMonteCarlo::raiseOrder,
-    // &DiagrammaticMonteCarlo::lowerOrder
+    &DiagrammaticMonteCarlo::raiseOrder,
+    &DiagrammaticMonteCarlo::lowerOrder
   };
 
-
-  // save configuration
-  this->FD.save();
-
-  double oldVal = this->FD();
-
+  // random start configuration
   for (int i = 0; i < 100; ++i) {
     auto updateMethod = updateMethods[this->Uint(0, updateMethods.size() - 1)];
-    // update diagram
     (this->*updateMethod)();
-    display.render();
   }
 
+  // bins for counting
+  vector<double> bins(this->maxOrder + 1, 0);
 
-  // revert to saved configuration
-  this->FD.revert();
+  for (int i = 0; i < numIterations; ++i) {
+    // choose update operation on random
+    auto updateMethod = updateMethods[this->Uint(0, updateMethods.size() - 1)];
 
-  double val = this->FD();
+    // save configuration
+    this->FD.save();
 
-  cout << (val == oldVal) << endl;
+    // update diagram
+    double a = (this->*updateMethod)();
 
+    if (a < this->Udouble(0, 1)) {
+      // rejected update
+      this->FD.revert();
+    }
+    // display.render();
 
+    bins[this->FD.Ds.size()]++;
+  }
+
+  for(vector<double>::size_type i = 0; i != bins.size(); i++) {
+    bins[i] /= numIterations;
+  }
+
+  return bins;
 }
+
+
+
+
+
 
 
 
@@ -110,20 +113,23 @@ Vector3d DiagrammaticMonteCarlo::calculateQ (Vector3d P0, double q, double theta
   Vector3d tempVector, Ep, Eo1, Eo2, Qp, Qo;
   
   Ep = P0.normalized();
-  if (Ep == P0) {
+  if (isnan(Ep[0])) {
     // if P0 ≈ (0,0,0) we use that theta is the angle against the z-axis
     Ep = Vector3d(0, 0, 1);
-  }
+    Eo1 = Vector3d(1, 0, 0);
+    Eo2 = Vector3d(0, 1, 0);
+  } else {
+    // find a vector orthogonal to Ep
+    tempVector = Ep.cross(Ep + Vector3d(1, 0, 0));
+    Eo1 = tempVector.normalized();
+    // cout << "TEMP " << Eo1.transpose() << endl;
+    if (isnan(Eo1[0])) {
+      Eo1  = Ep.cross(Ep + Vector3d(0, 1, 0)).normalized();
+    }
 
-  // find a vector orthogonal to Ep
-  tempVector = Ep.cross(Ep + Vector3d(1, 0, 0));
-  Eo1 = tempVector.normalized();
-  if (tempVector == Eo1) {
-    Eo1  = Ep.cross(Ep + Vector3d(0, 1, 0)).normalized();
+    // span rest of R^3
+    Eo2 = Ep.cross(Eo1);
   }
-
-  // span rest of R^3
-  Eo2 = Ep.cross(Eo1);
 
   // calculate the parallel and the orthogonal component of Q
   Qp = q*cos(theta)*Ep;

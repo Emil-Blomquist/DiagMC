@@ -1,41 +1,48 @@
+#include <iomanip>
+#include <iostream>
+
 #include "DMC/DiagrammaticMonteCarlo.h"
 
 int main() {
-  // FeynmanDiagram FD(Vector3d(0,0,0), 1, 2, 3);
 
-  // auto v1 = FD.insertVertex(0, 0.1);
-  // auto v2 = FD.insertVertex(1, 0.1);
-  // auto v3 = FD.insertVertex(2, 0.1);
-  // auto v4 = FD.insertVertex(3, 0.1);
+  vector<double> times(250, 0);
+  for(int i = 0; i != times.size(); i++) {
+    times[i] = 0.01 + i*5.0/(times.size() - 1);
+  }
 
-  // auto d1 = FD.addInternalPhonon(v1, v2, Vector3d(1,2,1), 1, 2);
-  // auto d2 = FD.addInternalPhonon(v3, v4, Vector3d(3,4,5), 1, 2);
-
-
-  // // FD.setVertexPosition(v2, 0.15);
-
-  // // FD.removeInternalPhonon(d1);
-  // // FD.removeVertex(v1);
-  // // FD.removeVertex(v3);
-
-  // // FD.setInternalPhononMomentum(d1, Vector3d(10,10,10));
-  // // FD.setInternalPhononMomentumDirection(d1, 3, 2);
-
-  // // FD.swapPhonons(v1, v2);
-  // FD.swapPhonons(v2, v3);
-  // FD.swapPhonons(v1, v2);
-  // FD.swapPhonons(v3, v4);
-  // FD.swapPhonons(v2, v3);
+  Vector3d externalMomentum(0, 0, 0);
+  double 
+    alpha = 2,
+    mu = -2.2;
 
 
 
 
-  DiagrammaticMonteCarlo DMC(Vector3d(0,0,0), 1, 2, 3);
-
-  // DMC.FD.print();
+  int N = 100000;
 
 
+  for(int i = 0; i != times.size(); i++) {
 
-  // Display display(&DMC.FD);
-  // display.render();
+    DiagrammaticMonteCarlo DMC(externalMomentum, times[i], alpha, mu);
+
+    double g0 = DMC.FD();
+
+    auto orderWeights = DMC.run(N);
+
+    cout << std::setprecision(5);
+    cout << fixed;
+
+
+    cout << times[i] << ":\t";
+    for (auto order : orderWeights) {
+      cout << g0*order/orderWeights[0] <<  "  ";
+    }
+    cout << g0/orderWeights[0] << endl;
+
+
+  }
+
+
+
+
 }

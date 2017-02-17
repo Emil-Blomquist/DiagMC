@@ -1,6 +1,11 @@
 #include "../DiagrammaticMonteCarlo.h"
 
 double DiagrammaticMonteCarlo::changeInternalPhononMomentumMagnitude () {
+  // requirement to lower: must be at least of order 1
+  if (this->FD.Ds.size() == 0) {
+    return 0;
+  }
+
   // select internal phonon on random
   shared_ptr<Phonon> d = this->FD.Ds[this->Uint(0, this->FD.Ds.size() - 1)];
 
@@ -11,9 +16,24 @@ double DiagrammaticMonteCarlo::changeInternalPhononMomentumMagnitude () {
     param1 = sqrt(0.5*(d->end->position - d->start->position)),
     param2 = p0*cos(d->theta);
 
-  double
+  double q,
     r = this->Udouble(0, 1),
-    q = param2 + boost::math::erf_inv(r + (r - 1)*erf(param1*param2))/param2;
+    param3 = r + (r - 1)*erf(param1*param2);
+  
+  if (abs(param3) >= 1) {
+    if (this->debug) {
+      cout << "--------------------------------------------------------------------" << endl
+           << "boost::math::erf_inv: Overflow Error prevented" << endl
+           << "param1=" << param1 << endl
+           << "param2=" << param2 << endl
+           << "param3=" << param3 << endl
+           << "--------------------------------------------------------------------" << endl;
+    }
+
+    param3 += (param3 > 0 ? -1 : 1)*DBL_EPSILON;
+  }
+
+  q = param2 + boost::math::erf_inv(param3)/param1;
 
   Vector3d Q = this->calculateQ(P0, q, d->theta, d->phi);
 
@@ -30,12 +50,23 @@ double DiagrammaticMonteCarlo::changeInternalPhononMomentumMagnitude () {
   this->FD.setInternalPhononMomentum(d, Q);
 
   if (this->debug) {
-    double a, val = this->FD();
+    double
+      val = this->FD(),
+      a = exp(log(val) - log(oldVal) - pow(param1, 2) * (pow(oldq - param2, 2) - pow(q - param2, 2)));
 
-    a = val/oldVal;
-    a *= exp(-pow(param1, 2) * (pow(oldq - param2, 2) - pow(q - param2, 2)));
-
-    cout << "changeInternalPhononMomentumMagnitude: " << a << endl;
+    if (! isnan(a) && a < numeric_limits<double>::max()) {
+      if (this->loud) { cout << "changeInternalPhononMomentumMagnitude " << a << endl; }
+    } else {
+      a = 0;
+      cout << "--------------------------------------------------------------------" << endl
+           << "overflow at DMC::changeInternalPhononMomentumMagnitude" << endl
+           << "a=" << a << endl
+           << "param2=" << param2 << endl
+           << "Q=" << Q.transpose() << endl
+           << "val=" << val << endl
+           << "oldVal=" << oldVal << endl
+           << "--------------------------------------------------------------------" << endl;
+    }
   }
   
   return 1;

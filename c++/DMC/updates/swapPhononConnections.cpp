@@ -52,9 +52,9 @@ double DiagrammaticMonteCarlo::swapPhononConnections () {
       cout << "--------------------------------------------------------------------" << endl
            << "overflow prevented at DMC::swapPhononConnections " << a*oldVal/val << " val=" << val << " oldVal=" << oldVal << endl
            << "--------------------------------------------------------------------" << endl;
+    } else {
+      if (this->loud) { cout << "swapPhononConnections: " << a*oldVal/val << endl; }
     }
-
-    cout << "swapPhononConnections: " << a*oldVal/val << endl;
   }
 
   return a;

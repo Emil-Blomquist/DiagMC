@@ -1,6 +1,11 @@
 #include "../DiagrammaticMonteCarlo.h"
 
 double DiagrammaticMonteCarlo::changeInternalPhononMomentumDirection () {
+  // requirement to lower: must be at least of order 1
+  if (this->FD.Ds.size() == 0) {
+    return 0;
+  }
+
   // select internal phonon on random
   shared_ptr<Phonon> d = this->FD.Ds[this->Uint(0, this->FD.Ds.size() - 1)];
 
@@ -29,7 +34,7 @@ double DiagrammaticMonteCarlo::changeInternalPhononMomentumDirection () {
   double oldCosTheta, oldTheta, oldVal;
   if (this->debug) {
     // if P0 ≈ (0,0,0) we use that theta is the angle against the z-axis
-    if (P0 == P0.normalized()) {
+    if (isnan(P0.normalized()[0])) {
       oldCosTheta = d->momentum[2]/q;
     } else {
       oldCosTheta = d->momentum.dot(P0)/(q*p0);
@@ -66,11 +71,11 @@ double DiagrammaticMonteCarlo::changeInternalPhononMomentumDirection () {
       a = val/oldVal;
       a *= sin(oldTheta)/sin(theta);
       a *= exp(-param*(cos(theta) - cos(oldTheta)));
-      cout << "changeInternalPhononMomentumDirection " << a << endl;
+      if (this->loud) { cout << "changeInternalPhononMomentumDirection " << a << endl; }
     } else {
-      a = 1;
+      a = 0;
       cout << "--------------------------------------------------------------------" << endl
-           << "overflow at DMC::changeInternalPhononMomentumDirection " << a << endl
+           << "overflow at DMC::changeInternalPhononMomentumDirection Q=" << Q.transpose() << " oldVal=" << oldVal << " sinTheta=" << sin(theta) << endl
            << "--------------------------------------------------------------------" << endl;
     }
   }

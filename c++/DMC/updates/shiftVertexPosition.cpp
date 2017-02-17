@@ -1,6 +1,11 @@
 #include "../DiagrammaticMonteCarlo.h"
 
 double DiagrammaticMonteCarlo::shiftVertexPosition () {
+  // requirement to lower: must be at least of order 1
+  if (this->FD.Ds.size() == 0) {
+    return 0;
+  }
+
   // select vertex on random
   shared_ptr<Electron> g = this->FD.Gs[this->Uint(0, this->FD.Gs.size() - 2)];
   shared_ptr<Vertex> v = g->end;
@@ -38,7 +43,7 @@ double DiagrammaticMonteCarlo::shiftVertexPosition () {
       val = this->FD(),
       a = exp(log(val) - log(oldVal) + dE*(t - tOld));
 
-    cout << "shiftVertexPosition: " << a << endl;
+    if (this->loud) { cout << "shiftVertexPosition: " << a << endl; }
   }
 
   return 1;

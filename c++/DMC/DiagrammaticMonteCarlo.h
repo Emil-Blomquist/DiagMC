@@ -8,6 +8,7 @@
 #include <chrono> // seed mt
 #include <math.h>
 #include <boost/math/special_functions/erf.hpp>
+#include <limits>
 
 #include <eigen3/Eigen/Dense>
 
@@ -19,8 +20,8 @@ using namespace std;
 
 class DiagrammaticMonteCarlo {
     mt19937_64 mt;
-    bool debug;
-    int maxOrder;
+    bool debug, loud;
+    int maxOrder, numIterations;
 
     double Udouble (double, double);
     int Uint (int, int);
@@ -34,10 +35,13 @@ class DiagrammaticMonteCarlo {
     double changeInternalPhononMomentumMagnitude ();
     double raiseOrder ();
     double lowerOrder ();
+
   public:
     FeynmanDiagram FD;
 
     DiagrammaticMonteCarlo (Vector3d, double, double, double);
+    
+    vector<double> run (int);
 };
 
 #endif

@@ -53,7 +53,7 @@ double DiagrammaticMonteCarlo::raiseOrder () {
   double a = val/oldVal * (wInvt1 * wInvt2 * wInvQ);
 
   if (this->debug) {
-    cout << "raiseOrder: " << a << endl;
+    if (this->loud) { cout << "raiseOrder: " << a << endl; }
   }
 
   return a;
