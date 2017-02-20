@@ -24,3 +24,10 @@ void Propagator::revert () {
   this->start = this->savedStart;
   this->end = this->savedEnd;
 }
+
+void Propagator::unlink () {
+  this->start = NULL;
+  this->end = NULL;
+  this->savedStart = NULL;
+  this->savedEnd = NULL;
+}

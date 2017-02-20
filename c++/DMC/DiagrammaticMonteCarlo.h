@@ -23,6 +23,10 @@ class DiagrammaticMonteCarlo {
     bool debug, loud;
     int maxOrder, numIterations;
 
+    shared_ptr<Vertex> vertices2beRemoved [2];
+    shared_ptr<Electron> electrons2beRemoved [2];
+    shared_ptr<Phonon> phonon2beRemoved;
+
     double Udouble (double, double);
     int Uint (int, int);
 
@@ -41,7 +45,7 @@ class DiagrammaticMonteCarlo {
 
     DiagrammaticMonteCarlo (Vector3d, double, double, double);
     
-    vector<double> run (int);
+    vector<double> run (int, int);
 };
 
 #endif

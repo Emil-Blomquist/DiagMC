@@ -65,5 +65,12 @@ double DiagrammaticMonteCarlo::lowerOrder () {
     }
   }
   
+  // these should be unlinked if update is accepted
+  this->phonon2beRemoved = d;
+  this->vertices2beRemoved[0] = v1;
+  this->vertices2beRemoved[1] = v2;
+  this->electrons2beRemoved[0] = v1->G[1];
+  this->electrons2beRemoved[1] = v2->G[1];
+  
   return a;
 }

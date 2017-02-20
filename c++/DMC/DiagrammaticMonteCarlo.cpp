@@ -14,13 +14,16 @@ DiagrammaticMonteCarlo::DiagrammaticMonteCarlo (
   this->debug = false;
   // will print acceptance ratios etc. (debug must be true)
   this->loud = false;
-
-  this->maxOrder = 3;
 }
 
 
-vector<double> DiagrammaticMonteCarlo::run (int numIterations) {
-   // Display display(&this->FD);
+vector<double> DiagrammaticMonteCarlo::run (int numIterations, int maxOrder) {
+  this->maxOrder = maxOrder;
+
+  // to reach start connfiguration
+  int untilStart = 1000;
+
+  Display display(&this->FD);
 
   // vector of pointers to member function of Phonon
   vector<double (DiagrammaticMonteCarlo::*)(void)> updateMethods = {
@@ -32,16 +35,10 @@ vector<double> DiagrammaticMonteCarlo::run (int numIterations) {
     &DiagrammaticMonteCarlo::lowerOrder
   };
 
-  // random start configuration
-  for (int i = 0; i < 100; ++i) {
-    auto updateMethod = updateMethods[this->Uint(0, updateMethods.size() - 1)];
-    (this->*updateMethod)();
-  }
-
   // bins for counting
   vector<double> bins(this->maxOrder + 1, 0);
 
-  for (int i = 0; i < numIterations; ++i) {
+  for (int i = 0; i < numIterations + untilStart; ++i) {
     // choose update operation on random
     auto updateMethod = updateMethods[this->Uint(0, updateMethods.size() - 1)];
 
@@ -54,10 +51,26 @@ vector<double> DiagrammaticMonteCarlo::run (int numIterations) {
     if (a < this->Udouble(0, 1)) {
       // rejected update
       this->FD.revert();
+      if (updateMethod == &DiagrammaticMonteCarlo::raiseOrder && this->FD.Ds.size() < this->maxOrder) {
+        // unlink must happen here to all elements being removed
+        this->phonon2beRemoved->unlink();
+        this->vertices2beRemoved[0]->unlink();
+        this->vertices2beRemoved[1]->unlink();
+        this->electrons2beRemoved[0]->unlink();
+        this->electrons2beRemoved[1]->unlink();
+      }
+    } else if (updateMethod == &DiagrammaticMonteCarlo::lowerOrder) {
+      // unlink must happen here to all elements being removed
+      this->phonon2beRemoved->unlink();
+      this->vertices2beRemoved[0]->unlink();
+      this->vertices2beRemoved[1]->unlink();
+      this->electrons2beRemoved[0]->unlink();
+      this->electrons2beRemoved[1]->unlink();
     }
-    // display.render();
 
-    bins[this->FD.Ds.size()]++;
+    if (i >= untilStart) {
+      bins[this->FD.Ds.size()]++;
+    }
   }
 
   for(vector<double>::size_type i = 0; i != bins.size(); i++) {

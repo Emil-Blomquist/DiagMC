@@ -2,8 +2,9 @@
 
 shared_ptr<Vertex> FeynmanDiagram::insertVertex (int gIndex, double dt) {
   if (dt <= 0) {
-    cout << "ERROR at FeynmanDiagram::insertVertex: dt <= 0" << endl;
-    return NULL;
+    // cout << "ERROR at FeynmanDiagram::insertVertex: dt <= 0" << endl;
+    // return NULL;
+    dt = DBL_EPSILON;
   }
 
   shared_ptr<Electron> g = this->Gs[gIndex];
@@ -12,8 +13,9 @@ shared_ptr<Vertex> FeynmanDiagram::insertVertex (int gIndex, double dt) {
   double tmax = g->end->position;
 
   if (tmax <= t) {
-    cout << "ERROR at FeynmanDiagram::insertVertex: tmax <= t" << endl;
-    return NULL;
+    // cout << "ERROR at FeynmanDiagram::insertVertex: tmax <= t" << endl;
+    // return NULL;
+    t = tmax - DBL_EPSILON;
   }
 
   // create new vertex

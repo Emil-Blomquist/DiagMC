@@ -4,6 +4,7 @@
 #include <iostream>
 #include <memory>
 #include <vector>
+#include <float.h>
 
 #include <eigen3/Eigen/Dense>
 

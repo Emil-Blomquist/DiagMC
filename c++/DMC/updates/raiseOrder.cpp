@@ -44,7 +44,7 @@ double DiagrammaticMonteCarlo::raiseOrder () {
   Vector3d Q(q*sin(theta)*cos(phi), q*sin(theta)*sin(phi), q*cos(theta));
 
   // add phonon
-  this->FD.addInternalPhonon(v1, v2, Q, theta, phi);
+  shared_ptr<Phonon> d = this->FD.addInternalPhonon(v1, v2, Q, theta, phi);
 
   // current confiduration value
   double val = this->FD();
@@ -55,6 +55,13 @@ double DiagrammaticMonteCarlo::raiseOrder () {
   if (this->debug) {
     if (this->loud) { cout << "raiseOrder: " << a << endl; }
   }
+
+  // these should be unlinked if update is rejected
+  this->phonon2beRemoved = d;
+  this->vertices2beRemoved[0] = v1;
+  this->vertices2beRemoved[1] = v2;
+  this->electrons2beRemoved[0] = v1->G[1];
+  this->electrons2beRemoved[1] = v2->G[1];
 
   return a;
 }

@@ -28,6 +28,8 @@ class Propagator {
 
     void save ();
     void revert ();
+
+    void unlink ();
 };
 
 #endif

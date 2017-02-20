@@ -1,6 +1,4 @@
-#include <iomanip>
 #include <iostream>
-
 #include "DMC/DiagrammaticMonteCarlo.h"
 
 int main() {
@@ -10,39 +8,31 @@ int main() {
     times[i] = 0.01 + i*5.0/(times.size() - 1);
   }
 
-  Vector3d externalMomentum(0, 0, 0);
+  Vector3d externalMomentum(1, 0, 0);
   double 
     alpha = 2,
     mu = -2.2;
 
+  int N = 10000000;
 
 
-
-  int N = 100000;
-
-
-  for(int i = 0; i != times.size(); i++) {
+  for(int i = 79; i != times.size(); i++) {
 
     DiagrammaticMonteCarlo DMC(externalMomentum, times[i], alpha, mu);
 
+
     double g0 = DMC.FD();
 
-    auto orderWeights = DMC.run(N);
+    auto orderWeights = DMC.run(N, 7);
 
-    cout << std::setprecision(5);
+    // precision and shit
+    cout << std::setprecision(7);
     cout << fixed;
 
-
-    cout << times[i] << ":\t";
+    cout << times[i] << " ";
     for (auto order : orderWeights) {
-      cout << g0*order/orderWeights[0] <<  "  ";
+      cout << g0*order/orderWeights[0] <<  " ";
     }
     cout << g0/orderWeights[0] << endl;
-
-
   }
-
-
-
-
 }

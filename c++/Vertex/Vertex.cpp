@@ -60,3 +60,14 @@ void Vertex::revert () {
   this->G[0] = this->savedG[0]; this->G[1] = this->savedG[1];
   this->D[0] = this->savedD[0]; this->D[1] = this->savedD[1];
 }
+
+void Vertex::unlink () {
+  this->G[0] = NULL;
+  this->G[1] = NULL;
+  this->D[0] =  NULL;
+  this->D[1] = NULL;
+  this->savedG[0] = NULL;
+  this->savedG[1] = NULL;
+  this->savedD[0] = NULL;
+  this->savedD[1] = NULL;
+}

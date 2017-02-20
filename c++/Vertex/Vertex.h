@@ -30,6 +30,8 @@ class Vertex : public enable_shared_from_this<Vertex> {
 
     void save ();
     void revert ();
+
+    void unlink ();
 };
 
 #endif
