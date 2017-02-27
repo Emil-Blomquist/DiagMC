@@ -26,7 +26,7 @@ class DiagrammaticMonteCarlo(object):
     # debug mode
     self.debug = debug
 
-    ##
+    ##  
     ## in the future we should insert "params" into FeynmanDiagram
     ##
 
@@ -36,17 +36,17 @@ class DiagrammaticMonteCarlo(object):
     ##
     ## in future we should let the actual algorithm build the diagram
     ##
-    dt = self.t/7
+    dt = 0.1;
 
     v1 = self.FD.insertVertex(0, dt)
     v2 = self.FD.insertVertex(1, dt)
-    # v3 = self.FD.insertVertex(2, dt)
-    # v4 = self.FD.insertVertex(3, dt)
+    v3 = self.FD.insertVertex(2, dt)
+    v4 = self.FD.insertVertex(3, dt)
     # v5 = self.FD.insertVertex(4, dt)
     # v6 = self.FD.insertVertex(5, dt)
 
-    self.FD.addInternalPhonon(v1, v2, np.random.rand(3), 1, 1) 
-    # self.FD.addInternalPhonon(v3, v4, np.random.rand(3), 1, 1)
+    self.FD.addInternalPhonon(v1, v3, np.array([1, 2, 1]), 1, 2) 
+    self.FD.addInternalPhonon(v2, v4, np.array([3, 4, 5]), 1, 2)
     # self.FD.addInternalPhonon(v4, v6, np.random.rand(3), 1, 1)
 
   def run(self, N):
@@ -56,25 +56,25 @@ class DiagrammaticMonteCarlo(object):
 
     updates = [
       self.changeInternalPhononMomentumDirection,
-      self.changeInternalPhononMomentumMagnitude,
-      self.shiftVertexPosition,
-      self.swapPhononConnections,
-      self.raiseOrder,
-      self.lowerOrder
+      # self.changeInternalPhononMomentumMagnitude,
+      # self.shiftVertexPosition,
+      # self.swapPhononConnections,
+      # self.raiseOrder,
+      # self.lowerOrder
     ]
     
 
     # to reach some sense of randomness
-    for i in range(0, 10):
-      for update in updates:
-        if len(self.FD.Ds) == 0 and update != self.raiseOrder:
-          r = 1
-        elif len(self.FD.Ds) == self.minOrder and (update == self.lowerOrder):
-          r = 1
-        elif len(self.FD.Ds) == self.maxOrder and (update == self.raiseOrder):
-          r = 1
-        else:
-          update()
+    # for i in range(0, 10):
+    #   for update in updates:
+    #     if len(self.FD.Ds) == 0 and update != self.raiseOrder:
+    #       r = 1
+    #     elif len(self.FD.Ds) == self.minOrder and (update == self.lowerOrder):
+    #       r = 1
+    #     elif len(self.FD.Ds) == self.maxOrder and (update == self.raiseOrder):
+    #       r = 1
+    #     else:
+    #       update()
    
 
     diagBins = {}
@@ -95,11 +95,11 @@ class DiagrammaticMonteCarlo(object):
 
       # r = update()
 
-      if np.random.rand() > min(1, r):
-        # reject step
-        self.FD.revert()
+      # if np.random.rand() > min(1, r):
+      #   # reject step
+      #   self.FD.revert()
 
-      # self.FD.plot()
+      self.FD.plot()
 
       ##
       ## temp

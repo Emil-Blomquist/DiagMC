@@ -6,34 +6,40 @@ double DiagrammaticMonteCarlo::lowerOrder () {
     return 0;
   }
 
-  // first encountered phonon line
-  shared_ptr<Phonon> d = this->FD.Gs[0]->end->D[1];
-
-  // requirement to lower: first and third vertex must connect to the same phonon
-  if (this->FD.Ds.size() > 1 && d != this->FD.Gs[2]->end->D[0]) {
-    return 0;
-  }
-
   // old configuration value
   double oldVal = this->FD();
+
+  // pick a phonon line
+  int i = this->Uint(0, this->FD.Ds.size() - 1);
+  shared_ptr<Phonon> d = this->FD.Ds[i];
+  double Winvd = this->FD.Ds.size();
 
   // vertices
   shared_ptr<Vertex>
     v1 = d->start,
     v2 = d->end;
 
+  // calculate vertex probability
+  int i1 = 0, i2 = 0;
+  for (int i = 0; i != this->FD.Gs.size(); ++i) {
+    if (this->FD.Gs[i]->end == v1) {
+      i1 = i;
+      break;
+    }
+  }
+  for (int i = i1 + 1; i != this->FD.Gs.size(); ++i) {
+    if (this->FD.Gs[i]->end == v2) {
+      i2 = i;
+      break;
+    }
+  }
+  double WinvVertex = (this->FD.Gs.size() - 2) * (this->FD.Gs.size() - 2 - i1);
+
   // inverse probabilities for internal parameters
   // must be the same probabilities as for raising order!
-  double wInvt1, wInvt2;
-  if (this->FD.Ds.size() == 1) {
-    wInvt1 = this->FD.length;
-    wInvt2 = d->end->G[1]->end->position - d->end->G[0]->start->position;
-  } else {
-    wInvt1 = d->start->G[1]->end->position - d->start->G[0]->start->position;
-    wInvt2 = d->end->G[1]->end->position - d->end->G[0]->start->position;
-  }
-
   double
+    wInvt1 = (v1->G[1]->end == v2 ? v1->G[1]->end->G[1]->end->position : v1->G[1]->end->position) - v1->G[0]->start->position,
+    wInvt2 = v2->G[1]->end->position - v2->G[0]->start->position,
     std = 1/sqrt(v2->position - v1->position),
     wInvQ = 2*pow(M_PI, 2.0) * sqrt(0.5*M_PI*pow(std, 2.0)) * exp(0.5*pow(d->momentum.norm()/std, 2.0));
 
@@ -52,7 +58,7 @@ double DiagrammaticMonteCarlo::lowerOrder () {
   if (val == 0 || wInvQ == 0) {
     a = 1;
   } else {
-    a = val/oldVal / (wInvt1 * wInvt2 * wInvQ);
+    a = val/oldVal * Winvd/(WinvVertex*wInvt1*wInvt2*wInvQ);
   }
 
   if (this->debug) {

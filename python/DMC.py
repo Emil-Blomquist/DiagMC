@@ -43,11 +43,11 @@ secondc = (
 
 
 
-plt.ion()
+# plt.ion()
 
 
 
-plt.plot(T, zeroth[0:len(T)], '--', color='blue')
+# plt.plot(T, zeroth[0:len(T)], '--', color='blue')
 # plt.plot(T, first[0:len(T)], '--', color='red')
 # plt.plot(T, seconda[0:len(T)], '--', color='green')
 # plt.plot(T, secondb[0:len(T)], '--', color='cyan')
@@ -69,8 +69,8 @@ o4 = []
 total = []
 
 
-N = 500000
-for t in T:
+N = 5000
+for t in [1]:#T:
   DMC = DiagrammaticMonteCarlo({
     't': t,
     'mu': -123,
@@ -111,25 +111,25 @@ for t in T:
   # plt.plot(T[0:len(b1221)], b1221, color='orange')
 
 
-  plt.plot(T[0:len(o0)], o0, color='blue')
-  plt.plot(T[0:len(o1)], o1, color='green')
-  plt.plot(T[0:len(o2)], o2, color='red')
-  plt.plot(T[0:len(o3)], o3, color='orange')
-  plt.plot(T[0:len(o4)], o4, color='cyan')
-  # plt.plot(T[0:len(o4)], np.array(o0) + np.array(o1) + np.array(o2) + np.array(o3) + np.array(o4), color='magenta')
-  plt.plot(T[0:len(total)], total, color='magenta')
+#   plt.plot(T[0:len(o0)], o0, color='blue')
+#   plt.plot(T[0:len(o1)], o1, color='green')
+#   plt.plot(T[0:len(o2)], o2, color='red')
+#   plt.plot(T[0:len(o3)], o3, color='orange')
+#   plt.plot(T[0:len(o4)], o4, color='cyan')
+#   # plt.plot(T[0:len(o4)], np.array(o0) + np.array(o1) + np.array(o2) + np.array(o3) + np.array(o4), color='magenta')
+#   plt.plot(T[0:len(total)], total, color='magenta')
 
-  plt.pause(0.05)
+#   plt.pause(0.05)
 
-  print('------')
-  print(t)
-  print('0:\t', o0)
-  print('1:\t', o1)
-  print('2:\t', o2)
-  print('3:\t', o3)
-  print('4:\t', o4)
+#   print('------')
+#   print(t)
+#   print('0:\t', o0)
+#   print('1:\t', o1)
+#   print('2:\t', o2)
+#   print('3:\t', o3)
+#   print('4:\t', o4)
 
-plt.ioff()
+# plt.ioff()
 
 
 # plt.plot(T[0:len(b0)], b0, color='blue')

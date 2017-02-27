@@ -54,7 +54,7 @@ double DiagrammaticMonteCarlo::changeInternalPhononMomentumMagnitude () {
       val = this->FD(),
       a = exp(log(val) - log(oldVal) - pow(param1, 2) * (pow(oldq - param2, 2) - pow(q - param2, 2)));
 
-    if (! isnan(a) && a < numeric_limits<double>::max()) {
+    if (! ::isnan(a) && a < numeric_limits<double>::max()) {
       if (this->loud) { cout << "changeInternalPhononMomentumMagnitude " << a << endl; }
     } else {
       a = 0;

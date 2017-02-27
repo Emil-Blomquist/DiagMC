@@ -2,8 +2,8 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 
-file1 = 'p=0.000 a=2.000 mu=-2.200 N=10000000 time=2017-02-22 01:09:51'
-file2 = 'data-0'
+file1 = 'p=0.000 a=2.000 mu=-2.200 N=20000000 time=2017-02-23 07:05:08'
+file2 = 'temp'
 
 
 T1 = [];

@@ -10,12 +10,10 @@ double DiagrammaticMonteCarlo::raiseOrder () {
   double oldVal = this->FD();
 
   // select electron lines to split
-  int i1, i2;
-  if (this->FD.Ds.size() == 0) {
-    i1 = 0; i2 = 1;
-  } else {
-    i1 = 0; i2 = 2;
-  }
+  int
+    i1 = this->Uint(0, this->FD.Gs.size() - 1),
+    i2 = this->Uint(i1 + 1, this->FD.Gs.size());
+  double wInvVertex = this->FD.Gs.size() * (this->FD.Gs.size() - i1);
 
   // split first electron line
   shared_ptr<Electron> g1 = this->FD.Gs[i1];
@@ -41,6 +39,9 @@ double DiagrammaticMonteCarlo::raiseOrder () {
     phi = this->Udouble(0, 2*M_PI),
     wInvQ = 2*pow(M_PI, 2.0) * sqrt(0.5*M_PI*pow(std, 2.0)) * exp(0.5*pow(q/std, 2.0));
 
+  // phonon
+  double wInvd = this->FD.Ds.size() + 1;
+
   Vector3d Q(q*sin(theta)*cos(phi), q*sin(theta)*sin(phi), q*cos(theta));
 
   // add phonon
@@ -50,7 +51,8 @@ double DiagrammaticMonteCarlo::raiseOrder () {
   double val = this->FD();
 
   // acceptance ration
-  double a = val/oldVal * (wInvt1 * wInvt2 * wInvQ);
+  double a = val/oldVal * (wInvVertex*wInvt1*wInvt2*wInvQ)/wInvd;
+  // double a = (wInvVertex*wInvt1)/wInvd;
 
   if (this->debug) {
     if (this->loud) { cout << "raiseOrder: " << a << endl; }

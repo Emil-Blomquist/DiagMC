@@ -34,7 +34,7 @@ double DiagrammaticMonteCarlo::changeInternalPhononMomentumDirection () {
   double oldCosTheta, oldTheta, oldVal;
   if (this->debug) {
     // if P0 ≈ (0,0,0) we use that theta is the angle against the z-axis
-    if (isnan(P0.normalized()[0])) {
+    if (::isnan(P0.normalized()[0])) {
       oldCosTheta = d->momentum[2]/q;
     } else {
       oldCosTheta = d->momentum.dot(P0)/(q*p0);

@@ -21,16 +21,16 @@ vector<double> DiagrammaticMonteCarlo::run (int numIterations, int maxOrder) {
   this->maxOrder = maxOrder;
 
   // to reach start connfiguration
-  int untilStart = 1000;
+  int untilStart = 0;
 
-  Display display(&this->FD);
+  // Display display(&this->FD);
 
   // vector of pointers to member function of Phonon
   vector<double (DiagrammaticMonteCarlo::*)(void)> updateMethods = {
-    &DiagrammaticMonteCarlo::shiftVertexPosition,
-    &DiagrammaticMonteCarlo::swapPhononConnections,
-    &DiagrammaticMonteCarlo::changeInternalPhononMomentumDirection,
-    &DiagrammaticMonteCarlo::changeInternalPhononMomentumMagnitude,
+    // &DiagrammaticMonteCarlo::shiftVertexPosition,
+    // &DiagrammaticMonteCarlo::swapPhononConnections,
+    // &DiagrammaticMonteCarlo::changeInternalPhononMomentumDirection,
+    // &DiagrammaticMonteCarlo::changeInternalPhononMomentumMagnitude,
     &DiagrammaticMonteCarlo::raiseOrder,
     &DiagrammaticMonteCarlo::lowerOrder
   };
@@ -68,6 +68,8 @@ vector<double> DiagrammaticMonteCarlo::run (int numIterations, int maxOrder) {
       this->electrons2beRemoved[1]->unlink();
     }
 
+    // display.render();
+
     if (i >= untilStart) {
       bins[this->FD.Ds.size()]++;
     }
@@ -99,7 +101,7 @@ double DiagrammaticMonteCarlo::Udouble (double from, double to) {
 }
 
 int DiagrammaticMonteCarlo::Uint (int fromIncluded, int toIncluded) {
-  uniform_int_distribution<double> distribution(fromIncluded, toIncluded);
+  uniform_int_distribution<int> distribution(fromIncluded, toIncluded);
   return distribution(this->mt);
 }
 
@@ -126,7 +128,7 @@ Vector3d DiagrammaticMonteCarlo::calculateQ (Vector3d P0, double q, double theta
   Vector3d tempVector, Ep, Eo1, Eo2, Qp, Qo;
   
   Ep = P0.normalized();
-  if (isnan(Ep[0])) {
+  if (::isnan(Ep[0])) { // ::isnan to prevent compiling error
     // if P0 ≈ (0,0,0) we use that theta is the angle against the z-axis
     Ep = Vector3d(0, 0, 1);
     Eo1 = Vector3d(1, 0, 0);
@@ -136,7 +138,7 @@ Vector3d DiagrammaticMonteCarlo::calculateQ (Vector3d P0, double q, double theta
     tempVector = Ep.cross(Ep + Vector3d(1, 0, 0));
     Eo1 = tempVector.normalized();
     // cout << "TEMP " << Eo1.transpose() << endl;
-    if (isnan(Eo1[0])) {
+    if (::isnan(Eo1[0])) {
       Eo1  = Ep.cross(Ep + Vector3d(0, 1, 0)).normalized();
     }
 

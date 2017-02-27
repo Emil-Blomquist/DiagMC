@@ -16,7 +16,7 @@ using namespace Eigen;
 using namespace std;
 
 #include "../FeynmanDiagram/FeynmanDiagram.h"
-#include "../Display/Display.h"
+// #include "../Display/Display.h"
 
 class DiagrammaticMonteCarlo {
     mt19937_64 mt;

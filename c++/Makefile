@@ -1,29 +1,30 @@
-# PROPAGATOR_DIR = Propagator
-# VERTEX_DIR = Vertex
-# FEYNMAN_DIAGRAM_DIR = FeynmanDiagram
+# CXX=clang++
+# CXXFLAGS=-g -std=c++11 -Wall -pedantic
+# BIN=output
+# LIBS=-lsfml-graphics -lsfml-window -lsfml-system
 
-# MAKE = make
+# # SRC=$(wildcard **/*.cpp)
+# SRC=$(wildcard *.cpp) $(wildcard */*.cpp) $(wildcard */*/*.cpp)
+# # SRC=main.cpp
+# OBJ=$(SRC:%.cpp=%.o)
 
-# objects = main.o
+# all: $(OBJ)
+# 	@$(CXX) -o $(BIN) $(LIBS) $^
+# 	@echo "-------"
+# 	@./$(BIN)
 
-# run: output
-# 	@echo "----------"
-# 	@./output
-
-# output: $(objects)
-# 	g++ $(objects) -o output
-# 	-lsfml-graphics -lsfml-window -lsfml-system
-
-# # main.o: main.cpp
-# # 	g++ -c main.cpp
+# %.o: %.c
+# 	$(CXX) $@ -c $<
 
 # clean:
-# 	rm *.o output
-# 	cd $(PROPAGATOR_DIR) && rm *.o
-# 	cd $(VERTEX_DIR) && rm *.o
-# 	cd $(FEYNMAN_DIAGRAM_DIR) && rm *.o
+# 	@for file in $(OBJ) ; do \
+# 		echo "removing" $$file"..."; \
+# 		rm $$file ; \
+# 	done
 
-CXX=clang++
+# 	rm $(BIN)
+
+CXX=mpic++
 CXXFLAGS=-g -std=c++11 -Wall -pedantic
 BIN=output
 LIBS=-lsfml-graphics -lsfml-window -lsfml-system
@@ -34,9 +35,7 @@ SRC=$(wildcard *.cpp) $(wildcard */*.cpp) $(wildcard */*/*.cpp)
 OBJ=$(SRC:%.cpp=%.o)
 
 all: $(OBJ)
-	@$(CXX) -o $(BIN) $(LIBS) $^
-	@echo "-------"
-	@./$(BIN)
+	@$(CXX) -o $(BIN) $^
 
 %.o: %.c
 	$(CXX) $@ -c $<
