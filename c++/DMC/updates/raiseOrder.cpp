@@ -1,6 +1,6 @@
 #include "../DiagrammaticMonteCarlo.h"
 
-double DiagrammaticMonteCarlo::raiseOrder () {
+double DiagrammaticMonteCarlo::raiseOrder (double param) {
   // requirement to raise: cannot be of max order
   if (this->FD.Ds.size() == this->maxOrder) {
     return 0;
@@ -25,12 +25,15 @@ double DiagrammaticMonteCarlo::raiseOrder () {
   // split second electron line
   shared_ptr<Electron> g2 = this->FD.Gs[i2];
   double
-    t2 = this->Udouble(g2->start->position, g2->end->position),
-    wInvt2 = g2->end->position - g2->start->position;
-  shared_ptr<Vertex> v2 = this->FD.insertVertex(i2, t2 - g2->start->position);
+    l = param,
+    Dt2 = g2->end->position - g2->start->position,
+    r = this->Udouble(0, 1),
+    dt2 = -log(1 - r + r*exp(-l*Dt2))/l,
+    wInvt2 = exp(l*dt2)*(1 - exp(-l*Dt2))/l;
+  shared_ptr<Vertex> v2 = this->FD.insertVertex(i2, dt2);
 
   // generate phonon momentum
-  double std = 1/sqrt(t2 - t1);
+  double std = 1/sqrt(g2->start->position + dt2 - t1);
   normal_distribution<double> normal(0.0, std);
 
   double

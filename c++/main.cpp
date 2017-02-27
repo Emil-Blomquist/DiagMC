@@ -20,7 +20,8 @@ void runParallel (
   const double mu,
   const int numIterations,
   const int maxOrder,
-  const int rank
+  const int processId,
+  const int numProcesses
 ) {
   // external momentum
   Vector3d externalMomentum(p, 0, 0);
@@ -31,13 +32,21 @@ void runParallel (
   char buffer[80];
   time (&rawtime);
   timeinfo = localtime(&rawtime);
-  strftime(buffer, 80, "%Y-%m-%d %I:%M:%S", timeinfo);
+  strftime(buffer, 80, "%Y-%m-%d %H:%M:%S", timeinfo);
   string dateAndTimeString(buffer);
+
+  auto param = 3*(processId + 1.0)/numProcesses;
 
   // create file name
   stringstream stream;
   stream << fixed << setprecision(3)
-         << "p="<< p << " a=" << alpha << " mu=" << mu << " N=" << numIterations << " time=" << dateAndTimeString << " id=" << rank;
+         << "p="<< p
+         <<" a=" << alpha
+         << " mu=" << mu
+         << " N=" << numIterations
+         << " time=" << dateAndTimeString
+         << " id=" << processId
+         << " param=" << param;
   string fileName = stream.str();
 
   // write to file
@@ -49,7 +58,7 @@ void runParallel (
   // for each of our time data points
   for(int i = 0; i != times.size(); i++) {
     // initiate DMC
-    DiagrammaticMonteCarlo DMC(externalMomentum, times[i], alpha, mu);
+    DiagrammaticMonteCarlo DMC(externalMomentum, times[i], alpha, mu, processId);
 
     // obtain g0 before we update the diagram
     double g0 = DMC.FD();
@@ -91,13 +100,15 @@ int main () {
 
   // num iterations for each data point
   const unsigned int
-    numIterations = 10000000,
+    numIterations = 1000000,
     maxOrder = 7;
 
   // create vector with time data points
-  VectorXf times = VectorXf::LinSpaced(250, 0.01, tMax + 0.01);
+  VectorXf times = VectorXf::LinSpaced(50, 4, 4);
+  // VectorXf times{1};
+  // times << 1;
 
-  runParallel(ref(times), momentum, alpha, mu, numIterations, maxOrder, 0);
+  runParallel(ref(times), momentum, alpha, mu, numIterations, maxOrder, myrank, nprocs);
 
   MPI_Finalize();
   return 0;

@@ -22,6 +22,7 @@ class DiagrammaticMonteCarlo {
     mt19937_64 mt;
     bool debug, loud;
     int maxOrder, numIterations;
+    double param;
 
     shared_ptr<Vertex> vertices2beRemoved [2];
     shared_ptr<Electron> electrons2beRemoved [2];
@@ -37,13 +38,13 @@ class DiagrammaticMonteCarlo {
     double swapPhononConnections ();
     double changeInternalPhononMomentumDirection ();
     double changeInternalPhononMomentumMagnitude ();
-    double raiseOrder ();
-    double lowerOrder ();
+    double raiseOrder (double param = 0.0);
+    double lowerOrder (double param = 0.0);
 
   public:
     FeynmanDiagram FD;
 
-    DiagrammaticMonteCarlo (Vector3d, double, double, double);
+    DiagrammaticMonteCarlo (Vector3d, double, double, double, double param = 0.0);
     
     vector<double> run (int, int);
 };

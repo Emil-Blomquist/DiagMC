@@ -1,7 +1,7 @@
 import numpy as np
 import matplotlib.pyplot as plt
 
-fileName = 'p=0.000 a=2.000 mu=-2.200 N=20000000 time=2017-02-23 07:05:08'
+fileName = 'p=0.000 a=2.000 mu=-2.200 N=40000000 time=2017-02-23 07:05:08'
 # fileName = 'p=1.000 a=2.000 mu=-2.200 N=10000000 time=2017-02-?? ??:??:??'
 # fileName = 'p=1.667 a=2.000 mu=-2.200 N=10000000 time=2017-02-22 01:09:51'
 # fileName = 'p=3.333 a=2.000 mu=-2.200 N=10000000 time=2017-02-22 01:09:51'

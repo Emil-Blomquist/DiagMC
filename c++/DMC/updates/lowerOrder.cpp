@@ -1,6 +1,6 @@
 #include "../DiagrammaticMonteCarlo.h"
 
-double DiagrammaticMonteCarlo::lowerOrder () {
+double DiagrammaticMonteCarlo::lowerOrder (double param) {
   // requirement to lower: must be at least of order 1
   if (this->FD.Ds.size() == 0) {
     return 0;
@@ -39,7 +39,12 @@ double DiagrammaticMonteCarlo::lowerOrder () {
   // must be the same probabilities as for raising order!
   double
     wInvt1 = (v1->G[1]->end == v2 ? v1->G[1]->end->G[1]->end->position : v1->G[1]->end->position) - v1->G[0]->start->position,
-    wInvt2 = v2->G[1]->end->position - v2->G[0]->start->position,
+
+    l = param,
+    Dt2 = v2->G[1]->end->position - v2->G[0]->start->position,
+    dt2 = v2->position - v2->G[0]->start->position,
+    wInvt2 = exp(l*dt2)*(1 - exp(-l*Dt2))/l,
+
     std = 1/sqrt(v2->position - v1->position),
     wInvQ = 2*pow(M_PI, 2.0) * sqrt(0.5*M_PI*pow(std, 2.0)) * exp(0.5*pow(d->momentum.norm()/std, 2.0));
 

@@ -6,9 +6,10 @@ from mpl_toolkits.mplot3d import Axes3D
 T = [];
 G = [];
 
-base = 'p=* a=2.000 mu=-2.200 N=20000000 time=*.txt'
+fileName = 'p=0.000 a=2.000 mu=-2.200 N=40000000 *'
+# fileName = 'temp'
 
-paths = glob.glob('data/' + base, recursive=True)
+paths = glob.glob('data/' + fileName + '.txt', recursive=True)
 
 
 fig = plt.figure()

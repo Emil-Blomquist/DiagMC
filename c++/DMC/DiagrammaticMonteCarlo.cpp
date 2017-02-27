@@ -4,7 +4,8 @@ DiagrammaticMonteCarlo::DiagrammaticMonteCarlo (
   Vector3d P,
   double length,
   double alpha,
-  double mu
+  double mu,
+  double param
 ) : FD{P, length, alpha, mu} {
   // seed random generator
   unsigned seed1 = std::chrono::system_clock::now().time_since_epoch().count();
@@ -14,6 +15,8 @@ DiagrammaticMonteCarlo::DiagrammaticMonteCarlo (
   this->debug = false;
   // will print acceptance ratios etc. (debug must be true)
   this->loud = false;
+
+  this->param = param;
 }
 
 
@@ -26,7 +29,7 @@ vector<double> DiagrammaticMonteCarlo::run (int numIterations, int maxOrder) {
   // Display display(&this->FD);
 
   // vector of pointers to member function of Phonon
-  vector<double (DiagrammaticMonteCarlo::*)(void)> updateMethods = {
+  vector<double (DiagrammaticMonteCarlo::*)(double)> updateMethods = {
     // &DiagrammaticMonteCarlo::shiftVertexPosition,
     // &DiagrammaticMonteCarlo::swapPhononConnections,
     // &DiagrammaticMonteCarlo::changeInternalPhononMomentumDirection,
@@ -46,7 +49,7 @@ vector<double> DiagrammaticMonteCarlo::run (int numIterations, int maxOrder) {
     this->FD.save();
 
     // update diagram
-    double a = (this->*updateMethod)();
+    double a = (this->*updateMethod)(this->param);
 
     if (a < this->Udouble(0, 1)) {
       // rejected update
