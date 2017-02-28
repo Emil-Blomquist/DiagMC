@@ -6,23 +6,21 @@ from mpl_toolkits.mplot3d import Axes3D
 T = [];
 G = [];
 
-fileName = 'p=0.000 a=2.000 mu=-2.200 N=40000000 *'
-# fileName = 'temp'
 
-paths = glob.glob('data/' + fileName + '.txt', recursive=True)
+fileNames =[
+  'p=0.000 a=2.000 mu=-2.200 N=10000000 time=2017-02-27 06:22:21 id=0',
+  'p=0.000 a=2.000 mu=-2.200 N=10000000 time=2017-02-27 09:44:42 id=0',
+  'p=0.000 a=2.000 mu=-2.200 N=40000000 time=2017-02-23 07:05:08'
+  ]
 
-
-fig = plt.figure()
-ax = fig.add_subplot(111, projection='3d')
-
-for path in paths:
-  print(path)
+for j, file in enumerate(fileNames):
+  print(file)
 
 
   T = [];
   G = [];
 
-  with open(path) as fp:
+  with open('data/' + file + '.txt') as fp:
     for i, line in enumerate(fp):
 
       # fetch data from first line
@@ -54,11 +52,11 @@ for path in paths:
 
     colors = ['cyan', 'purple', 'orange', 'red', 'magenta', 'blue', 'black', 'gray']
 
-    # for i in range(10, len(Gs[0, :])):
-      # ax.plot(T, np.full(len(T), float(config['p'])), Gs[:, i].astype(np.float), color=colors[i])
-    
-    ax.plot(T, np.full(len(T), float(config['p'])), G, color='brown')
+    for i in range(0, len(Gs[0, :])):
+      plt.plot(T, Gs[:, i].astype(np.float), color=colors[j])
 
+    plt.plot(T, G, color=colors[j], label=j)
 
+# plt.legend(loc=1)
 plt.savefig('plots/' + 'many' + '.pdf')
 plt.show()

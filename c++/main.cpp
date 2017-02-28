@@ -35,7 +35,8 @@ void runParallel (
   strftime(buffer, 80, "%Y-%m-%d %H:%M:%S", timeinfo);
   string dateAndTimeString(buffer);
 
-  auto param = 3*(processId + 1.0)/numProcesses;
+  VectorXf params = VectorXf::LinSpaced(numProcesses, 0.1, 4);
+  double param = params[processId];
 
   // create file name
   stringstream stream;
@@ -58,7 +59,7 @@ void runParallel (
   // for each of our time data points
   for(int i = 0; i != times.size(); i++) {
     // initiate DMC
-    DiagrammaticMonteCarlo DMC(externalMomentum, times[i], alpha, mu, processId);
+    DiagrammaticMonteCarlo DMC(externalMomentum, times[i], alpha, mu, param);
 
     // obtain g0 before we update the diagram
     double g0 = DMC.FD();
@@ -104,7 +105,7 @@ int main () {
     maxOrder = 7;
 
   // create vector with time data points
-  VectorXf times = VectorXf::LinSpaced(50, 4, 4);
+  VectorXf times = VectorXf::LinSpaced(200, 4, 4);
   // VectorXf times{1};
   // times << 1;
 
