@@ -5,8 +5,11 @@ DiagrammaticMonteCarloV2::DiagrammaticMonteCarloV2 (
   double maxLength,
   double alpha,
   double mu,
+  unsigned int numIterations,
+  unsigned int maxOrder,
+  unsigned int numBins,
   double param
-) : FD{P, maxLength/2, alpha, mu} {
+) : FD{P, maxLength/2*2, alpha, mu} {
   // seed random generator
   unsigned seed1 = std::chrono::system_clock::now().time_since_epoch().count();
   this->mt.seed(seed1);
@@ -18,22 +21,31 @@ DiagrammaticMonteCarloV2::DiagrammaticMonteCarloV2 (
 
   this->mu = mu;
   this->maxLength = maxLength;
-
+  this->numIterations = numIterations;
+  this->maxOrder = maxOrder;
+  this->numBins = numBins;
   this->param = param;
 
   this->lastKeyMargin = 0.1;
+
+  // store time at which the calculation began
+  time_t rawtime;
+  time (&rawtime);
+  this->timeinfo = localtime(&rawtime);
+
+
+  this->write2file();
+  this->run();
 }
 
 
-tuple<vector<double>, vector<double>> DiagrammaticMonteCarloV2::run (
-  unsigned int numIterations,
-  unsigned int maxOrder,
-  unsigned int numBins
-) {
-  this->maxOrder = maxOrder;
+void DiagrammaticMonteCarloV2::run () {
 
   // to reach start connfiguration
-  int untilStart = 0;
+  const unsigned int untilStart = 10000;
+
+  // to save data under the process
+  const unsigned int saveAfter = 10*1000000;
 
   // Display display(&this->FD);
 
@@ -44,8 +56,8 @@ tuple<vector<double>, vector<double>> DiagrammaticMonteCarloV2::run (
     &DiagrammaticMonteCarloV2::changeInternalPhononMomentumDirection,
     &DiagrammaticMonteCarloV2::changeInternalPhononMomentumMagnitude,
     &DiagrammaticMonteCarloV2::raiseOrder,
-    &DiagrammaticMonteCarloV2::lowerOrder,
-    &DiagrammaticMonteCarloV2::updateDiagramLength
+    &DiagrammaticMonteCarloV2::lowerOrder
+    // &DiagrammaticMonteCarloV2::updateDiagramLength
   };
 
 
@@ -53,23 +65,27 @@ tuple<vector<double>, vector<double>> DiagrammaticMonteCarloV2::run (
 
 
   // bins and keys for counting
-  vector<double>
-    keys(numBins, 0),
-    bins(numBins, 0);
+  this->keys = vector<double>(this->numBins, 0);
+  this->bins = vector<double>(this->numBins, 0);
 
   // fill keys
-  double dt = this->maxLength/numBins;
-  keys[numBins - 1] += this->lastKeyMargin; // so we never get out of bounds
-  for (int i = 0; i != keys.size(); ++i) {
-    keys[i] += (i + 1)*dt;
+  double dt = this->maxLength/this->numBins;
+  this->keys[this->numBins - 1] += this->lastKeyMargin; // so we never get out of bounds
+  for (int i = 0; i != this->numBins; ++i) {
+    this->keys[i] += (i + 1)*dt;
   }
 
 
+  ///
+  //
+  ///
+
+  unsigned int maxO = 0;
 
 
 
+  for (int i = 0; i < this->numIterations + untilStart; ++i) {
 
-  for (int i = 0; i < numIterations + untilStart; ++i) {
     // choose update operation on random
     auto updateMethod = updateMethods[this->Uint(0, updateMethods.size() - 1)];
 
@@ -101,28 +117,103 @@ tuple<vector<double>, vector<double>> DiagrammaticMonteCarloV2::run (
 
     // display.render();
 
+
+
+    if (maxO < this->FD.Ds.size()) {
+      maxO = this->FD.Ds.size();
+      cout << maxO << endl;
+    }
+
     if (i >= untilStart) {
-      // bins[(int)(this->FD.length/dt)]++;
+
+      if ((i - untilStart)%saveAfter == saveAfter - 1) {
+        // save temporary result
+        this->write2file(i - untilStart + 1);
+      }
 
       vector<double>::iterator itr = upper_bound(keys.begin(), keys.end(), this->FD.length);
       bins[itr - keys.begin()]++;
     }
   }
 
+  // save final result
+  this->write2file();
+}
+
+
+void DiagrammaticMonteCarloV2::write2file (const unsigned int iterationNum) {
+  // create date and time string
+  char buffer[80];
+  strftime(buffer, 80, "%Y-%m-%d %H:%M:%S", this->timeinfo);
+  string dateAndTimeString(buffer);
+  
+
+  // create file name
+  stringstream stream;
+  stream << fixed << setprecision(3)
+         << "p=" << this->FD.externalMomentum.norm()
+         << " tmax=" << this->maxLength
+         << " a=" << this->FD.couplingConstant
+         << " mu=" << this->FD.chemicalPotential
+         << " N=" << numIterations
+         << " date=" << dateAndTimeString
+         << " unique=" << param;
+  string fileName = stream.str();
+
+  // write to file
+  ofstream myfile;
+  myfile.open("../data/" + fileName + ".txt", ios_base::app);
+  myfile << "-------- " + fileName;
+  if (iterationNum) {
+    myfile << " Ntemp=" << iterationNum;
+  }
+  myfile << " --------" << endl;
+  myfile.close();
+
   //
   // TODO: we need to multiply with a factor (bins[0] new 1!)
   //
 
-  // prepare result
-  double firstBin = bins[0];
-  for(vector<double>::size_type i = 0; i != bins.size(); i++) {
-    bins[i] /= firstBin;
+
+
+  // data to write to file
+  myfile.open("../data/" + fileName + ".txt", ios_base::app);
+  // for (auto key : this->keys) {
+  //   if (key == this->keys[this->numBins - 1]) {
+  //     myfile << fixed << setprecision(7) << key - this->lastKeyMargin <<  "\n";
+  //   } else {
+  //     myfile << fixed << setprecision(7) << key <<  " ";
+  //   }
+  // }
+  // for (auto bin : this->bins) {
+  //   if (bin == this->bins[this->numBins - 1]) {
+  //     myfile << fixed << setprecision(7) << bin/this->bins[0] << "\n";
+  //   } else {
+  //     myfile << fixed << setprecision(7) << bin/this->bins[0] <<  " ";
+  //   }
+  // }
+
+  if (! this->keys.empty()) {
+    for (int i = 0; i != this->numBins; ++i) {
+      if (i == this->numBins - 1) {
+        myfile << fixed << setprecision(7) << this->keys[i] - this->lastKeyMargin <<  "\n";
+      } else {
+        myfile << fixed << setprecision(7) << this->keys[i] <<  " ";
+      }
+    }
+    for (int i = 0; i != this->numBins; ++i) {
+      if (i == this->numBins - 1) {
+        myfile << fixed << setprecision(7) << this->bins[i]/this->bins[0] << "\n";
+      } else {
+        myfile << fixed << setprecision(7) << this->bins[i]/this->bins[0] <<  " ";
+      }
+    }
   }
-  keys[numBins - 1] -= this->lastKeyMargin;
 
-  return make_tuple(keys, bins);
+
+
+  myfile.close();
 }
-
 
 
 
@@ -166,30 +257,46 @@ Vector3d DiagrammaticMonteCarloV2::calculateP0 (shared_ptr<Phonon> d) {
 }
 
 Vector3d DiagrammaticMonteCarloV2::calculateQ (Vector3d P0, double q, double theta, double phi) {
-  Vector3d tempVector, Ep, Eo1, Eo2, Qp, Qo;
+  Vector3d tempVector, Ep, Eo1, Eo2, Qp, Qo, Q;
   
   Ep = P0.normalized();
-  if (::isnan(Ep[0])) { // ::isnan to prevent compiling error
-    // if P0 ≈ (0,0,0) we use that theta is the angle against the z-axis
-    Ep = Vector3d(0, 0, 1);
-    Eo1 = Vector3d(1, 0, 0);
-    Eo2 = Vector3d(0, 1, 0);
-  } else {
+  if (isfinite(Ep[0])) {
     // find a vector orthogonal to Ep
     tempVector = Ep.cross(Ep + Vector3d(1, 0, 0));
     Eo1 = tempVector.normalized();
     // cout << "TEMP " << Eo1.transpose() << endl;
-    if (::isnan(Eo1[0])) {
+    if ( ! isfinite(Eo1[0])) {
       Eo1  = Ep.cross(Ep + Vector3d(0, 1, 0)).normalized();
     }
 
     // span rest of R^3
     Eo2 = Ep.cross(Eo1);
+  } else {
+    // if P0 ≈ (0,0,0) we use that theta is the angle against the z-axis
+    Ep = Vector3d(0, 0, 1);
+    Eo1 = Vector3d(1, 0, 0);
+    Eo2 = Vector3d(0, 1, 0);
   }
 
   // calculate the parallel and the orthogonal component of Q
   Qp = q*cos(theta)*Ep;
   Qo = (Eo1*cos(phi) + Eo2*sin(phi)) * q*sin(theta);
+  Q = Qp + Qo;
 
-  return Qp + Qo;
+  // to find overflow cause
+  if (! isfinite(Q[0]) || ! isfinite(Q[1]) || ! isfinite(Q[2])) {
+    cout << "-----------" << endl
+         << "Overflow at DiagrammaticMonteCarloV2::calculateQ" << endl
+         << "Q=" << Q.transpose() << endl
+         << "P0= " << P0.transpose() << endl
+         << "Ep= " << Ep.transpose() << endl
+         << "Eo1= " << Eo1.transpose() << endl
+         << "Eo2= " << Eo2.transpose() << endl
+         << "q= " << q << endl
+         << "theta= " << theta << endl
+         << "phi= " << phi << endl
+         << "-----------" << endl;
+  }
+
+  return Q;
 }

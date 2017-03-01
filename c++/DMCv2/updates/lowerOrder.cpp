@@ -60,19 +60,27 @@ double DiagrammaticMonteCarloV2::lowerOrder (double param) {
 
   // acceptance ration
   double a;
-  if (val == 0 || wInvQ == 0) {
+  if (val == 0) {
+    a = 0;
+  } else if (wInvQ == 0) {
     a = 1;
   } else {
     a = val/oldVal * Winvd/(WinvVertex*wInvt1*wInvt2*wInvQ);
   }
 
   if (this->debug) {
-    if (val == 0 || wInvQ == 0) {
+    if (a < 0 || ! isfinite(a)) {
       cout << "--------------------------------------------------------------------" << endl
-           << "overflow at DMC::lowerOrder " << this->FD.Ds.size() << " " << a << endl
+           << "overflow at DMC::lowerOrder " << endl
+           << "a=" << a << endl
+           << "order=" << this->FD.Ds.size() << endl
+           << "val=" << val << endl
+           << "oldVal=" << oldVal << endl
+           << "wInvQ=" << wInvQ << endl
+           << "wInvt2=" << wInvt2 << endl
            << "--------------------------------------------------------------------" << endl;
-    } else {
-      if (this->loud) { cout << "lowerOrder: "  << this->FD.Ds.size() << " " << a << endl; }
+    } else if (this->loud) {
+      cout << "lowerOrder: "  << this->FD.Ds.size() << " " << a << endl;
     }
   }
   

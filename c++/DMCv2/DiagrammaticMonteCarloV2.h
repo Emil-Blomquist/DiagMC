@@ -11,6 +11,12 @@
 #include <limits>
 #include <algorithm>
 
+#include <fstream>
+#include <string>
+#include <ctime>
+#include <iomanip> // setprecision
+#include <sstream> // stringstream
+
 #include <tuple> // return value
 
 #include <eigen3/Eigen/Dense>
@@ -22,10 +28,14 @@ using namespace std;
 // #include "../Display/Display.h"
 
 class DiagrammaticMonteCarloV2 {
+  private:
     mt19937_64 mt;
     bool debug, loud;
-    unsigned int maxOrder;
+    unsigned int maxOrder, numIterations, numBins;
     double maxLength, mu, param, lastKeyMargin;
+    struct tm *timeinfo;
+
+    vector<double> keys, bins;
 
     shared_ptr<Vertex> vertices2beRemoved [2];
     shared_ptr<Electron> electrons2beRemoved [2];
@@ -43,14 +53,25 @@ class DiagrammaticMonteCarloV2 {
     double changeInternalPhononMomentumMagnitude (double param = 1);
     double raiseOrder (double param = 1);
     double lowerOrder (double param = 1);
-    double updateDiagramLength (double param = 0.0);
+    double updateDiagramLength (double param = 1);
+
+    void write2file (const unsigned int = 0);
 
   public:
     FeynmanDiagram FD;
 
-    DiagrammaticMonteCarloV2 (Vector3d, double, double, double, double param = 0.0);
+    DiagrammaticMonteCarloV2 (
+      Vector3d, 
+      double,
+      double,
+      double,
+      unsigned int,
+      unsigned int,
+      unsigned int,
+      double param
+    );
     
-    tuple<vector<double>, vector<double>> run (unsigned int, unsigned int, unsigned int);
+    void run ();
 };
 
 #endif

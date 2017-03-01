@@ -1,88 +1,10 @@
 #include <iostream>
-#include <fstream>
-#include <string>
-#include <ctime>
-#include <iomanip> // setprecision
-#include <sstream> // stringstream
-#include <thread>
-
 #include <time.h> // execution time
-
 #include <mpi.h> // MPI
 
 #include "DMCv2/DiagrammaticMonteCarloV2.h"
 
-// using namespace std;
-
-
-void runParallel (
-  const double p,
-  const double maxLength,
-  const double alpha,
-  const double mu,
-  const int numIterations,
-  const int numBins,
-  const int maxOrder,
-  const int processId,
-  const int numProcesses
-) {
-  // external momentum
-  Vector3d externalMomentum(p, 0, 0);
-
-  // create date and time string
-  time_t rawtime;
-  struct tm * timeinfo;
-  char buffer[80];
-  time (&rawtime);
-  timeinfo = localtime(&rawtime);
-  strftime(buffer, 80, "%Y-%m-%d %H:%M:%S", timeinfo);
-  string dateAndTimeString(buffer);
-
-  VectorXf params = VectorXf::LinSpaced(numProcesses, 0.1, 4);
-  double param = params[processId];
-
-  // create file name
-  stringstream stream;
-  stream << fixed << setprecision(3)
-         << "p="<< p
-         << " tmax=" << maxLength
-         << " a=" << alpha
-         << " mu=" << mu
-         << " N=" << numIterations
-         << " date=" << dateAndTimeString
-         << " id=" << processId
-         << " param=" << param;
-  string fileName = stream.str();
-
-  // write to file
-  ofstream myfile;
-  myfile.open("../data/" + fileName + ".txt", ios_base::app);
-  myfile << "-------- " + fileName + " --------" << endl;
-  myfile.close();
-
-  // for each of our time data points
-  DiagrammaticMonteCarloV2 DMC(externalMomentum, maxLength, alpha, mu, param);
-
-  // run the algorithm
-  auto result = DMC.run(numIterations, maxOrder, numBins);
-
-  auto
-    keys = get<0>(result),
-    bins = get<1>(result);
-
-  // data to write to file
-  myfile.open("../data/" + fileName + ".txt", ios_base::app);
-  for (auto key : keys) {
-    myfile << fixed << setprecision(7) << key <<  " ";
-  }
-  myfile << "\n";
-  for (auto bin : bins) {
-    myfile << fixed << setprecision(7) << bin <<  " ";
-  }
-  myfile.close();
-}
-
-
+using namespace std;
 
 int main () {
   // MPI stuff
@@ -94,19 +16,40 @@ int main () {
   // do after MPI stuff
   clock_t tStart = clock();
 
+  //
+  /////////////////////////////////////////////////////// <------------ ta bort tmax/2*2 och aktivera att man kan byta tid + maxorder
+
   // parameters
   const double
-    momentum = 0,
-    maxLength = 5,
+    maxMomenta = 3,
+    maxLength = 5*10,
+    // maxLength = 5,
     alpha = 2,
     mu = -2.2;
 
   const unsigned int
-    numIterations = 25000000,
-    numBins = 250,
-    maxOrder = 7;
+    numIterations = 600*1000000,
+    numBins = 250*10,
+    maxOrder = 100000000;
+    // numIterations = 10000000,
+    // numBins = 250,
+    // maxOrder = 100000000;
 
-  runParallel(momentum, maxLength, alpha, mu, numIterations, numBins, maxOrder, myrank, nprocs);
+  VectorXf momenta = VectorXf::LinSpaced(nprocs, 0, maxMomenta);
+  Vector3d externalMomentum(momenta[myrank], 0, 0);
+
+  double param = myrank;
+
+  DiagrammaticMonteCarloV2 DMC(
+    externalMomentum,
+    maxLength,
+    alpha,
+    mu,
+    numIterations,
+    maxOrder,
+    numBins,
+    param
+  );
 
   // do before MPI finalize
   printf("[Finished in %.2fs]\n", (double)(clock() - tStart)/CLOCKS_PER_SEC);
@@ -114,3 +57,18 @@ int main () {
   MPI_Finalize();
   return 0;
 }
+
+// --------------------------------------------------------------------
+// overflow at DMC::changeInternalPhononMomentumDirection Q=-0.275119  -1.67229  -1.34297 oldVal=0 sinTheta=0.660851
+// --------------------------------------------------------------------
+// --------------------------------------------------------------------
+// overflow at DMC::changeInternalPhononMomentumMagnitude
+// a=0
+// param2=0.664333
+// Q= 2.32223 -1.10779 0.634016
+// val=0
+// oldVal=0
+// --------------------------------------------------------------------
+
+
+

@@ -2,9 +2,9 @@
 
 double DiagrammaticMonteCarloV2::raiseOrder (double param) {
   // requirement to raise: cannot be of max order
-  if (this->FD.Ds.size() == this->maxOrder) {
-    return 0;
-  }
+  // if (this->FD.Ds.size() == this->maxOrder) {
+  //   return 0;
+  // }
 
   // old configuration value
   double oldVal = this->FD();
@@ -54,8 +54,28 @@ double DiagrammaticMonteCarloV2::raiseOrder (double param) {
   double val = this->FD();
 
   // acceptance ration
-  double a = val/oldVal * (wInvVertex*wInvt1*wInvt2*wInvQ)/wInvd;
-  // double a = (wInvVertex*wInvt1)/wInvd;
+  double a;
+  if (val == 0) {
+    a = 0;
+  } else {
+    a = val/oldVal * (wInvVertex*wInvt1*wInvt2*wInvQ)/wInvd;
+  }
+
+  if (this->debug) {
+    if (a < 0 || ! isfinite(a)) {
+      cout << "--------------------------------------------------------------------" << endl
+           << "overflow at DMC::raiseOrder " << endl
+           << "a=" << a << endl
+           << "order=" << this->FD.Ds.size() << endl
+           << "val=" << val << endl
+           << "oldVal=" << oldVal << endl
+           << "wInvQ=" << wInvQ << endl
+           << "wInvt2=" << wInvt2 << endl
+           << "--------------------------------------------------------------------" << endl;
+    } else if (this->loud) {
+      cout << "raiseOrder: "  << this->FD.Ds.size() << " " << a << endl;
+    }
+  }
 
   if (this->debug) {
     if (this->loud) { cout << "raiseOrder: " << a << endl; }
