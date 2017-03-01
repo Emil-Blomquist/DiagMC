@@ -44,6 +44,8 @@ class FeynmanDiagram {
 
     double operator() ();
 
+    void setLength (double);
+
     void save ();
     void revert ();
 };

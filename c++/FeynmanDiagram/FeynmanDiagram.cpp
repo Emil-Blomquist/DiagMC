@@ -84,3 +84,7 @@ void FeynmanDiagram::revert () {
     d->revert();
   }
 }
+
+void FeynmanDiagram::setLength (double length) {
+  this->length = length;
+}

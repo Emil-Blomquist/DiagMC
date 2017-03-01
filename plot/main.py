@@ -1,12 +1,7 @@
 import numpy as np
 import matplotlib.pyplot as plt
 
-fileName = 'p=0.000 a=2.000 mu=-2.200 N=40000000 time=2017-02-23 07:05:08'
-# fileName = 'p=1.000 a=2.000 mu=-2.200 N=10000000 time=2017-02-?? ??:??:??'
-# fileName = 'p=1.667 a=2.000 mu=-2.200 N=10000000 time=2017-02-22 01:09:51'
-# fileName = 'p=3.333 a=2.000 mu=-2.200 N=10000000 time=2017-02-22 01:09:51'
-# fileName = 'p=5.000 a=2.000 mu=-2.200 N=10000000 time=2017-02-22 01:09:51'
-
+fileName = 'G7 p=0 a=2'
 T = [];
 G = [];
 
@@ -42,6 +37,10 @@ with open('data/' + fileName + '.txt') as fp:
 
 for i, val in enumerate(Gs[0, :]):
   plt.plot(T, Gs[:, i], label=r'$G^' +  str(i) + '$')
+
+print(G)
+print(Gs[:, 0])
+print(Gs[:, 1])
 
 plt.plot(T, G, lw=2, color="brown", label=r'$\sum G^i$')
 
