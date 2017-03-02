@@ -57,6 +57,8 @@ double DiagrammaticMonteCarloV2::raiseOrder (double param) {
   double a;
   if (val == 0) {
     a = 0;
+  } else if (oldVal == 0) {
+    a = 1;
   } else {
     a = val/oldVal * (wInvVertex*wInvt1*wInvt2*wInvQ)/wInvd;
   }
@@ -75,10 +77,6 @@ double DiagrammaticMonteCarloV2::raiseOrder (double param) {
     } else if (this->loud) {
       cout << "raiseOrder: "  << this->FD.Ds.size() << " " << a << endl;
     }
-  }
-
-  if (this->debug) {
-    if (this->loud) { cout << "raiseOrder: " << a << endl; }
   }
 
   // these should be unlinked if update is rejected

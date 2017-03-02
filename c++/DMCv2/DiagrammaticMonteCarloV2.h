@@ -53,7 +53,7 @@ class DiagrammaticMonteCarloV2 {
     double changeInternalPhononMomentumMagnitude (double param = 1);
     double raiseOrder (double param = 1);
     double lowerOrder (double param = 1);
-    double updateDiagramLength (double param = 1);
+    double changeDiagramLength (double param = 1);
 
     void write2file (const unsigned int = 0);
 

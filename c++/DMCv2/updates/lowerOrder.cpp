@@ -62,7 +62,7 @@ double DiagrammaticMonteCarloV2::lowerOrder (double param) {
   double a;
   if (val == 0) {
     a = 0;
-  } else if (wInvQ == 0) {
+  } else if (wInvQ == 0 || oldVal == 0) {
     a = 1;
   } else {
     a = val/oldVal * Winvd/(WinvVertex*wInvt1*wInvt2*wInvQ);

@@ -16,24 +16,22 @@ int main () {
   // do after MPI stuff
   clock_t tStart = clock();
 
-  //
-  /////////////////////////////////////////////////////// <------------ ta bort tmax/2*2 och aktivera att man kan byta tid + maxorder
-
   // parameters
   const double
-    maxMomenta = 3,
-    maxLength = 5*10,
-    // maxLength = 5,
+    // maxMomenta = 3,
+    // maxLength = 5*10,
+    maxMomenta = 0,
+    maxLength = 5,
     alpha = 2,
     mu = -2.2;
 
   const unsigned int
-    numIterations = 600*1000000,
-    numBins = 250*10,
-    maxOrder = 100000000;
-    // numIterations = 10000000,
-    // numBins = 250,
+    // numIterations = 600*1000000,
+    // numBins = 250*10,
     // maxOrder = 100000000;
+    numIterations = 25000000,
+    numBins = 250,
+    maxOrder = 100000000;
 
   VectorXf momenta = VectorXf::LinSpaced(nprocs, 0, maxMomenta);
   Vector3d externalMomentum(momenta[myrank], 0, 0);
@@ -57,18 +55,3 @@ int main () {
   MPI_Finalize();
   return 0;
 }
-
-// --------------------------------------------------------------------
-// overflow at DMC::changeInternalPhononMomentumDirection Q=-0.275119  -1.67229  -1.34297 oldVal=0 sinTheta=0.660851
-// --------------------------------------------------------------------
-// --------------------------------------------------------------------
-// overflow at DMC::changeInternalPhononMomentumMagnitude
-// a=0
-// param2=0.664333
-// Q= 2.32223 -1.10779 0.634016
-// val=0
-// oldVal=0
-// --------------------------------------------------------------------
-
-
-

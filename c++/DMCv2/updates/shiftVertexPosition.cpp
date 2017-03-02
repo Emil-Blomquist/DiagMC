@@ -39,11 +39,30 @@ double DiagrammaticMonteCarloV2::shiftVertexPosition (double param) {
   this->FD.setVertexPosition(v, t);
 
   if (this->debug) {
-    double 
-      val = this->FD(),
-      a = exp(log(val) - log(oldVal) + dE*(t - tOld));
+    double val = this->FD();
 
-    if (this->loud) { cout << "shiftVertexPosition: " << a << endl; }
+    double a;
+    if (val == 0) {
+      a = 0;
+    } else if (oldVal == 0) {
+      a = 1;
+    } else {
+      a = val/oldVal * exp(dE*(t - tOld));
+    }
+
+    if (a < 0 || ! isfinite(a)) {
+      cout << "--------------------------------------------------------------------" << endl
+           << "overflow at DMC::shiftVertexPosition " << endl
+           << "a=" << a << endl
+           << "order=" << this->FD.Ds.size() << endl
+           << "val=" << val << endl
+           << "oldVal=" << oldVal << endl
+           << "dE=" << dE << endl
+           << "exp=" << exp(dE*(t - tOld)) << endl
+           << "--------------------------------------------------------------------" << endl;
+    } else if (this->loud) {
+      cout << "shiftVertexPosition " << a << endl;
+    }
   }
 
   return 1;

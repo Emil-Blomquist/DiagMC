@@ -50,22 +50,34 @@ double DiagrammaticMonteCarloV2::changeInternalPhononMomentumMagnitude (double p
   this->FD.setInternalPhononMomentum(d, Q);
 
   if (this->debug) {
-    double
-      val = this->FD(),
-      a = exp(log(val) - log(oldVal) - pow(param1, 2) * (pow(oldq - param2, 2) - pow(q - param2, 2)));
+    double val = this->FD();
 
-    if (! ::isnan(a) && a < numeric_limits<double>::max()) {
-      if (this->loud) { cout << "changeInternalPhononMomentumMagnitude " << a << endl; }
-    } else {
+    double a;
+    if (val == 0) {
       a = 0;
+    } else if (oldVal == 0) {
+      a = 1;
+    } else {
+      // a = exp(log(val) - log(oldVal) - pow(param1, 2) * (pow(oldq - param2, 2) - pow(q - param2, 2)));
+      a = val/oldVal * exp(-pow(param1, 2) * (pow(oldq - param2, 2) - pow(q - param2, 2)));
+    }
+
+    if (a < 0 || ! isfinite(a)) {
       cout << "--------------------------------------------------------------------" << endl
-           << "overflow at DMC::changeInternalPhononMomentumMagnitude" << endl
+           << "overflow at DMC::changeInternalPhononMomentumMagnitude " << endl
            << "a=" << a << endl
+           << "order=" << this->FD.Ds.size() << endl
+           << "val=" << val << endl
+           << "oldVal=" << oldVal << endl
+           << "exp=" << exp(-pow(param1, 2) * (pow(oldq - param2, 2) - pow(q - param2, 2))) << endl
+           << "param1=" << param1 << endl
            << "param2=" << param2 << endl
            << "Q=" << Q.transpose() << endl
            << "val=" << val << endl
            << "oldVal=" << oldVal << endl
            << "--------------------------------------------------------------------" << endl;
+    } else if (this->loud) {
+      cout << "changeInternalPhononMomentumMagnitude " << a << endl;
     }
   }
   

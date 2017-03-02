@@ -32,11 +32,13 @@ double DiagrammaticMonteCarloV2::swapPhononConnections (double param) {
 
   double exponent = -t*(Eafter - Ebefore + c2 - c1);
 
-  // to prevent overflow error
-  if (exponent > 700) { exponent = 700; }
-
-  // acceptance ratio
-  double a = exp(exponent);
+  // acceptance ration
+  double a;
+  if (exponent > 700) {
+    a = 1;
+  } else {
+    a = exp(exponent);
+  }
 
   double oldVal;
   if (this->debug) {
@@ -45,15 +47,22 @@ double DiagrammaticMonteCarloV2::swapPhononConnections (double param) {
 
   this->FD.swapPhonons(v1, v2);
 
+
   if (this->debug) {
     double val = this->FD();
 
-    if (exponent == 700) {
+    if (a < 0 || ! isfinite(a)) {
       cout << "--------------------------------------------------------------------" << endl
-           << "overflow prevented at DMC::swapPhononConnections " << a*oldVal/val << " val=" << val << " oldVal=" << oldVal << endl
+           << "overflow at DMC::swapPhononConnections " << endl
+           << "a=" << a << endl
+           << "val/oldVal=" << val/oldVal << endl
+           << "order=" << this->FD.Ds.size() << endl
+           << "val=" << val << endl
+           << "oldVal=" << oldVal << endl
+           << "exponent=" << exponent << endl
            << "--------------------------------------------------------------------" << endl;
-    } else {
-      if (this->loud) { cout << "swapPhononConnections: " << a*oldVal/val << endl; }
+    } else if (this->loud) {
+      cout << "swapPhononConnections: "  << this->FD.Ds.size() << " " << a << endl;
     }
   }
 

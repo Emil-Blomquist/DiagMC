@@ -9,13 +9,13 @@ DiagrammaticMonteCarloV2::DiagrammaticMonteCarloV2 (
   unsigned int maxOrder,
   unsigned int numBins,
   double param
-) : FD{P, maxLength/2*2, alpha, mu} {
+) : FD{P, maxLength/2, alpha, mu} {
   // seed random generator
   unsigned seed1 = std::chrono::system_clock::now().time_since_epoch().count();
   this->mt.seed(seed1);
 
   // will print overflow exceptions etc.
-  this->debug = true;
+  this->debug = false;
   // will print acceptance ratios etc. (debug must be true)
   this->loud = false;
 
@@ -42,7 +42,7 @@ DiagrammaticMonteCarloV2::DiagrammaticMonteCarloV2 (
 void DiagrammaticMonteCarloV2::run () {
 
   // to reach start connfiguration
-  const unsigned int untilStart = 10000;
+  const unsigned int untilStart = 100000;
 
   // to save data under the process
   const unsigned int saveAfter = 10*1000000;
@@ -56,8 +56,8 @@ void DiagrammaticMonteCarloV2::run () {
     &DiagrammaticMonteCarloV2::changeInternalPhononMomentumDirection,
     &DiagrammaticMonteCarloV2::changeInternalPhononMomentumMagnitude,
     &DiagrammaticMonteCarloV2::raiseOrder,
-    &DiagrammaticMonteCarloV2::lowerOrder
-    // &DiagrammaticMonteCarloV2::updateDiagramLength
+    &DiagrammaticMonteCarloV2::lowerOrder,
+    &DiagrammaticMonteCarloV2::changeDiagramLength
   };
 
 
@@ -76,11 +76,6 @@ void DiagrammaticMonteCarloV2::run () {
   }
 
 
-  ///
-  //
-  ///
-
-  unsigned int maxO = 0;
 
 
 
@@ -119,10 +114,6 @@ void DiagrammaticMonteCarloV2::run () {
 
 
 
-    if (maxO < this->FD.Ds.size()) {
-      maxO = this->FD.Ds.size();
-      cout << maxO << endl;
-    }
 
     if (i >= untilStart) {
 
@@ -174,25 +165,8 @@ void DiagrammaticMonteCarloV2::write2file (const unsigned int iterationNum) {
   // TODO: we need to multiply with a factor (bins[0] new 1!)
   //
 
-
-
   // data to write to file
   myfile.open("../data/" + fileName + ".txt", ios_base::app);
-  // for (auto key : this->keys) {
-  //   if (key == this->keys[this->numBins - 1]) {
-  //     myfile << fixed << setprecision(7) << key - this->lastKeyMargin <<  "\n";
-  //   } else {
-  //     myfile << fixed << setprecision(7) << key <<  " ";
-  //   }
-  // }
-  // for (auto bin : this->bins) {
-  //   if (bin == this->bins[this->numBins - 1]) {
-  //     myfile << fixed << setprecision(7) << bin/this->bins[0] << "\n";
-  //   } else {
-  //     myfile << fixed << setprecision(7) << bin/this->bins[0] <<  " ";
-  //   }
-  // }
-
   if (! this->keys.empty()) {
     for (int i = 0; i != this->numBins; ++i) {
       if (i == this->numBins - 1) {
@@ -209,8 +183,6 @@ void DiagrammaticMonteCarloV2::write2file (const unsigned int iterationNum) {
       }
     }
   }
-
-
 
   myfile.close();
 }

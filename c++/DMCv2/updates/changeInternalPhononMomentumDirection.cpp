@@ -67,16 +67,27 @@ double DiagrammaticMonteCarloV2::changeInternalPhononMomentumDirection (double p
     double val = this->FD();
 
     double a;
-    if (abs(oldVal) > 0 and sin(theta) > 0) {
-      a = val/oldVal;
-      a *= sin(oldTheta)/sin(theta);
-      a *= exp(-param1*(cos(theta) - cos(oldTheta)));
-      if (this->loud) { cout << "changeInternalPhononMomentumDirection " << a << endl; }
-    } else {
+    if (val == 0) {
       a = 0;
+    } else if (sin(theta) == 0 || oldVal == 0) {
+      a = 1;
+    } else {
+      a = val/oldVal * sin(oldTheta)/sin(theta) * exp(-param1*(cos(theta) - cos(oldTheta)));
+    }
+
+    if (a < 0 || ! isfinite(a)) {
       cout << "--------------------------------------------------------------------" << endl
-           << "overflow at DMC::changeInternalPhononMomentumDirection Q=" << Q.transpose() << " oldVal=" << oldVal << " sinTheta=" << sin(theta) << endl
+           << "overflow at DMC::changeInternalPhononMomentumDirection " << endl
+           << "a=" << a << endl
+           << "order=" << this->FD.Ds.size() << endl
+           << "val=" << val << endl
+           << "oldVal=" << oldVal << endl
+           << "sin(oldTheta)=" << sin(oldTheta) << endl
+           << "sin(theta)=" << sin(theta) << endl
+           << "exp=" << exp(-param1*(cos(theta) - cos(oldTheta))) << endl
            << "--------------------------------------------------------------------" << endl;
+    } else if (this->loud) {
+      cout << "changeInternalPhononMomentumDirection " << a << endl;
     }
   }
 
