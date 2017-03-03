@@ -6,7 +6,6 @@ DiagrammaticMonteCarloV2::DiagrammaticMonteCarloV2 (
   double alpha,
   double mu,
   unsigned int numIterations,
-  unsigned int maxOrder,
   unsigned int numBins,
   double param
 ) : FD{P, maxLength/2, alpha, mu} {
@@ -14,19 +13,22 @@ DiagrammaticMonteCarloV2::DiagrammaticMonteCarloV2 (
   unsigned seed1 = std::chrono::system_clock::now().time_since_epoch().count();
   this->mt.seed(seed1);
 
-  // will print overflow exceptions etc.
+  // will print overflow exceptions etc. (code is half as fast with this activated)
   this->debug = false;
   // will print acceptance ratios etc. (debug must be true)
   this->loud = false;
 
   this->mu = mu;
+  this->alpha = alpha;
   this->maxLength = maxLength;
   this->numIterations = numIterations;
-  this->maxOrder = maxOrder;
   this->numBins = numBins;
   this->param = param;
 
   this->lastKeyMargin = 0.1;
+
+  // number of times we visit the zeroth order diagram of the zeroth bin
+  this->n00 = 0;
 
   // store time at which the calculation began
   time_t rawtime;
@@ -40,17 +42,14 @@ DiagrammaticMonteCarloV2::DiagrammaticMonteCarloV2 (
 
 
 void DiagrammaticMonteCarloV2::run () {
-
   // to reach start connfiguration
   const unsigned int untilStart = 100000;
 
   // to save data under the process
-  const unsigned int saveAfter = 10*1000000;
-
-  // Display display(&this->FD);
+  const unsigned int saveAfter = 100*1000000;
 
   // vector of pointers to member function of Phonon
-  vector<double (DiagrammaticMonteCarloV2::*)(double)> updateMethods = {
+  vector<void (DiagrammaticMonteCarloV2::*)(double)> updateMethods = {
     &DiagrammaticMonteCarloV2::shiftVertexPosition,
     &DiagrammaticMonteCarloV2::swapPhononConnections,
     &DiagrammaticMonteCarloV2::changeInternalPhononMomentumDirection,
@@ -60,13 +59,9 @@ void DiagrammaticMonteCarloV2::run () {
     &DiagrammaticMonteCarloV2::changeDiagramLength
   };
 
-
-
-
-
   // bins and keys for counting
   this->keys = vector<double>(this->numBins, 0);
-  this->bins = vector<double>(this->numBins, 0);
+  this->bins = vector<int>(this->numBins, 0);
 
   // fill keys
   double dt = this->maxLength/this->numBins;
@@ -75,56 +70,34 @@ void DiagrammaticMonteCarloV2::run () {
     this->keys[i] += (i + 1)*dt;
   }
 
-
-
-
-
-  for (int i = 0; i < this->numIterations + untilStart; ++i) {
-
+  // to start at a random position
+  for (unsigned int i = 0; i < untilStart; ++i) {
     // choose update operation on random
-    auto updateMethod = updateMethods[this->Uint(0, updateMethods.size() - 1)];
-
-    // save configuration
-    this->FD.save();
-
+     auto updateMethod = updateMethods[this->Uint(0, updateMethods.size() - 1)];
     // update diagram
-    double a = (this->*updateMethod)(this->param);
+    (this->*updateMethod)(this->param);
+  }
 
-    if (a < this->Udouble(0, 1)) {
-      // rejected update
-      this->FD.revert();
-      if (updateMethod == &DiagrammaticMonteCarloV2::raiseOrder && this->FD.Ds.size() < this->maxOrder) {
-        // unlink must happen here to all elements being removed
-        this->phonon2beRemoved->unlink();
-        this->vertices2beRemoved[0]->unlink();
-        this->vertices2beRemoved[1]->unlink();
-        this->electrons2beRemoved[0]->unlink();
-        this->electrons2beRemoved[1]->unlink();
-      }
-    } else if (updateMethod == &DiagrammaticMonteCarloV2::lowerOrder) {
-      // unlink must happen here to all elements being removed
-      this->phonon2beRemoved->unlink();
-      this->vertices2beRemoved[0]->unlink();
-      this->vertices2beRemoved[1]->unlink();
-      this->electrons2beRemoved[0]->unlink();
-      this->electrons2beRemoved[1]->unlink();
+
+  for (unsigned int i = 0; i < this->numIterations; ++i) {
+    auto updateMethod = updateMethods[this->Uint(0, updateMethods.size() - 1)];
+    (this->*updateMethod)(this->param);
+
+    if (i%saveAfter == saveAfter - 1) {
+      // save temporary result
+      this->write2file(i + 1);
     }
 
-    // display.render();
+    // bin diagram length
+    vector<double>::iterator itr = upper_bound(keys.begin(), keys.end(), this->FD.length);
+    int index = itr - keys.begin();
+    bins[index]++;
 
-
-
-
-    if (i >= untilStart) {
-
-      if ((i - untilStart)%saveAfter == saveAfter - 1) {
-        // save temporary result
-        this->write2file(i - untilStart + 1);
-      }
-
-      vector<double>::iterator itr = upper_bound(keys.begin(), keys.end(), this->FD.length);
-      bins[itr - keys.begin()]++;
+    // if at first bin and at zeroth order, bin again
+    if (index == 0 && this->FD.Ds.size() == 0) {
+      this->n00++;
     }
+
   }
 
   // save final result
@@ -161,25 +134,30 @@ void DiagrammaticMonteCarloV2::write2file (const unsigned int iterationNum) {
   myfile << " --------" << endl;
   myfile.close();
 
-  //
-  // TODO: we need to multiply with a factor (bins[0] new 1!)
-  //
+
 
   // data to write to file
   myfile.open("../data/" + fileName + ".txt", ios_base::app);
   if (! this->keys.empty()) {
     for (int i = 0; i != this->numBins; ++i) {
-      if (i == this->numBins - 1) {
-        myfile << fixed << setprecision(7) << this->keys[i] - this->lastKeyMargin <<  "\n";
+      if (i == 0) {
+        myfile << fixed << setprecision(7) << 0.5*this->keys[i] << " ";
+      } else if (i == this->numBins - 1) {
+        myfile << fixed << setprecision(7) << 0.5*(this->keys[i - 1] + this->keys[i] - this->lastKeyMargin) <<  "\n";
       } else {
-        myfile << fixed << setprecision(7) << this->keys[i] <<  " ";
+        myfile << fixed << setprecision(7) << 0.5*(this->keys[i - 1] + this->keys[i]) <<  " ";
       }
     }
+
+    double
+      g0Ofdt = exp(-0.5*this->keys[0]*(0.5*this->FD.externalMomentum.squaredNorm() - this->mu)),
+      gOfdt = (double) this->bins[0]/this->n00 * g0Ofdt;
+
     for (int i = 0; i != this->numBins; ++i) {
       if (i == this->numBins - 1) {
-        myfile << fixed << setprecision(7) << this->bins[i]/this->bins[0] << "\n";
+        myfile << fixed << setprecision(7) << (double) this->bins[i]/this->bins[0] * gOfdt << "\n";
       } else {
-        myfile << fixed << setprecision(7) << this->bins[i]/this->bins[0] <<  " ";
+        myfile << fixed << setprecision(7) << (double) this->bins[i]/this->bins[0] * gOfdt <<  " ";
       }
     }
   }
@@ -209,23 +187,30 @@ int DiagrammaticMonteCarloV2::Uint (int fromIncluded, int toIncluded) {
   return distribution(this->mt);
 }
 
-Vector3d DiagrammaticMonteCarloV2::calculateP0 (shared_ptr<Phonon> d) {
-  double dt = d->end->position - d->start->position;
+Vector3d DiagrammaticMonteCarloV2::calculateMeanP (shared_ptr<Vertex> v1, shared_ptr<Vertex> v2) {
+  if (v1 != v2) {
+    double dt = v2->position - v1->position;
 
-  Vector3d P0(0, 0, 0);
+    Vector3d meanP(0, 0, 0);
 
-  // loop through electrons between phonon propagator ends
-  shared_ptr<Electron> g = d->start->G[1];
-  while (g->start != d->end) {
-    P0 += g->momentum*(g->end->position - g->start->position);
+    // loop through electrons between phonon propagator ends
+    shared_ptr<Electron> g = v1->G[1];
+    while (g->start != v2) {
+      meanP += g->momentum*(g->end->position - g->start->position);
 
-    g = g->end->G[1];
+      g = g->end->G[1];
+    }
+
+    return meanP/dt;
+  } else {
+    return Vector3d(0, 0, 0);
   }
+}
 
-  // add own momentum as well
-  P0 = P0/dt + d->momentum;
+Vector3d DiagrammaticMonteCarloV2::calculateP0 (shared_ptr<Phonon> d) {
+  Vector3d meanP = this->calculateMeanP(d->start, d->end);
 
-  return P0;
+  return meanP + d->momentum;
 }
 
 Vector3d DiagrammaticMonteCarloV2::calculateQ (Vector3d P0, double q, double theta, double phi) {

@@ -1,9 +1,9 @@
 #include "../DiagrammaticMonteCarloV2.h"
 
-double DiagrammaticMonteCarloV2::shiftVertexPosition (double param) {
+void DiagrammaticMonteCarloV2::shiftVertexPosition (double param) {
   // requirement to lower: must be at least of order 1
   if (this->FD.Ds.size() == 0) {
-    return 0;
+    return;
   }
 
   // select vertex on random
@@ -36,6 +36,7 @@ double DiagrammaticMonteCarloV2::shiftVertexPosition (double param) {
     oldVal = this->FD();
   }
 
+  // is always accepted
   this->FD.setVertexPosition(v, t);
 
   if (this->debug) {
@@ -64,6 +65,4 @@ double DiagrammaticMonteCarloV2::shiftVertexPosition (double param) {
       cout << "shiftVertexPosition " << a << endl;
     }
   }
-
-  return 1;
 }

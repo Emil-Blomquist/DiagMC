@@ -1,9 +1,9 @@
 #include "../DiagrammaticMonteCarloV2.h"
 
-double DiagrammaticMonteCarloV2::changeInternalPhononMomentumDirection (double param) {
+void DiagrammaticMonteCarloV2::changeInternalPhononMomentumDirection (double param) {
   // requirement to lower: must be at least of order 1
   if (this->FD.Ds.size() == 0) {
-    return 0;
+    return;
   }
 
   // select internal phonon on random
@@ -59,7 +59,7 @@ double DiagrammaticMonteCarloV2::changeInternalPhononMomentumDirection (double p
     oldVal = this->FD();
   }
 
-  // update diagram (the last one only saves the angles)
+  // is always accepted (the last one only save the angles)
   this->FD.setInternalPhononMomentum(d, Q);
   this->FD.setInternalPhononMomentumDirection(d, theta, phi);
 
@@ -90,6 +90,4 @@ double DiagrammaticMonteCarloV2::changeInternalPhononMomentumDirection (double p
       cout << "changeInternalPhononMomentumDirection " << a << endl;
     }
   }
-
-  return 1;
 }

@@ -1,9 +1,9 @@
 #include "../DiagrammaticMonteCarloV2.h"
 
-double DiagrammaticMonteCarloV2::changeInternalPhononMomentumMagnitude (double param) {
+void DiagrammaticMonteCarloV2::changeInternalPhononMomentumMagnitude (double param) {
   // requirement to lower: must be at least of order 1
   if (this->FD.Ds.size() == 0) {
-    return 0;
+    return;
   }
 
   // select internal phonon on random
@@ -46,7 +46,7 @@ double DiagrammaticMonteCarloV2::changeInternalPhononMomentumMagnitude (double p
     oldVal = this->FD();
   }
 
-  // update diagram
+  // is always accepted
   this->FD.setInternalPhononMomentum(d, Q);
 
   if (this->debug) {
@@ -80,6 +80,4 @@ double DiagrammaticMonteCarloV2::changeInternalPhononMomentumMagnitude (double p
       cout << "changeInternalPhononMomentumMagnitude " << a << endl;
     }
   }
-  
-  return 1;
 }

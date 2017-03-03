@@ -1,6 +1,6 @@
 #include "../DiagrammaticMonteCarloV2.h"
 
-double DiagrammaticMonteCarloV2::changeDiagramLength (double param) {
+void DiagrammaticMonteCarloV2::changeDiagramLength (double param) {
 
   double
     l = 0.5*this->FD.end->G[0]->momentum.squaredNorm() - this->mu,
@@ -15,6 +15,7 @@ double DiagrammaticMonteCarloV2::changeDiagramLength (double param) {
     wInvt = exp(l*dt)*(1 - exp(-l*this->maxLength - tmin))/l;
   }
 
+  // is always accepted
   this->FD.setLength(tmin + dt);
   this->FD.end->setPosition(tmin + dt);
 
@@ -44,6 +45,4 @@ double DiagrammaticMonteCarloV2::changeDiagramLength (double param) {
       cout << "changeDiagramLength " << a << endl;
     }
   }
-
-  return 1;
 }

@@ -31,11 +31,12 @@ class DiagrammaticMonteCarloV2 {
   private:
     mt19937_64 mt;
     bool debug, loud;
-    unsigned int maxOrder, numIterations, numBins;
-    double maxLength, mu, param, lastKeyMargin;
+    unsigned int numIterations, numBins, n00;
+    double maxLength, mu, alpha, param, lastKeyMargin;
     struct tm *timeinfo;
 
-    vector<double> keys, bins;
+    vector<double> keys;
+    vector<int> bins;
 
     shared_ptr<Vertex> vertices2beRemoved [2];
     shared_ptr<Electron> electrons2beRemoved [2];
@@ -44,16 +45,18 @@ class DiagrammaticMonteCarloV2 {
     double Udouble (double, double);
     int Uint (int, int);
 
+    Vector3d calculateMeanP (shared_ptr<Vertex>, shared_ptr<Vertex>);
     Vector3d calculateP0 (shared_ptr<Phonon>);
     Vector3d calculateQ (Vector3d, double, double, double);
 
-    double shiftVertexPosition (double param = 1);
-    double swapPhononConnections (double param = 1);
-    double changeInternalPhononMomentumDirection (double param = 1);
-    double changeInternalPhononMomentumMagnitude (double param = 1);
-    double raiseOrder (double param = 1);
-    double lowerOrder (double param = 1);
-    double changeDiagramLength (double param = 1);
+    void
+      shiftVertexPosition (double param = 1),
+      swapPhononConnections (double param = 1),
+      changeInternalPhononMomentumDirection (double param = 1),
+      changeInternalPhononMomentumMagnitude (double param = 1),
+      raiseOrder (double param = 1),
+      lowerOrder (double param = 1),
+      changeDiagramLength (double param = 1);
 
     void write2file (const unsigned int = 0);
 
@@ -65,7 +68,6 @@ class DiagrammaticMonteCarloV2 {
       double,
       double,
       double,
-      unsigned int,
       unsigned int,
       unsigned int,
       double param

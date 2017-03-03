@@ -18,20 +18,19 @@ int main () {
 
   // parameters
   const double
-    // maxMomenta = 3,
-    // maxLength = 5*10,
     maxMomenta = 0,
     maxLength = 5,
+    // maxMomenta = 0,
+    // maxLength = 5,
     alpha = 2,
     mu = -2.2;
 
   const unsigned int
-    // numIterations = 600*1000000,
-    // numBins = 250*10,
+    // numIterations = 1000*1000000,
+    // numBins = 250*6,
     // maxOrder = 100000000;
-    numIterations = 25000000,
-    numBins = 250,
-    maxOrder = 100000000;
+    numIterations = 10000000,
+    numBins = 250;
 
   VectorXf momenta = VectorXf::LinSpaced(nprocs, 0, maxMomenta);
   Vector3d externalMomentum(momenta[myrank], 0, 0);
@@ -44,7 +43,6 @@ int main () {
     alpha,
     mu,
     numIterations,
-    maxOrder,
     numBins,
     param
   );

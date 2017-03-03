@@ -1,9 +1,14 @@
 #include "../DiagrammaticMonteCarloV2.h"
 
-double DiagrammaticMonteCarloV2::swapPhononConnections (double param) {
+void DiagrammaticMonteCarloV2::swapPhononConnections (double param) {
   // requirement to swap: must be at least of order 2
   if (this->FD.Ds.size() < 2) {
-    return 0;
+    return;
+  }
+
+  double oldVal;
+  if (this->debug) {
+    oldVal = this->FD();
   }
 
   // select internal electron propagator on random
@@ -20,7 +25,7 @@ double DiagrammaticMonteCarloV2::swapPhononConnections (double param) {
 
   // we do not allow for phonon to be reversed
   if (d1 == d2) {
-    return 0;
+    return;
   }
 
   double
@@ -40,13 +45,13 @@ double DiagrammaticMonteCarloV2::swapPhononConnections (double param) {
     a = exp(exponent);
   }
 
-  double oldVal;
-  if (this->debug) {
-    oldVal = this->FD();
+  // accept or reject update
+  bool accepted = false;
+  if (a > this->Udouble(0, 1)) {
+    this->FD.swapPhonons(v1, v2);
+
+    accepted = true;
   }
-
-  this->FD.swapPhonons(v1, v2);
-
 
   if (this->debug) {
     double val = this->FD();
@@ -54,6 +59,7 @@ double DiagrammaticMonteCarloV2::swapPhononConnections (double param) {
     if (a < 0 || ! isfinite(a)) {
       cout << "--------------------------------------------------------------------" << endl
            << "overflow at DMC::swapPhononConnections " << endl
+           << "accepted=" << accepted << endl
            << "a=" << a << endl
            << "val/oldVal=" << val/oldVal << endl
            << "order=" << this->FD.Ds.size() << endl
@@ -65,6 +71,4 @@ double DiagrammaticMonteCarloV2::swapPhononConnections (double param) {
       cout << "swapPhononConnections: "  << this->FD.Ds.size() << " " << a << endl;
     }
   }
-
-  return a;
 }
