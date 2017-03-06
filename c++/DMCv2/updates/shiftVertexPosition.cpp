@@ -39,6 +39,19 @@ void DiagrammaticMonteCarloV2::shiftVertexPosition (double param) {
   // is always accepted
   this->FD.setVertexPosition(v, t);
 
+  if ( ! isfinite(t)) {
+    cout
+      << "-------------------------" << endl
+      << "DMC::shiftVertexPosition: nan encountered" << endl
+      << "t=" << t << endl
+      << "dtdE=" << dtdE << endl
+      << "dE=" << dE << endl
+      << "t1=" << t1 << endl
+      << "t2=" << t2 << endl
+      << "t2>t1=" << (t2>t1) << endl
+      << "-------------------------" << endl;
+  }
+
   if (this->debug) {
     double val = this->FD();
 

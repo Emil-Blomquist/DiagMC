@@ -51,6 +51,9 @@ void FeynmanDiagram::removeVertex (shared_ptr<Vertex> v) {
   // relink
   v->G[0]->setEnd(g->end);
 
+  // unlink
+  g->setStart(NULL);
+
   // remove g from Gs
   for (auto i = this->Gs.begin(); i != this->Gs.end(); ++i) {
     if (*i == g) {
@@ -66,9 +69,15 @@ void FeynmanDiagram::setVertexPosition (shared_ptr<Vertex> v, double t) {
     return;
   }
 
-  if ( ! (v->G[0]->start->position < t && t < v->G[1]->end->position)) {
-    cout << "ERROR at FeynmanDiagram::setVertexPosition: New vertex time invalid" << endl;
-    return;
+  // if ( ! (v->G[0]->start->position < t && t < v->G[1]->end->position)) {
+  //   cout << "ERROR at FeynmanDiagram::setVertexPosition: New vertex time invalid" << endl;
+  //   return;
+  // }
+
+  if (v->G[0]->start->position >= t) {
+    t = v->G[0]->start->position + DBL_EPSILON;
+  } else if (t >= v->G[1]->end->position) {
+    t = v->G[1]->end->position - DBL_EPSILON;
   }
 
   v->setPosition(t);

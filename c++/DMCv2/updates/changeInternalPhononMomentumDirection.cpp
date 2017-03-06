@@ -18,15 +18,25 @@ void DiagrammaticMonteCarloV2::changeInternalPhononMomentumDirection (double par
     r = this->Udouble(0, 1),
     phi = this->Udouble(0, 2*M_PI);
 
-  // sample new theta
-  double cosTheta, param1 = q*p0*(d->end->position - d->start->position);
+  double
+    param1 = q*p0*(d->end->position - d->start->position),
+    cosTheta;
   if (param1 < pow(10.0, -10.0)) {
     // small "param1" approximation to avoid overflow
     cosTheta = 1 - 2*r;
   } else {
     cosTheta = 1 + log(1 - r*(1 - exp(-2*param1)))/param1;
   }
+
   double theta = acos(cosTheta);
+  if ( ! isfinite(theta)) {
+    // to correct errors due to machine precision
+    if (cosTheta > 0) {
+      theta = 0;
+    } else {
+      theta = M_PI;
+    }
+  }
 
   // calculate new Q
   Vector3d Q = calculateQ(P0, q, theta, phi);
@@ -62,6 +72,21 @@ void DiagrammaticMonteCarloV2::changeInternalPhononMomentumDirection (double par
   // is always accepted (the last one only save the angles)
   this->FD.setInternalPhononMomentum(d, Q);
   this->FD.setInternalPhononMomentumDirection(d, theta, phi);
+
+  if ( ! isfinite(theta) || ! isfinite(phi) || ! isfinite(Q[0])) {
+    cout
+      << "-------------------------" << endl
+      << "DMC::changeInternalPhononMomentumDirection: nan encountered" << endl
+      << "theta=" << theta << endl
+      << "phi=" << phi << endl
+      << "Q=" << Q.transpose() << endl
+      << "cosTheta=" << cosTheta << endl
+      << "r=" << r << endl
+      << "P0=" << P0.transpose() << endl
+      << "p0=" << p0 << endl
+      << "q=" << q << endl
+      << "-------------------------" << endl;
+  }
 
   if (this->debug) {
     double val = this->FD();

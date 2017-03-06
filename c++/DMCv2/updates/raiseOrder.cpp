@@ -36,8 +36,10 @@ void DiagrammaticMonteCarloV2::raiseOrder (double param) {
     wInvt2 = exp(l*dt2)*(1 - exp(-l*(t2up - t2low)))/l;
 
   // phonon momentum
-  double std = 1/sqrt(t2 - t1);
+  // if dt = 0
+  double std = (t2 - t1 < pow(10.0, -10.0) ? 100000 : 1/sqrt(t2 - t1)); 
   normal_distribution<double> normal(0.0, std);
+
 
   double
     q = abs(normal(this->mt)),
@@ -87,6 +89,24 @@ void DiagrammaticMonteCarloV2::raiseOrder (double param) {
     shared_ptr<Phonon> d = this->FD.addInternalPhonon(v1, v2, Q, theta, phi);
 
     accepted = true;
+  }
+
+  if (! isfinite(dt1) || ! isfinite(dt2) || ! isfinite(theta) || ! isfinite(phi) || ! isfinite(Q[0]) || ! isfinite(Q[1]) || ! isfinite(Q[2])) {
+    cout
+      << "-------------------------" << endl
+      << "DMC::raiseOrder: nan encountered" << endl
+      << "Q=" << Q.transpose() << endl
+      << "q=" << q << endl
+      << "theta=" << theta << endl
+      << "phi=" << phi << endl
+      << "meanP=" << meanP.transpose() << endl
+      << "accepted=" << accepted << endl
+      << "dt1=" << dt1 << endl
+      << "dt2=" << dt2 << endl
+      << "t1=" << t1 << endl
+      << "t2=" << t2 << endl
+      << "t2>t1=" << (t2>t1) << endl
+      << "-------------------------" << endl;
   }
 
   if (this->debug) {

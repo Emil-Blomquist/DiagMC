@@ -46,7 +46,7 @@ void DiagrammaticMonteCarloV2::run () {
   const unsigned int untilStart = 100000;
 
   // to save data under the process
-  const unsigned int saveAfter = 100*1000000;
+  const unsigned int saveAfter = 500*1000000;
 
   // vector of pointers to member function of Phonon
   vector<void (DiagrammaticMonteCarloV2::*)(double)> updateMethods = {
@@ -99,6 +99,10 @@ void DiagrammaticMonteCarloV2::run () {
     }
 
   }
+
+  //
+  // TODO: on final save, overwrite file content
+  //
 
   // save final result
   this->write2file();
@@ -188,23 +192,48 @@ int DiagrammaticMonteCarloV2::Uint (int fromIncluded, int toIncluded) {
 }
 
 Vector3d DiagrammaticMonteCarloV2::calculateMeanP (shared_ptr<Vertex> v1, shared_ptr<Vertex> v2) {
+
+  Vector3d meanP(0, 0, 0);
+
   if (v1 != v2) {
-    double dt = v2->position - v1->position;
+    if (v1->G[1]->end == v2) {
+      // if dt = 0
+      meanP += v1->G[1]->momentum;
 
-    Vector3d meanP(0, 0, 0);
+      if ( ! isfinite(meanP[0]) || ! isfinite(meanP[1]) || ! isfinite(meanP[2])) {
+        cout << "-----------" << endl
+             << "Overflow at DiagrammaticMonteCarloV2::calculateMeanP" << endl
+             << "meanP= " << meanP.transpose() << endl
+             << "t1= " << v1->position << endl
+             << "t2= " << v2->position << endl
+             << "-----------" << endl;
+      }
+    } else {
+      double dt = v2->position - v1->position;
 
-    // loop through electrons between phonon propagator ends
-    shared_ptr<Electron> g = v1->G[1];
-    while (g->start != v2) {
-      meanP += g->momentum*(g->end->position - g->start->position);
+      // loop through electrons between phonon propagator ends
+      shared_ptr<Electron> g = v1->G[1];
+      while (g->start != v2) {
+        meanP += g->momentum*(g->end->position - g->start->position);
 
-      g = g->end->G[1];
+        g = g->end->G[1];
+      }
+
+      if (dt == 0 || ! isfinite(meanP[0]) || ! isfinite(meanP[1]) || ! isfinite(meanP[2])) {
+        cout << "-----------" << endl
+             << "Overflow at DiagrammaticMonteCarloV2::calculateMeanP" << endl
+             << "dt=" << dt << endl
+             << "meanP= " << meanP.transpose() << endl
+             << "t1= " << v1->position << endl
+             << "t2= " << v2->position << endl
+             << "-----------" << endl;
+      }
+
+      meanP /= dt;
     }
-
-    return meanP/dt;
-  } else {
-    return Vector3d(0, 0, 0);
   }
+
+  return meanP;
 }
 
 Vector3d DiagrammaticMonteCarloV2::calculateP0 (shared_ptr<Phonon> d) {
@@ -239,6 +268,18 @@ Vector3d DiagrammaticMonteCarloV2::calculateQ (Vector3d P0, double q, double the
   Qp = q*cos(theta)*Ep;
   Qo = (Eo1*cos(phi) + Eo2*sin(phi)) * q*sin(theta);
   Q = Qp + Qo;
+
+  // Overflow at DiagrammaticMonteCarloV2::calculateQ
+  // Q=-nan -nan -nan
+  // P0= -nan -nan -nan
+  // Ep= 0 0 1
+  // Eo1= 1 0 0
+  // Eo2= 0 1 0
+  // q= 5.48249e+07
+  // theta= -nan <------------------------------------------------------------------------------------------------------- (var kommer detta ifrån?) DiagrammaticMonteCarloV2::changeInternalPhononMomentumDirection
+  // phi= 0.320447
+  // -----------
+
 
   // to find overflow cause
   if (! isfinite(Q[0]) || ! isfinite(Q[1]) || ! isfinite(Q[2])) {

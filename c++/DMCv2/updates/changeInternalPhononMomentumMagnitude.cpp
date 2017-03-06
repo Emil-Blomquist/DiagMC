@@ -49,6 +49,23 @@ void DiagrammaticMonteCarloV2::changeInternalPhononMomentumMagnitude (double par
   // is always accepted
   this->FD.setInternalPhononMomentum(d, Q);
 
+  if ( ! isfinite(Q[0]) || ! isfinite(Q[1]) || ! isfinite(Q[2])) {
+    cout
+      << "-------------------------" << endl
+      << "DMC::changeInternalPhononMomentumMagnitude: nan encountered" << endl
+      << "Q=" << Q.transpose() << endl
+      << "q=" << q << endl
+      << "erf_inv=" << boost::math::erf_inv(param3) << endl
+      << "param1=" << param1 << endl
+      << "param2=" << param2 << endl
+      << "param3=" << param3 << endl
+      << "dt=" << d->end->position - d->start->position << endl
+      << "d->theta=" << d->theta << endl
+      << "P0=" << P0.transpose() << endl
+      << "p0=" << p0 << endl
+      << "-------------------------" << endl;
+  }
+
   if (this->debug) {
     double val = this->FD();
 
@@ -81,3 +98,29 @@ void DiagrammaticMonteCarloV2::changeInternalPhononMomentumMagnitude (double par
     }
   }
 }
+
+
+
+
+// -----------
+// Overflow at DiagrammaticMonteCarloV2::calculateQ
+// Q=nan nan nan
+// P0= -nan -nan -nan
+// Ep= 0 0 1
+// Eo1= 1 0 0
+// Eo2= 0 1 0
+// q= nan
+// theta= 0.981302
+// phi= 5.98027
+// -----------
+// -----------
+// Overflow at DiagrammaticMonteCarloV2::calculateQ
+// Q=nan nan nan
+// P0= nan nan nan
+// Ep= 0 0 1
+// Eo1= 1 0 0
+// Eo2= 0 1 0
+// q= nan
+// theta= 3.14159
+// phi= 0.633581
+// -----------

@@ -53,6 +53,17 @@ void DiagrammaticMonteCarloV2::swapPhononConnections (double param) {
     accepted = true;
   }
 
+  if ( ! isfinite(a)) {
+    cout
+      << "-------------------------" << endl
+      << "DMC::swapPhononConnections: nan encountered" << endl
+      << "a=" << a << endl
+      << "exponent=" << exponent << endl
+      << "Eafter=" << Eafter << endl
+      << "Ebefore=" << Ebefore << endl
+      << "-------------------------" << endl;
+  }
+
   if (this->debug) {
     double val = this->FD();
 

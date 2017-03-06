@@ -19,6 +19,17 @@ void DiagrammaticMonteCarloV2::changeDiagramLength (double param) {
   this->FD.setLength(tmin + dt);
   this->FD.end->setPosition(tmin + dt);
 
+  if ( ! isfinite(dt)) {
+    cout
+      << "-------------------------" << endl
+      << "DMC::changeDiagramLength: nan encountered" << endl
+      << "dt=" << dt << endl
+      << "tmin=" << tmin << endl
+      << "r=" << r << endl
+      << "l=" << l << endl
+      << "-------------------------" << endl;
+  }
+
   if (this->debug) {
     double val = this->FD();
 
