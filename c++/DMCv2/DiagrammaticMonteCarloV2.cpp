@@ -50,13 +50,13 @@ void DiagrammaticMonteCarloV2::run () {
 
   // vector of pointers to member function of Phonon
   vector<void (DiagrammaticMonteCarloV2::*)(double)> updateMethods = {
-    &DiagrammaticMonteCarloV2::shiftVertexPosition,
-    &DiagrammaticMonteCarloV2::swapPhononConnections,
-    &DiagrammaticMonteCarloV2::changeInternalPhononMomentumDirection,
-    &DiagrammaticMonteCarloV2::changeInternalPhononMomentumMagnitude,
+    // &DiagrammaticMonteCarloV2::shiftVertexPosition, // <- 2
+    // &DiagrammaticMonteCarloV2::swapPhononConnections, // <- 1
+    // &DiagrammaticMonteCarloV2::changeInternalPhononMomentumDirection, // <- 3
+    &DiagrammaticMonteCarloV2::changeInternalPhononMomentumMagnitude, // <- 4
     &DiagrammaticMonteCarloV2::raiseOrder,
     &DiagrammaticMonteCarloV2::lowerOrder,
-    &DiagrammaticMonteCarloV2::changeDiagramLength
+    // &DiagrammaticMonteCarloV2::changeDiagramLength
   };
 
   // bins and keys for counting
@@ -79,6 +79,11 @@ void DiagrammaticMonteCarloV2::run () {
   }
 
 
+  // Display disp(&this->FD);
+  // disp.render();
+
+
+  // main loop
   for (unsigned int i = 0; i < this->numIterations; ++i) {
     auto updateMethod = updateMethods[this->Uint(0, updateMethods.size() - 1)];
     (this->*updateMethod)(this->param);
@@ -268,18 +273,6 @@ Vector3d DiagrammaticMonteCarloV2::calculateQ (Vector3d P0, double q, double the
   Qp = q*cos(theta)*Ep;
   Qo = (Eo1*cos(phi) + Eo2*sin(phi)) * q*sin(theta);
   Q = Qp + Qo;
-
-  // Overflow at DiagrammaticMonteCarloV2::calculateQ
-  // Q=-nan -nan -nan
-  // P0= -nan -nan -nan
-  // Ep= 0 0 1
-  // Eo1= 1 0 0
-  // Eo2= 0 1 0
-  // q= 5.48249e+07
-  // theta= -nan <------------------------------------------------------------------------------------------------------- (var kommer detta ifrån?) DiagrammaticMonteCarloV2::changeInternalPhononMomentumDirection
-  // phi= 0.320447
-  // -----------
-
 
   // to find overflow cause
   if (! isfinite(Q[0]) || ! isfinite(Q[1]) || ! isfinite(Q[2])) {

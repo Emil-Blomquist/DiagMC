@@ -48,10 +48,18 @@ void Phonon::setEnd (shared_ptr<Vertex> v) {
 
 void Phonon::setTheta (double theta) {
   this->theta = theta;
+
+  if ( ! isfinite(theta)) {
+    cout << "Phonon::setTheta theta=" << theta << endl;
+  }
 }
 
 void Phonon::setPhi (double phi) {
   this->phi = phi;
+
+  if ( ! isfinite(phi)) {
+    cout << "Phonon::setPhi phi=" << phi << endl;
+  }
 }
 
 double Phonon::operator() (double alpha) {

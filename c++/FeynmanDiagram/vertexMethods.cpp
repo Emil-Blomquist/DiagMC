@@ -1,6 +1,13 @@
 #include "FeynmanDiagram.h"
 
 shared_ptr<Vertex> FeynmanDiagram::insertVertex (int gIndex, double dt) {
+
+  if ( ! isfinite(dt)) {
+    cout << "FeynmanDiagram::insertVertex dt=" << dt << endl;
+  }
+
+
+
   if (dt <= 0) {
     // cout << "ERROR at FeynmanDiagram::insertVertex: dt <= 0" << endl;
     // return NULL;
@@ -67,6 +74,10 @@ void FeynmanDiagram::setVertexPosition (shared_ptr<Vertex> v, double t) {
   if (v == this->start || v == this->end) {
     cout << "ERROR at FeynmanDiagram::setVertexPosition: Not allowed to change position of the first nor the last vertex" << endl;
     return;
+  }
+
+  if ( ! isfinite(t)) {
+    cout << "FeynmanDiagram::setVertexPosition t=" << t << endl;
   }
 
   // if ( ! (v->G[0]->start->position < t && t < v->G[1]->end->position)) {

@@ -15,6 +15,11 @@ void DiagrammaticMonteCarloV2::shiftVertexPosition (double param) {
     t1 = g->start->position,
     t2 = v->G[1]->end->position;
 
+  if (t2 - t1 <= 3*DBL_EPSILON) {
+    cout << "DMC::shiftVertexPosition dt≈0 ->return";
+    return;
+  }
+
   // calculate exponent
   double
     c = (v->D[0]) ? -1 : 1,

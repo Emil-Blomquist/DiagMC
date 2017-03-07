@@ -7,10 +7,18 @@ Propagator::Propagator (int type, Vector3d momentum) {
 
 void Propagator::setMomentum (Vector3d P) {
   this->momentum = P;
+
+  if ( ! isfinite(P[0]) || ! isfinite(P[1]) || ! isfinite(P[2])) {
+    cout << "Phonon::setMomentum P=" << P.transpose() << endl;
+  }
 }
 
 void Propagator::addMomentum (Vector3d P) {
   this->momentum += P;
+
+  if ( ! isfinite(P[0]) || ! isfinite(P[1]) || ! isfinite(P[2])) {
+    cout << "Phonon::addMomentum P=" << P.transpose() << endl;
+  }
 }
 
 void Propagator::save () {

@@ -35,16 +35,9 @@ void Vertex::setD (int i, shared_ptr<Phonon> d) {
 }
 
 void Vertex::setPosition (double t) {
-  //
-  // this check needs to be carried out elsewhere
-  //
-
-  // if (this->G[0] == NULL or this->G[1] == NULL) {
-  //   cout << "ERROR at Vertex::setPosition: cannot change position of first nor last vertex";
-  //   return;
-  // }
-
-  // double tmin = this->G[0]->start.position, tmax = this->G[1]->end.position;
+  if ( ! isfinite(t)) {
+    cout << "Phonon::setPosition t=" << t << endl;
+  }
 
   this->position = t;
 }

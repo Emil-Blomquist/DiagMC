@@ -6,8 +6,16 @@ void DiagrammaticMonteCarloV2::changeInternalPhononMomentumMagnitude (double par
     return;
   }
 
+
   // select internal phonon on random
   shared_ptr<Phonon> d = this->FD.Ds[this->Uint(0, this->FD.Ds.size() - 1)];
+
+
+  if (d->end->position - d->start->position == 0) {
+    // if time difference is zero momentum does not matter...
+    cout << "DMC::changeInternalPhononMomentumMagnitude: dt = 0 -> return" << endl;
+    return;
+  }
 
   Vector3d P0 = this->calculateP0(d);
   double p0 = P0.norm();
@@ -102,25 +110,28 @@ void DiagrammaticMonteCarloV2::changeInternalPhononMomentumMagnitude (double par
 
 
 
+
 // -----------
 // Overflow at DiagrammaticMonteCarloV2::calculateQ
-// Q=nan nan nan
-// P0= -nan -nan -nan
-// Ep= 0 0 1
-// Eo1= 1 0 0
-// Eo2= 0 1 0
-// q= nan
-// theta= 0.981302
-// phi= 5.98027
+// Q= inf -nan -inf
+// P0=   0.628175   0.455531 -0.0329462
+// Ep=   0.808818   0.586527 -0.0424205
+// Eo1=          0 -0.0721364  -0.997395
+// Eo2=  -0.588059   0.806711 -0.0583452
+// q= inf
+// theta= 1.21672
+// phi= 5.11482
 // -----------
-// -----------
-// Overflow at DiagrammaticMonteCarloV2::calculateQ
-// Q=nan nan nan
-// P0= nan nan nan
-// Ep= 0 0 1
-// Eo1= 1 0 0
-// Eo2= 0 1 0
-// q= nan
-// theta= 3.14159
-// phi= 0.633581
-// -----------
+// -------------------------
+// DMC::changeInternalPhononMomentumMagnitude: nan encountered
+// Q= inf -nan -inf
+// q=inf
+// erf_inv=0.533844
+// param1=0
+// param2=0.269286
+// param3=0.549732
+// dt=0                <-----
+// d->theta=1.21672
+// P0=  0.628175   0.455531 -0.0329462
+// p0=0.776658
+// -------------------------
