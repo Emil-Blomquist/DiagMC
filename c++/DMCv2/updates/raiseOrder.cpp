@@ -2,9 +2,9 @@
 
 void DiagrammaticMonteCarloV2::raiseOrder (double param) {
   // temp
-  if (this->FD.Ds.size() == 5) {
-    return;
-  }
+  // if (this->FD.Ds.size() == 5) {
+  //   return;
+  // }
 
 
   double oldVal;
@@ -58,7 +58,7 @@ void DiagrammaticMonteCarloV2::raiseOrder (double param) {
   // använd meanP som Z-axel!!
 
 
-  // Vector3d Q(q*sin(theta)*cos(phi), q*sin(theta)*sin(phi), q*cos(theta)); // <-- swap here
+  Vector3d Q(q*sin(theta)*cos(phi), q*sin(theta)*sin(phi), q*cos(theta)); // <-- swap here
   // Vector3d Q(q*sin(theta)*sin(phi), q*cos(theta), q*sin(theta)*cos(phi)); // <-- swap here
  
   double wInvd = this->FD.Ds.size() + 1;
@@ -74,7 +74,7 @@ void DiagrammaticMonteCarloV2::raiseOrder (double param) {
   }
 
   // test
-  Vector3d Q = this->calculateQ(meanP, q, theta, phi);
+  // Vector3d Q = this->calculateQ(meanP, q, theta, phi);
 
   double
     sinTheta = sin(theta),
@@ -85,7 +85,7 @@ void DiagrammaticMonteCarloV2::raiseOrder (double param) {
   double a;
   if (! isfinite(exponential)) {
     a = 1;
-  } else if (sinTheta == 0 || wInvt2 == 0 || wInvQ == 0 || ! isfinite(exponential)) {
+  } else if (sinTheta == 0 || wInvt2 == 0 || wInvQ == 0) {
     a = 0;
   } else {
     a = exponential * alpha*sinTheta/(sqrt(8)*M_PI*M_PI) * (wInvVertex*wInvt1*wInvt2*wInvQ)/wInvd;

@@ -25,7 +25,7 @@ int main () {
   //   mu = 0.03;
 
   // const unsigned int
-  //   numIterations = 3000000000,
+    // numIterations = 3000000000,
   //   numBins = 250*6;
 
 
@@ -38,6 +38,7 @@ int main () {
 
   const unsigned int
     numIterations = 50000000*2,
+    // numIterations = 3000000000,
     numBins = 250*2;
 
   VectorXf momenta = VectorXf::LinSpaced(nprocs, minMomenta, maxMomenta);

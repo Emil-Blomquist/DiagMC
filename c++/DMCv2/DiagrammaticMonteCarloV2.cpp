@@ -50,10 +50,10 @@ void DiagrammaticMonteCarloV2::run () {
 
   // vector of pointers to member function of Phonon
   vector<void (DiagrammaticMonteCarloV2::*)(double)> updateMethods = {
-    // &DiagrammaticMonteCarloV2::shiftVertexPosition, // <- 2
-    // &DiagrammaticMonteCarloV2::swapPhononConnections, // <- 1
+    &DiagrammaticMonteCarloV2::shiftVertexPosition, // <- 2
+    &DiagrammaticMonteCarloV2::swapPhononConnections, // <- 1
     &DiagrammaticMonteCarloV2::changeInternalPhononMomentumDirection, // <- 3
-    // &DiagrammaticMonteCarloV2::changeInternalPhononMomentumMagnitude, // <- 4
+    &DiagrammaticMonteCarloV2::changeInternalPhononMomentumMagnitude, // <- 4
     &DiagrammaticMonteCarloV2::raiseOrder,
     &DiagrammaticMonteCarloV2::lowerOrder,
     &DiagrammaticMonteCarloV2::changeDiagramLength

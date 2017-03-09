@@ -17,89 +17,62 @@ void DiagrammaticMonteCarloV2::changeInternalPhononMomentumMagnitude (double par
     return;
   }
 
-  Vector3d P0 = this->calculateP0(d);
-  double p0 = P0.norm();
 
   double
-    param1 = sqrt(0.5*(d->end->position - d->start->position)),
-    param2 = p0*cos(d->theta);
-
-  double q,
-    r = this->Udouble(0, 1),
-    param3 = r + (r - 1)*erf(param1*param2);
+    t1 = d->start->position,
+    t2 = d->end->position,
+    std = (t2 - t1 < pow(10.0, -10.0) ? 100000 : 1/sqrt(t2 - t1)); 
+  normal_distribution<double> normal(0.0, std);
   
-  if (abs(param3) >= 1) {
-    // if (this->debug) {
-      cout << "--------------------------------------------------------------------" << endl
-           << "boost::math::erf_inv: Overflow Error prevented" << endl
-           << "param1=" << param1 << endl
-           << "param2=" << param2 << endl
-           << "param3=" << param3 << endl
-           << "--------------------------------------------------------------------" << endl;
-    // }
+  double
+    q = abs(normal(this->mt)),
+    wInvq = sqrt(0.5*M_PI*pow(std, 2.0)) * exp(0.5*pow(q/std, 2.0));
 
-    param3 += (param3 > 0 ? -1 : 1)*DBL_EPSILON;
-  }
+  Vector3d
+    Q(q*sin(d->theta)*cos(d->phi), q*sin(d->theta)*sin(d->phi), q*cos(d->theta)),
+    oldQ = d->momentum,
+    dQ = Q - oldQ,
+    meanP = this->calculateMeanP(d->start, d->end);
 
-  q = param2 + boost::math::erf_inv(param3)/param1;
+  double
+    oldq = oldQ.norm(),
+    oldwInvq = sqrt(0.5*M_PI*pow(std, 2.0)) * exp(0.5*pow(oldq/std, 2.0));
 
-  Vector3d Q = this->calculateQ(P0, q, d->theta, d->phi);
+  double
+    dq2 = dQ.squaredNorm(),
+    exponent = (dQ.dot(meanP) - 0.5*dq2)*(t2 - t1);
 
-  double oldq, oldVal;
-  Vector3d oldQ;
+  double a = wInvq/oldwInvq * exp(exponent);
+
+  double oldVal;
   if (this->debug) {
-    oldq = d->momentum.norm();
-    oldQ = this->calculateQ(P0, oldq, d->theta, d->phi);
-    this->FD.setInternalPhononMomentum(d, oldQ);
     oldVal = this->FD();
   }
 
-  // is always accepted
-  this->FD.setInternalPhononMomentum(d, Q);
+  // accept or reject update
+  bool accepted = false;
+  if (a > this->Udouble(0, 1)) {
 
-  if ( ! isfinite(Q[0]) || ! isfinite(Q[1]) || ! isfinite(Q[2])) {
-    cout
-      << "-------------------------" << endl
-      << "DMC::changeInternalPhononMomentumMagnitude: nan encountered" << endl
-      << "Q=" << Q.transpose() << endl
-      << "q=" << q << endl
-      << "erf_inv=" << boost::math::erf_inv(param3) << endl
-      << "param1=" << param1 << endl
-      << "param2=" << param2 << endl
-      << "param3=" << param3 << endl
-      << "dt=" << d->end->position - d->start->position << endl
-      << "d->theta=" << d->theta << endl
-      << "P0=" << P0.transpose() << endl
-      << "p0=" << p0 << endl
-      << "-------------------------" << endl;
+    // set new momentum
+    this->FD.setInternalPhononMomentum(d, Q);
+
+    accepted = true;
   }
+
+
 
   if (this->debug) {
     double val = this->FD();
-
-    double a;
-    if (val == 0) {
-      a = 0;
-    } else if (oldVal == 0) {
-      a = 1;
-    } else {
-      // a = exp(log(val) - log(oldVal) - pow(param1, 2) * (pow(oldq - param2, 2) - pow(q - param2, 2)));
-      a = val/oldVal * exp(-pow(param1, 2) * (pow(oldq - param2, 2) - pow(q - param2, 2)));
-    }
 
     if (a < 0 || ! isfinite(a)) {
       cout << "--------------------------------------------------------------------" << endl
            << "overflow at DMC::changeInternalPhononMomentumMagnitude " << endl
            << "a=" << a << endl
+           << "accepted=" << accepted << endl
            << "order=" << this->FD.Ds.size() << endl
            << "val=" << val << endl
            << "oldVal=" << oldVal << endl
-           << "exp=" << exp(-pow(param1, 2) * (pow(oldq - param2, 2) - pow(q - param2, 2))) << endl
-           << "param1=" << param1 << endl
-           << "param2=" << param2 << endl
            << "Q=" << Q.transpose() << endl
-           << "val=" << val << endl
-           << "oldVal=" << oldVal << endl
            << "--------------------------------------------------------------------" << endl;
     } else if (this->loud) {
       cout << "changeInternalPhononMomentumMagnitude " << a << endl;
