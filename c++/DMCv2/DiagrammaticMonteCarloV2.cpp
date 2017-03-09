@@ -52,11 +52,11 @@ void DiagrammaticMonteCarloV2::run () {
   vector<void (DiagrammaticMonteCarloV2::*)(double)> updateMethods = {
     // &DiagrammaticMonteCarloV2::shiftVertexPosition, // <- 2
     // &DiagrammaticMonteCarloV2::swapPhononConnections, // <- 1
-    // &DiagrammaticMonteCarloV2::changeInternalPhononMomentumDirection, // <- 3
-    &DiagrammaticMonteCarloV2::changeInternalPhononMomentumMagnitude, // <- 4
+    &DiagrammaticMonteCarloV2::changeInternalPhononMomentumDirection, // <- 3
+    // &DiagrammaticMonteCarloV2::changeInternalPhononMomentumMagnitude, // <- 4
     &DiagrammaticMonteCarloV2::raiseOrder,
     &DiagrammaticMonteCarloV2::lowerOrder,
-    // &DiagrammaticMonteCarloV2::changeDiagramLength
+    &DiagrammaticMonteCarloV2::changeDiagramLength
   };
 
   // bins and keys for counting
@@ -255,7 +255,7 @@ Vector3d DiagrammaticMonteCarloV2::calculateQ (Vector3d P0, double q, double the
     // find a vector orthogonal to Ep
     tempVector = Ep.cross(Ep + Vector3d(1, 0, 0));
     Eo1 = tempVector.normalized();
-    // cout << "TEMP " << Eo1.transpose() << endl;
+
     if ( ! isfinite(Eo1[0])) {
       Eo1  = Ep.cross(Ep + Vector3d(0, 1, 0)).normalized();
     }

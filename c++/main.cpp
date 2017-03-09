@@ -41,7 +41,7 @@ int main () {
     numBins = 250*2;
 
   VectorXf momenta = VectorXf::LinSpaced(nprocs, minMomenta, maxMomenta);
-  Vector3d externalMomentum(momenta[myrank], 0, 0);
+  Vector3d externalMomentum(0, 0, momenta[myrank]);
 
   double param = myrank;
 

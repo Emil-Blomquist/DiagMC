@@ -1,9 +1,15 @@
 #include "../DiagrammaticMonteCarloV2.h"
 
 void DiagrammaticMonteCarloV2::raiseOrder (double param) {
-  // old configuration value
+  // temp
+  if (this->FD.Ds.size() == 5) {
+    return;
+  }
+
+
   double oldVal;
   if (this->debug) {
+    // old configuration value
     oldVal = this->FD();
   }
 
@@ -47,8 +53,14 @@ void DiagrammaticMonteCarloV2::raiseOrder (double param) {
     phi = this->Udouble(0, 2*M_PI),
     wInvQ = 2*pow(M_PI, 2.0) * sqrt(0.5*M_PI*pow(std, 2.0)) * exp(0.5*pow(q/std, 2.0));
 
-  Vector3d Q(q*sin(theta)*cos(phi), q*sin(theta)*sin(phi), q*cos(theta));
 
+  // calculate Q in the same way as for direction and magnitude
+  // använd meanP som Z-axel!!
+
+
+  // Vector3d Q(q*sin(theta)*cos(phi), q*sin(theta)*sin(phi), q*cos(theta)); // <-- swap here
+  // Vector3d Q(q*sin(theta)*sin(phi), q*cos(theta), q*sin(theta)*cos(phi)); // <-- swap here
+ 
   double wInvd = this->FD.Ds.size() + 1;
 
   // calculate meanP
@@ -60,6 +72,9 @@ void DiagrammaticMonteCarloV2::raiseOrder (double param) {
     meanP += this->calculateMeanP(g1->end, g2->start)*(g2->start->position - g1->end->position);
     meanP /= t2 - t1;
   }
+
+  // test
+  Vector3d Q = this->calculateQ(meanP, q, theta, phi);
 
   double
     sinTheta = sin(theta),

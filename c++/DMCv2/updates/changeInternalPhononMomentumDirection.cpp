@@ -69,7 +69,7 @@ void DiagrammaticMonteCarloV2::changeInternalPhononMomentumDirection (double par
     oldVal = this->FD();
   }
 
-  // is always accepted (the last one only save the angles)
+  // is always accepted (the last one only saves the angles)
   this->FD.setInternalPhononMomentum(d, Q);
   this->FD.setInternalPhononMomentumDirection(d, theta, phi);
 

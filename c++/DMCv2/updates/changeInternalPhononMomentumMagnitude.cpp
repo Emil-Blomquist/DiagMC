@@ -29,14 +29,14 @@ void DiagrammaticMonteCarloV2::changeInternalPhononMomentumMagnitude (double par
     param3 = r + (r - 1)*erf(param1*param2);
   
   if (abs(param3) >= 1) {
-    if (this->debug) {
+    // if (this->debug) {
       cout << "--------------------------------------------------------------------" << endl
            << "boost::math::erf_inv: Overflow Error prevented" << endl
            << "param1=" << param1 << endl
            << "param2=" << param2 << endl
            << "param3=" << param3 << endl
            << "--------------------------------------------------------------------" << endl;
-    }
+    // }
 
     param3 += (param3 > 0 ? -1 : 1)*DBL_EPSILON;
   }
