@@ -19,7 +19,7 @@ $(TARGETDIR)/$(TARGET): $(OBJECTS)
 %.o: %.$(SRCEXT)
 	@echo "$(CC) $(CFLAGS) -c -o $@ $<"; $(CC) $(CFLAGS) -c -o $@ $<
 
-clean:
-	@echo "$(RM) $(OBJECTS) $(TARGETDIR)/$(TARGET)"; $(RM) $(OBJECTS) $(TARGETDIR)/$(TARGET)
 
 .PHONY: clean
+clean:
+	@echo "$(RM) $(OBJECTS) $(TARGETDIR)/$(TARGET)"; $(RM) $(OBJECTS) $(TARGETDIR)/$(TARGET)

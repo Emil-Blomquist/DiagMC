@@ -9,45 +9,56 @@ using namespace std;
 int main (int argc, char **argv) {
   clock_t tStart = clock();
 
-  // parameters
-  // const double
-  //   minMomenta = 1.8,
-  //   maxMomenta = 1.8,
-  //   maxLength = 30,
-  //   alpha = 1,
-  //   mu = 0.03;
-
-  // const unsigned int
-    // numIterations = 3000000000,
-  //   numBins = 250*6;
-
-
-  const double
-    minMomenta = 1.8,
-    maxMomenta = 1.8,
-    maxLength = 10,
+  // default parameters
+  double
+    momenta = 0,
     alpha = 1,
-    mu = 0.03;
+    mu = -1.2,
+    maxLength = 30,
+    param = 0;
 
-  const unsigned int
-    // numIterations = 50000000*2,
-    numIterations = 4000000000,
-    numBins = 250*2;
+  long int numIterations = 4000000000;
 
-  Vector3d externalMomentum(0, 0, minMomenta);
+  // input parameters
+  int i = 1;
+  while (i < argc) {
+    if (strcmp(argv[i], "-p") == 0) {
+      momenta = stod(argv[i + 1]);
+      i += 2;
+    } else if (strcmp(argv[i], "-a") == 0) {
+      alpha = stod(argv[i + 1]);
+      i += 2;
+    } else if (strcmp(argv[i], "-mu") == 0) {
+      mu = stod(argv[i + 1]);
+      i += 2;
+    } else if (strcmp(argv[i], "-t") == 0) {
+      maxLength = stod(argv[i + 1]);
+      i += 2;
+    } else if (strcmp(argv[i], "-N") == 0) {
+      numIterations = stol(argv[i + 1]);
+      i += 2;
+    } else {
+      i++;
+    }
+  }
 
-  double param = 0;
+  // 50 bins per unit time
+  const unsigned int numBins = 50*maxLength;
 
-  DiagrammaticMonteCarloV2 DMC(
-    externalMomentum,
-    maxLength,
-    alpha,
-    mu,
-    numIterations,
-    numBins,
-    param,
-    argv
-  );
+  Vector3d externalMomentum(0, 0, momenta);
+
+  cout << "gör om överallt till long int!!" << endl;
+
+  // DiagrammaticMonteCarloV2 DMC(
+  //   externalMomentum,
+  //   maxLength,
+  //   alpha,
+  //   mu,
+  //   numIterations,
+  //   numBins,
+  //   param,
+  //   argv
+  // );
 
   printf("[Finished in %.2fs]\n", (double)(clock() - tStart)/CLOCKS_PER_SEC);
   return 0;

@@ -48,7 +48,7 @@ void DiagrammaticMonteCarloV2::run () {
   const unsigned int untilStart = 100000;
 
   // to save data under the process
-  const unsigned int saveAfter = 500*1000000;
+  const unsigned int saveAfter = 50*1000000;
 
   // vector of pointers to member function of Phonon
   vector<void (DiagrammaticMonteCarloV2::*)(double)> updateMethods = {
@@ -107,10 +107,6 @@ void DiagrammaticMonteCarloV2::run () {
 
   }
 
-  //
-  // TODO: on final save, overwrite file content
-  //
-
   // save final result
   this->write2file();
 }
@@ -144,14 +140,13 @@ void DiagrammaticMonteCarloV2::write2file (const unsigned int iterationNum) {
 
   // write to file
   ofstream myfile;
-  myfile.open(path + "../data/" + fileName + ".txt", ios_base::app);
+  myfile.open(path + "../data/" + fileName + ".txt");
   myfile << "-------- " + fileName;
   if (iterationNum) {
     myfile << " Ntemp=" << iterationNum;
   }
   myfile << " --------" << endl;
   myfile.close();
-
 
   if (! this->keys.empty()) {
     // data to write to file
@@ -173,7 +168,7 @@ void DiagrammaticMonteCarloV2::write2file (const unsigned int iterationNum) {
 
     for (int i = 0; i != this->numBins; ++i) {
       if (i == this->numBins - 1) {
-        myfile << fixed << setprecision(7) << (double) this->bins[i]/this->bins[0] * gOfdt << "\n";
+        myfile << fixed << setprecision(7) << (double) this->bins[i]/this->bins[0] * gOfdt;
       } else {
         myfile << fixed << setprecision(7) << (double) this->bins[i]/this->bins[0] * gOfdt <<  " ";
       }
