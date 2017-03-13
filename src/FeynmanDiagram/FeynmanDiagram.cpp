@@ -23,19 +23,6 @@ FeynmanDiagram::FeynmanDiagram (
   this->Gs[0]->setEnd(this->end);
 }
 
-void FeynmanDiagram::print () {
-  this->start->print();
-  this->end->print();
-
-  for (auto g : this->Gs) {
-    g->print();
-  }
-
-  for (auto d : this->Ds) {
-    d->print();
-  }
-}
-
 double FeynmanDiagram::operator() () {
   double val;
 
@@ -55,36 +42,37 @@ double FeynmanDiagram::operator() () {
   return val;
 }
 
-void FeynmanDiagram::save () {
-  this->savedGs = this->Gs;
-  this->savedDs = this->Ds;
-
-  this->start->save();
-  for (auto g : this->Gs) {
-    g->save();
-    g->end->save();
-  }
-
-  for (auto d : this->Ds) {
-    d->save();
-  }
-}
-
-void FeynmanDiagram::revert () {
-  this->Gs = this->savedGs;
-  this->Ds = this->savedDs;
-
-  this->start->revert();
-  for (auto g : this->Gs) {
-    g->revert();
-    g->end->revert();
-  }
-
-  for (auto d : this->Ds) {
-    d->revert();
-  }
-}
-
 void FeynmanDiagram::setLength (double length) {
   this->length = length;
 }
+
+unsigned int FeynmanDiagram::binaryElectronSearch(shared_ptr<Electron> g, unsigned int lowerBound) {
+  double position = g->end->position;
+
+  int
+    index,
+    upperBound = this->Gs.size() - 1;
+
+  do {
+    index = 0.5*(upperBound + lowerBound);
+
+    if (this->Gs[index]->end->position > position) {
+      upperBound = index - 1;
+    } else if (this->Gs[index]->end->position < position) {
+      lowerBound = index + 1;
+    } else {
+      break;
+    }
+  } while (index != upperBound);
+
+  if (this->Gs[index] != g) {
+    // multiple vertices with the same position -> do a linear search
+    cout << "FeynmanDiagram::binarySearch: forced to retreat to linear search" << endl
+         << position << " vs " << this->Gs[index]->end->position << endl;
+
+    vector<shared_ptr<Electron> >::iterator it = find(this->Gs.begin(), this->Gs.end(), g);
+    index = distance(this->Gs.begin(), it);
+  }
+
+  return index;
+};

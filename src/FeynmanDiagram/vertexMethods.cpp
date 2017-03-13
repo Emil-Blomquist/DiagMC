@@ -1,12 +1,9 @@
 #include "FeynmanDiagram.h"
 
 shared_ptr<Vertex> FeynmanDiagram::insertVertex (int gIndex, double dt) {
-
   if ( ! isfinite(dt)) {
     cout << "FeynmanDiagram::insertVertex dt=" << dt << endl;
   }
-
-
 
   if (dt <= 0) {
     // cout << "ERROR at FeynmanDiagram::insertVertex: dt <= 0" << endl;
@@ -55,6 +52,9 @@ void FeynmanDiagram::removeVertex (shared_ptr<Vertex> v) {
   // temporary save
   shared_ptr<Electron> g = v->G[1];
 
+  // obtain index before we unlink
+  unsigned int i = this->binaryElectronSearch(g);
+
   // relink
   v->G[0]->setEnd(g->end);
 
@@ -62,16 +62,7 @@ void FeynmanDiagram::removeVertex (shared_ptr<Vertex> v) {
   g->setStart(NULL);
 
   // remove g from Gs
-
-  //
-  // search instead
-  //
-  for (auto i = this->Gs.begin(); i != this->Gs.end(); ++i) {
-    if (*i == g) {
-      this->Gs.erase(i);
-      break;
-    }
-  }
+  this->Gs.erase(this->Gs.begin() + i);   
 }
 
 void FeynmanDiagram::setVertexPosition (shared_ptr<Vertex> v, double t) {

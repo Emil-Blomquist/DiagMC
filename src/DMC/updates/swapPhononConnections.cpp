@@ -1,4 +1,4 @@
-#include "../DiagrammaticMonteCarloV2.h"
+#include "../DiagrammaticMonteCarlo.h"
 
 void DiagrammaticMonteCarloV2::swapPhononConnections (double param) {
   // requirement to swap: must be at least of order 2

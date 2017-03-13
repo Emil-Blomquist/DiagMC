@@ -1,4 +1,4 @@
-#include "../DiagrammaticMonteCarloV2.h"
+#include "../DiagrammaticMonteCarlo.h"
 
 void DiagrammaticMonteCarloV2::changeDiagramLength (double param) {
 

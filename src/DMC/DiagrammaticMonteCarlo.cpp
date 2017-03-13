@@ -1,4 +1,4 @@
-#include "DiagrammaticMonteCarloV2.h"
+#include "DiagrammaticMonteCarlo.h"
 
 DiagrammaticMonteCarloV2::DiagrammaticMonteCarloV2 (
   Vector3d P,
@@ -251,47 +251,3 @@ Vector3d DiagrammaticMonteCarloV2::calculateP0 (shared_ptr<Phonon> d) {
   return meanP + d->momentum;
 }
 
-Vector3d DiagrammaticMonteCarloV2::calculateQ (Vector3d P0, double q, double theta, double phi) {
-  Vector3d tempVector, Ep, Eo1, Eo2, Qp, Qo, Q;
-  
-  Ep = P0.normalized();
-  if (isfinite(Ep[0])) {
-    // find a vector orthogonal to Ep
-    tempVector = Ep.cross(Ep + Vector3d(1, 0, 0));
-    Eo1 = tempVector.normalized();
-
-    if ( ! isfinite(Eo1[0])) {
-      Eo1  = Ep.cross(Ep + Vector3d(0, 1, 0)).normalized();
-    }
-
-    // span rest of R^3
-    Eo2 = Ep.cross(Eo1);
-  } else {
-    // if P0 ≈ (0,0,0) we use that theta is the angle against the z-axis
-    Ep = Vector3d(0, 0, 1);
-    Eo1 = Vector3d(1, 0, 0);
-    Eo2 = Vector3d(0, 1, 0);
-  }
-
-  // calculate the parallel and the orthogonal component of Q
-  Qp = q*cos(theta)*Ep;
-  Qo = (Eo1*cos(phi) + Eo2*sin(phi)) * q*sin(theta);
-  Q = Qp + Qo;
-
-  // to find overflow cause
-  if (! isfinite(Q[0]) || ! isfinite(Q[1]) || ! isfinite(Q[2])) {
-    cout << "-----------" << endl
-         << "Overflow at DiagrammaticMonteCarloV2::calculateQ" << endl
-         << "Q=" << Q.transpose() << endl
-         << "P0= " << P0.transpose() << endl
-         << "Ep= " << Ep.transpose() << endl
-         << "Eo1= " << Eo1.transpose() << endl
-         << "Eo2= " << Eo2.transpose() << endl
-         << "q= " << q << endl
-         << "theta= " << theta << endl
-         << "phi= " << phi << endl
-         << "-----------" << endl;
-  }
-
-  return Q;
-}

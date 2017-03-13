@@ -9,12 +9,13 @@ SOURCES := $(shell find $(SRCDIR) -type f -name '*.$(SRCEXT)')
 OBJECTS := $(SOURCES:%.cpp=%.o)
 
 CFLAGS := -O3 -g3 -std=c++11 -Wall -pedantic
-LIBS := -lsfml-graphics -lsfml-window -lsfml-system
+LIBS := 
+#-lsfml-graphics -lsfml-window -lsfml-system
 
 $(TARGETDIR)/$(TARGET): $(OBJECTS)
 	@echo "Linking..."
 	@mkdir -p $(TARGETDIR)
-	@echo "$(CC) $^ -o $(TARGETDIR)/$(TARGET) $(LIB)"; $(CC) $^ -o $(TARGETDIR)/$(TARGET) $(LIB)
+	@echo "$(CC) $^ -o $(TARGETDIR)/$(TARGET) $(LIBS)"; $(CC) $^ -o $(TARGETDIR)/$(TARGET) $(LIBS)
 
 %.o: %.$(SRCEXT)
 	@echo "$(CC) $(CFLAGS) -c -o $@ $<"; $(CC) $(CFLAGS) -c -o $@ $<

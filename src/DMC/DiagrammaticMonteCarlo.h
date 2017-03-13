@@ -47,9 +47,9 @@ class DiagrammaticMonteCarloV2 {
     double Udouble (double, double);
     int Uint (int, int);
 
-    Vector3d calculateMeanP (shared_ptr<Vertex>, shared_ptr<Vertex>);
-    Vector3d calculateP0 (shared_ptr<Phonon>);
-    Vector3d calculateQ (Vector3d, double, double, double);
+    Vector3d
+      calculateMeanP (shared_ptr<Vertex>, shared_ptr<Vertex>),
+      calculateP0 (shared_ptr<Phonon>);
 
     void
       shiftVertexPosition (double param = 1),

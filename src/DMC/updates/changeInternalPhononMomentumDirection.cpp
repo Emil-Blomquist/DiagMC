@@ -1,4 +1,4 @@
-#include "../DiagrammaticMonteCarloV2.h"
+#include "../DiagrammaticMonteCarlo.h"
 
 void DiagrammaticMonteCarloV2::changeInternalPhononMomentumDirection (double param) {
   // requirement to lower: must be at least of order 1
