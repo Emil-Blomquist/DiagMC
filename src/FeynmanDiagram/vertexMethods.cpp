@@ -62,6 +62,10 @@ void FeynmanDiagram::removeVertex (shared_ptr<Vertex> v) {
   g->setStart(NULL);
 
   // remove g from Gs
+
+  //
+  // search instead
+  //
   for (auto i = this->Gs.begin(); i != this->Gs.end(); ++i) {
     if (*i == g) {
       this->Gs.erase(i);

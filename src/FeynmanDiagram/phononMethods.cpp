@@ -25,7 +25,9 @@ shared_ptr<Phonon> FeynmanDiagram::addInternalPhonon (shared_ptr<Vertex> v1, sha
   return this->Ds.back();
 }
 
-void FeynmanDiagram::removeInternalPhonon (shared_ptr<Phonon> d) {
+void FeynmanDiagram::removeInternalPhonon (unsigned int phononIndex) {
+  shared_ptr<Phonon> d = this->Ds[phononIndex];
+
   // momentum conservation
   shared_ptr<Electron> g = d->start->G[1];
   while (g->start != d->end) {
@@ -38,18 +40,35 @@ void FeynmanDiagram::removeInternalPhonon (shared_ptr<Phonon> d) {
   d->setStart(NULL);
   d->setEnd(NULL);
 
-  //
-  // IMPROVEMENT: we could implement a hash table for Ds, with the key being the adress to the Phonon instance.
-  //
-
   // remove d from Ds
-  for (auto i = this->Ds.begin(); i != this->Ds.end(); ++i) {
-    if (*i == d) {
-      this->Ds.erase(i);
-      break;
-    }
-  }
+  this->Ds.erase(this->Ds.begin() + phononIndex);
 }
+
+// void FeynmanDiagram::removeInternalPhonon (shared_ptr<Phonon> d) {
+//   // momentum conservation
+//   shared_ptr<Electron> g = d->start->G[1];
+//   while (g->start != d->end) {
+//     g->addMomentum(d->momentum);
+
+//     g = g->end->G[1];
+//   }
+
+//   // unlink phonon from vertices
+//   d->setStart(NULL);
+//   d->setEnd(NULL);
+
+//   //
+//   // IMPROVEMENT: we could implement a hash table for Ds, with the key being the adress to the Phonon instance.
+//   //
+
+//   // remove d from Ds
+//   for (auto i = this->Ds.begin(); i != this->Ds.end(); ++i) {
+//     if (*i == d) {
+//       this->Ds.erase(i);
+//       break;
+//     }
+//   }
+// }
 
 void FeynmanDiagram::setInternalPhononMomentum (shared_ptr<Phonon> d, Vector3d Q) {
   Vector3d dQ = Q - d->momentum;

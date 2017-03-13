@@ -13,8 +13,8 @@ void DiagrammaticMonteCarloV2::lowerOrder (double param) {
   }
 
   // pick a phonon line
-  int i = this->Uint(0, this->FD.Ds.size() - 1);
-  shared_ptr<Phonon> d = this->FD.Ds[i];
+  int phononIndex = this->Uint(0, this->FD.Ds.size() - 1);
+  shared_ptr<Phonon> d = this->FD.Ds[phononIndex];
   double Winvd = this->FD.Ds.size();
 
   // vertices
@@ -74,7 +74,7 @@ void DiagrammaticMonteCarloV2::lowerOrder (double param) {
   bool accepted = false;
   if (a > this->Udouble(0, 1)) {
     // remove phonon
-    this->FD.removeInternalPhonon(d);
+    this->FD.removeInternalPhonon(phononIndex);
 
     // remove vertices
     this->FD.removeVertex(v1);

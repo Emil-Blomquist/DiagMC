@@ -5,7 +5,7 @@ DiagrammaticMonteCarloV2::DiagrammaticMonteCarloV2 (
   double maxLength,
   double alpha,
   double mu,
-  unsigned int numIterations,
+  unsigned long int numIterations,
   unsigned int numBins,
   double param,
   char **argv
@@ -86,7 +86,7 @@ void DiagrammaticMonteCarloV2::run () {
 
 
   // main loop
-  for (unsigned int i = 0; i < this->numIterations; ++i) {
+  for (unsigned long int i = 0; i < this->numIterations; ++i) {
     auto updateMethod = updateMethods[this->Uint(0, updateMethods.size() - 1)];
     (this->*updateMethod)(this->param);
 
@@ -112,7 +112,7 @@ void DiagrammaticMonteCarloV2::run () {
 }
 
 
-void DiagrammaticMonteCarloV2::write2file (const unsigned int iterationNum) {
+void DiagrammaticMonteCarloV2::write2file (const unsigned long int iterationNum) {
   // create date and time string
   char buffer[80];
   strftime(buffer, 80, "%Y-%m-%d %H:%M:%S", this->timeinfo);

@@ -1,6 +1,8 @@
 #include <iostream>
 #include <time.h> // execution time
 
+#include <unordered_set>
+
 
 #include "DMCv2/DiagrammaticMonteCarloV2.h"
 
@@ -47,8 +49,6 @@ int main (int argc, char **argv) {
 
   Vector3d externalMomentum(0, 0, momenta);
 
-  cout << "gör om överallt till long int!!" << endl;
-
   // DiagrammaticMonteCarloV2 DMC(
   //   externalMomentum,
   //   maxLength,
@@ -59,6 +59,29 @@ int main (int argc, char **argv) {
   //   param,
   //   argv
   // );
+
+
+  unordered_set<shared_ptr<int> > myset;
+
+  shared_ptr<int>
+    p1(new int{123}),
+    p2(new int{321});
+
+  myset.insert(p1);
+  myset.insert(p2);
+
+  cout << *p1 << " " << *p2 << endl;
+
+  *p1 = 666;
+
+  cout << *p1 << " " << *p2 << endl;
+
+
+  for (const shared_ptr<int>& x: myset) std::cout << " " << *x;
+
+
+
+
 
   printf("[Finished in %.2fs]\n", (double)(clock() - tStart)/CLOCKS_PER_SEC);
   return 0;

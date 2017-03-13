@@ -31,7 +31,8 @@ class DiagrammaticMonteCarloV2 {
   private:
     mt19937_64 mt;
     bool debug, loud;
-    unsigned int numIterations, numBins, n00;
+    unsigned int numBins, n00;
+    unsigned long int numIterations;
     double maxLength, mu, alpha, param, lastKeyMargin;
     struct tm *timeinfo;
     char **argv;
@@ -59,7 +60,7 @@ class DiagrammaticMonteCarloV2 {
       lowerOrder (double param = 1),
       changeDiagramLength (double param = 1);
 
-    void write2file (const unsigned int = 0);
+    void write2file (const unsigned long int = 0);
 
   public:
     FeynmanDiagram FD;
@@ -69,7 +70,7 @@ class DiagrammaticMonteCarloV2 {
       double,
       double,
       double,
-      unsigned int,
+      unsigned long int,
       unsigned int,
       double param,
       char **argv
