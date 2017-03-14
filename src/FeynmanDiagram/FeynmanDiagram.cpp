@@ -75,4 +75,4 @@ unsigned int FeynmanDiagram::binaryElectronSearch(shared_ptr<Electron> g, unsign
   }
 
   return index;
-};
+}

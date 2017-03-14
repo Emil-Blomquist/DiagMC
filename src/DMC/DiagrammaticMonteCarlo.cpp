@@ -48,7 +48,7 @@ void DiagrammaticMonteCarloV2::run () {
   const unsigned int untilStart = 100000;
 
   // to save data under the process
-  const unsigned int saveAfter = 50*1000000;
+  const unsigned int saveAfter = 500*1000000;
 
   // vector of pointers to member function of Phonon
   vector<void (DiagrammaticMonteCarloV2::*)(double)> updateMethods = {
