@@ -50,16 +50,38 @@ void DiagrammaticMonteCarloV2::run () {
   // to save data under the process
   const unsigned int saveAfter = 500*1000000;
 
-  // vector of pointers to member function of Phonon
-  vector<void (DiagrammaticMonteCarloV2::*)(double)> updateMethods = {
-    &DiagrammaticMonteCarloV2::shiftVertexPosition, // <- 2
-    &DiagrammaticMonteCarloV2::swapPhononConnections, // <- 1
-    &DiagrammaticMonteCarloV2::changeInternalPhononMomentumDirection, // <- 3
-    &DiagrammaticMonteCarloV2::changeInternalPhononMomentumMagnitude, // <- 4
-    &DiagrammaticMonteCarloV2::raiseOrder,
-    &DiagrammaticMonteCarloV2::lowerOrder,
-    &DiagrammaticMonteCarloV2::changeDiagramLength
+
+  // specify the relative probability of choosing a specific update function
+  multimap<unsigned int, void (DiagrammaticMonteCarloV2::*)(double)> temp = {
+    {49, &DiagrammaticMonteCarloV2::shiftVertexPosition},
+    {46, &DiagrammaticMonteCarloV2::swapPhononConnections},
+    {26, &DiagrammaticMonteCarloV2::changeInternalPhononMomentumDirection},
+    {66, &DiagrammaticMonteCarloV2::changeInternalPhononMomentumMagnitude},
+    {57, &DiagrammaticMonteCarloV2::raiseOrder}, // <- These two must have the same probability
+    {57, &DiagrammaticMonteCarloV2::lowerOrder}, // <-
+    {11, &DiagrammaticMonteCarloV2::changeDiagramLength}
   };
+
+  // vector which is going to contain the specified quantity of update functions
+  vector<void (DiagrammaticMonteCarloV2::*)(double)> updateMethods;
+
+  // populate vector
+  for (auto updateMethod = temp.begin(); updateMethod != temp.end(); updateMethod++) {
+    for (unsigned int i = 0; i != updateMethod->first; i++) {
+      updateMethods.push_back(updateMethod->second);
+    }
+  }
+
+  // vector of pointers to member function of Phonon
+  // vector<void (DiagrammaticMonteCarloV2::*)(double)> updateMethods = {
+  //   &DiagrammaticMonteCarloV2::shiftVertexPosition, // <- 2
+  //   &DiagrammaticMonteCarloV2::swapPhononConnections, // <- 1
+  //   &DiagrammaticMonteCarloV2::changeInternalPhononMomentumDirection, // <- 3
+  //   &DiagrammaticMonteCarloV2::changeInternalPhononMomentumMagnitude, // <- 4
+  //   &DiagrammaticMonteCarloV2::raiseOrder,
+  //   &DiagrammaticMonteCarloV2::lowerOrder,
+  //   &DiagrammaticMonteCarloV2::changeDiagramLength
+  // };
 
   // bins and keys for counting
   this->keys = vector<double>(this->numBins, 0);
