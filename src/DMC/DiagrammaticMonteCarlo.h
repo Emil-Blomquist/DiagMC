@@ -20,7 +20,7 @@
 
 #include <tuple> // return value
 
-#include <eigen3/Eigen/Dense>
+#include <Eigen/Dense>
 
 using namespace Eigen;
 using namespace std;
