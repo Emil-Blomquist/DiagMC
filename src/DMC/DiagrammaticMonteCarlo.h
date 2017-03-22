@@ -10,6 +10,7 @@
 #include <boost/math/special_functions/erf.hpp>
 #include <limits>
 #include <algorithm>
+#include <map>
 
 #include <fstream>
 #include <string>
