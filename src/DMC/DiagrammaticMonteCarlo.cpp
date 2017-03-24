@@ -52,36 +52,25 @@ void DiagrammaticMonteCarloV2::run () {
 
 
   // specify the relative probability of choosing a specific update function
-  multimap<unsigned int, void (DiagrammaticMonteCarloV2::*)(double)> temp = {
-    {49, &DiagrammaticMonteCarloV2::shiftVertexPosition},
-    {46, &DiagrammaticMonteCarloV2::swapPhononConnections},
-    {26, &DiagrammaticMonteCarloV2::changeInternalPhononMomentumDirection},
-    {66, &DiagrammaticMonteCarloV2::changeInternalPhononMomentumMagnitude},
-    {57, &DiagrammaticMonteCarloV2::raiseOrder}, // <- These two must have the same probability
-    {57, &DiagrammaticMonteCarloV2::lowerOrder}, // <-
-    {11, &DiagrammaticMonteCarloV2::changeDiagramLength}
+  multimap<unsigned int, void (DiagrammaticMonteCarloV2::*)(double)> updateMethods = {
+    {93, &DiagrammaticMonteCarloV2::shiftVertexPosition},
+    {62, &DiagrammaticMonteCarloV2::swapPhononConnections},
+    {77, &DiagrammaticMonteCarloV2::changeInternalPhononMomentumDirection},
+    {52, &DiagrammaticMonteCarloV2::changeInternalPhononMomentumMagnitude},
+    {100, &DiagrammaticMonteCarloV2::raiseOrder}, // <- These two must have the same probability
+    {100, &DiagrammaticMonteCarloV2::lowerOrder}, // <-
+    {58, &DiagrammaticMonteCarloV2::changeDiagramLength}
   };
 
   // vector which is going to contain the specified quantity of update functions
-  vector<void (DiagrammaticMonteCarloV2::*)(double)> updateMethods;
+  vector<void (DiagrammaticMonteCarloV2::*)(double)> chooseUpdateMethod;
 
   // populate vector
-  for (auto updateMethod = temp.begin(); updateMethod != temp.end(); updateMethod++) {
+  for (auto updateMethod = updateMethods.begin(); updateMethod != updateMethods.end(); updateMethod++) {
     for (unsigned int i = 0; i != updateMethod->first; i++) {
-      updateMethods.push_back(updateMethod->second);
+      chooseUpdateMethod.push_back(updateMethod->second);
     }
   }
-
-  // vector of pointers to member function of Phonon
-  // vector<void (DiagrammaticMonteCarloV2::*)(double)> updateMethods = {
-  //   &DiagrammaticMonteCarloV2::shiftVertexPosition, // <- 2
-  //   &DiagrammaticMonteCarloV2::swapPhononConnections, // <- 1
-  //   &DiagrammaticMonteCarloV2::changeInternalPhononMomentumDirection, // <- 3
-  //   &DiagrammaticMonteCarloV2::changeInternalPhononMomentumMagnitude, // <- 4
-  //   &DiagrammaticMonteCarloV2::raiseOrder,
-  //   &DiagrammaticMonteCarloV2::lowerOrder,
-  //   &DiagrammaticMonteCarloV2::changeDiagramLength
-  // };
 
   // bins and keys for counting
   this->keys = vector<double>(this->numBins, 0);
@@ -97,7 +86,7 @@ void DiagrammaticMonteCarloV2::run () {
   // to start at a random position
   for (unsigned int i = 0; i < untilStart; ++i) {
     // choose update operation on random
-     auto updateMethod = updateMethods[this->Uint(0, updateMethods.size() - 1)];
+     auto updateMethod = chooseUpdateMethod[this->Uint(0, chooseUpdateMethod.size() - 1)];
     // update diagram
     (this->*updateMethod)(this->param);
   }
@@ -109,7 +98,7 @@ void DiagrammaticMonteCarloV2::run () {
 
   // main loop
   for (unsigned long int i = 0; i < this->numIterations; ++i) {
-    auto updateMethod = updateMethods[this->Uint(0, updateMethods.size() - 1)];
+    auto updateMethod = chooseUpdateMethod[this->Uint(0, chooseUpdateMethod.size() - 1)];
     (this->*updateMethod)(this->param);
 
     if (i%saveAfter == saveAfter - 1) {
@@ -174,7 +163,7 @@ void DiagrammaticMonteCarloV2::write2file (const unsigned long int iterationNum)
     // data to write to file
     myfile.open(path + "../data/" + fileName + ".txt", ios_base::app);
 
-    for (int i = 0; i != this->numBins; ++i) {
+    for (unsigned int i = 0; i != this->numBins; ++i) {
       if (i == 0) {
         myfile << fixed << setprecision(7) << 0.5*this->keys[i] << " ";
       } else if (i == this->numBins - 1) {
@@ -188,7 +177,7 @@ void DiagrammaticMonteCarloV2::write2file (const unsigned long int iterationNum)
       g0Ofdt = exp(-0.5*this->keys[0]*(0.5*this->FD.externalMomentum.squaredNorm() - this->mu)),
       gOfdt = (double) this->bins[0]/this->n00 * g0Ofdt;
 
-    for (int i = 0; i != this->numBins; ++i) {
+    for (unsigned int i = 0; i != this->numBins; ++i) {
       if (i == this->numBins - 1) {
         myfile << fixed << setprecision(7) << (double) this->bins[i]/this->bins[0] * gOfdt;
       } else {

@@ -47,17 +47,25 @@ int main (int argc, char **argv) {
   Vector3d externalMomentum(0, 0, momenta);
 
   //
-  // 1. alla updates har olika sannolikhet och jämför olika resultat
-  // 2. samma som 1. fast gör med flit så att en uppdatering blir felaktig och se om det skiljer
-  // 3. bin size
-  // 4. kolla olika riktingar på external momentum
+  // 1. alla updates har olika sannolikhet och jämför olika resultat - gjort
+  // 2. samma som 1. fast gör med flit så att en uppdatering blir felaktig och se om det skiljer - gjort
+  // 3. bin size - gjort
+  // 4. kolla olika riktingar på external momentum - gjort
   // 5. kolla momentum konservation efter varje uppdatering
   // 6. kolla de där konstiga potentialerna som krävdes när man skulle ändra tid enligt artikeln
   // 7. testa med hardcore mode fast med moment i z-rikting
   // 8. be om resultat
-  // 9. jämför exakta resultat
+  // 9. jämför exakta resultat - gjort
   // 10. implementera bra raise/lower order
   //
+
+  // 
+  // TODO:  Kolla alpha beroende -> hur i helvete kan vi få en negativ propagator!? -> printa bara bis
+  //        10. -> jämför
+  //        7.  -> jämför
+  // 
+
+
 
   DiagrammaticMonteCarloV2 DMC(
     externalMomentum,

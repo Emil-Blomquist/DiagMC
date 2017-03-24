@@ -6,7 +6,7 @@ if [[ "$HOSTNAME" == *"triolith"* ]]
 then
   echo "We're on triolith!";
 
-  p='1.8'
+  p='1.85'
   mu='-0.011'
   a='1'
   N='100000000000'

@@ -32,14 +32,14 @@ class DiagrammaticMonteCarloV2 {
   private:
     mt19937_64 mt;
     bool debug, loud;
-    unsigned int numBins, n00;
-    unsigned long int numIterations;
+    unsigned int numBins;
+    unsigned long int numIterations, n00;
     double maxLength, mu, alpha, param, lastKeyMargin;
     struct tm *timeinfo;
     char **argv;
 
     vector<double> keys;
-    vector<int> bins;
+    vector<unsigned long int> bins;
 
     shared_ptr<Vertex> vertices2beRemoved [2];
     shared_ptr<Electron> electrons2beRemoved [2];

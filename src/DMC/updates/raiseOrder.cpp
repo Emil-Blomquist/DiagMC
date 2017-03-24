@@ -2,9 +2,9 @@
 
 void DiagrammaticMonteCarloV2::raiseOrder (double param) {
   // temp
-  // if (this->FD.Ds.size() == 5) {
-  //   return;
-  // }
+  if (this->FD.Ds.size() == 1) {
+    return;
+  }
 
 
   double oldVal;

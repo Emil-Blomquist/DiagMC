@@ -4,7 +4,5 @@
 bin/*
 data/*
 
-Eigen3
-
 DiagMC.sublime-project
 DiagMC.sublime-workspace
