@@ -27,39 +27,46 @@ DiagrammaticMonteCarloV2::DiagrammaticMonteCarloV2 (
   this->param = param;
   this->argv = argv;
 
-  this->lastKeyMargin = 0.1;
-
-  // number of times we visit the zeroth order diagram of the zeroth bin
-  this->n00 = 0;
+  this->binSize = this->maxLength/this->numBins;
 
   // store time at which the calculation began
   time_t rawtime;
   time (&rawtime);
   this->timeinfo = localtime(&rawtime);
 
-
   this->write2file();
   this->run();
 }
 
-
 void DiagrammaticMonteCarloV2::run () {
   // to reach start connfiguration
-  const unsigned int untilStart = 100000;
+  const unsigned int untilStart = 10000000;
 
   // to save data under the process
   const unsigned int saveAfter = 500*1000000;
 
+  // bins for counting
+  this->bins = vector<unsigned long int>(this->numBins, 0);
+  this->bins0 = vector<unsigned long int>(this->numBins, 0);
 
   // specify the relative probability of choosing a specific update function
+  // multimap<unsigned int, void (DiagrammaticMonteCarloV2::*)(double)> updateMethods = {
+  //   {93, &DiagrammaticMonteCarloV2::shiftVertexPosition},
+  //   {62, &DiagrammaticMonteCarloV2::swapPhononConnections},
+  //   {77, &DiagrammaticMonteCarloV2::changeInternalPhononMomentumDirection},
+  //   {52, &DiagrammaticMonteCarloV2::changeInternalPhononMomentumMagnitude},
+  //   {100, &DiagrammaticMonteCarloV2::raiseOrder}, // <- These two must have the same probability
+  //   {100, &DiagrammaticMonteCarloV2::lowerOrder}, // <-
+  //   {58, &DiagrammaticMonteCarloV2::changeDiagramLength}
+  // };
   multimap<unsigned int, void (DiagrammaticMonteCarloV2::*)(double)> updateMethods = {
-    {93, &DiagrammaticMonteCarloV2::shiftVertexPosition},
-    {62, &DiagrammaticMonteCarloV2::swapPhononConnections},
-    {77, &DiagrammaticMonteCarloV2::changeInternalPhononMomentumDirection},
-    {52, &DiagrammaticMonteCarloV2::changeInternalPhononMomentumMagnitude},
-    {100, &DiagrammaticMonteCarloV2::raiseOrder}, // <- These two must have the same probability
-    {100, &DiagrammaticMonteCarloV2::lowerOrder}, // <-
-    {58, &DiagrammaticMonteCarloV2::changeDiagramLength}
+    {0, &DiagrammaticMonteCarloV2::shiftVertexPosition},
+    {0, &DiagrammaticMonteCarloV2::swapPhononConnections},
+    {0, &DiagrammaticMonteCarloV2::changeInternalPhononMomentumDirection},
+    {0, &DiagrammaticMonteCarloV2::changeInternalPhononMomentumMagnitude},
+    {1, &DiagrammaticMonteCarloV2::raiseOrder}, // <- These two must have the same probability
+    {1, &DiagrammaticMonteCarloV2::lowerOrder}, // <-
+    {1, &DiagrammaticMonteCarloV2::changeDiagramLength}
   };
 
   // vector which is going to contain the specified quantity of update functions
@@ -72,29 +79,16 @@ void DiagrammaticMonteCarloV2::run () {
     }
   }
 
-  // bins and keys for counting
-  this->keys = vector<double>(this->numBins, 0);
-  this->bins = vector<int>(this->numBins, 0);
-
-  // fill keys
-  double dt = this->maxLength/this->numBins;
-  this->keys[this->numBins - 1] += this->lastKeyMargin; // so we never get out of bounds
-  for (int i = 0; i != this->numBins; ++i) {
-    this->keys[i] += (i + 1)*dt;
-  }
-
   // to start at a random position
   for (unsigned int i = 0; i < untilStart; ++i) {
     // choose update operation on random
-     auto updateMethod = chooseUpdateMethod[this->Uint(0, chooseUpdateMethod.size() - 1)];
+    auto updateMethod = chooseUpdateMethod[this->Uint(0, chooseUpdateMethod.size() - 1)];
     // update diagram
     (this->*updateMethod)(this->param);
   }
 
-
   // Display disp(&this->FD);
   // disp.render();
-
 
   // main loop
   for (unsigned long int i = 0; i < this->numIterations; ++i) {
@@ -106,16 +100,14 @@ void DiagrammaticMonteCarloV2::run () {
       this->write2file(i + 1);
     }
 
-    // bin diagram length
-    vector<double>::iterator itr = upper_bound(keys.begin(), keys.end(), this->FD.length);
-    int index = itr - keys.begin();
+    // bin
+    unsigned int index = this->FD.length/this->binSize;
     bins[index]++;
 
-    // if at first bin and at zeroth order, bin again
-    if (index == 0 && this->FD.Ds.size() == 0) {
-      this->n00++;
+    // if zeroth order, bin again
+    if (this->FD.Ds.size() == 0) {
+      bins0[index]++;
     }
-
   }
 
   // save final result
@@ -128,7 +120,6 @@ void DiagrammaticMonteCarloV2::write2file (const unsigned long int iterationNum)
   char buffer[80];
   strftime(buffer, 80, "%Y-%m-%d %H:%M:%S", this->timeinfo);
   string dateAndTimeString(buffer);
-  
 
   // create file name
   stringstream stream;
@@ -159,29 +150,40 @@ void DiagrammaticMonteCarloV2::write2file (const unsigned long int iterationNum)
   myfile << " --------" << endl;
   myfile.close();
 
-  if (! this->keys.empty()) {
+  if (! this->bins.empty()) {
     // data to write to file
     myfile.open(path + "../data/" + fileName + ".txt", ios_base::app);
 
+    // times
     for (unsigned int i = 0; i != this->numBins; ++i) {
-      if (i == 0) {
-        myfile << fixed << setprecision(7) << 0.5*this->keys[i] << " ";
-      } else if (i == this->numBins - 1) {
-        myfile << fixed << setprecision(7) << 0.5*(this->keys[i - 1] + this->keys[i] - this->lastKeyMargin) <<  "\n";
+      myfile << fixed << setprecision(7) << (i + 0.5)*this->binSize;
+      if (i == this->numBins - 1) {
+        myfile << "\n";
       } else {
-        myfile << fixed << setprecision(7) << 0.5*(this->keys[i - 1] + this->keys[i]) <<  " ";
+        myfile << " ";
       }
     }
 
-    double
-      g0Ofdt = exp(-0.5*this->keys[0]*(0.5*this->FD.externalMomentum.squaredNorm() - this->mu)),
-      gOfdt = (double) this->bins[0]/this->n00 * g0Ofdt;
+    // calculate scale factor
+    unsigned int until = 0;
+    while ((double) this->bins0[until]/this->bins0[0] > 0.01) {
+      until++;
+    }
+    double Z = 0;
+    for (unsigned int i = 0; i != until; ++i) {
+      Z += sqrt(this->bins0[i]);
+    }
+    double scaleFactor = 0;
+    for (unsigned int i = 0; i != until; ++i) {
+      scaleFactor += exp(-(0.5*this->FD.externalMomentum.squaredNorm() - this->mu)*(i + 0.5)*this->binSize)
+                  /(sqrt(this->bins0[i]) * Z);
+    }
 
+    // greens function
     for (unsigned int i = 0; i != this->numBins; ++i) {
-      if (i == this->numBins - 1) {
-        myfile << fixed << setprecision(7) << (double) this->bins[i]/this->bins[0] * gOfdt;
-      } else {
-        myfile << fixed << setprecision(7) << (double) this->bins[i]/this->bins[0] * gOfdt <<  " ";
+      myfile << fixed << setprecision(7) << (double) this->bins[i]*scaleFactor;
+      if (i < this->numBins - 1) {
+        myfile << " ";
       }
     }
   }

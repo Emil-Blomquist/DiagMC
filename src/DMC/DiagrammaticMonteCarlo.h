@@ -33,13 +33,12 @@ class DiagrammaticMonteCarloV2 {
     mt19937_64 mt;
     bool debug, loud;
     unsigned int numBins;
-    unsigned long int numIterations, n00;
-    double maxLength, mu, alpha, param, lastKeyMargin;
+    unsigned long int numIterations;
+    double maxLength, mu, alpha, param, binSize;
     struct tm *timeinfo;
     char **argv;
 
-    vector<double> keys;
-    vector<unsigned long int> bins;
+    vector<unsigned long int> bins, bins0;
 
     shared_ptr<Vertex> vertices2beRemoved [2];
     shared_ptr<Electron> electrons2beRemoved [2];
@@ -59,7 +58,8 @@ class DiagrammaticMonteCarloV2 {
       changeInternalPhononMomentumMagnitude (double param = 1),
       raiseOrder (double param = 1),
       lowerOrder (double param = 1),
-      changeDiagramLength (double param = 1);
+      changeDiagramLength (double param = 1),
+      changeDiagramLengthComplex (double param = 1);
 
     void write2file (const unsigned long int = 0);
 

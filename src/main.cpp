@@ -19,7 +19,7 @@ int main (int argc, char **argv) {
   long int numIterations = 4000000000;
 
   // input parameters
-  int i = 1;
+  unsigned int i = 1;
   while (i < argc) {
     if (strcmp(argv[i], "-p") == 0) {
       momenta = stod(argv[i + 1]);
@@ -56,15 +56,13 @@ int main (int argc, char **argv) {
   // 7. testa med hardcore mode fast med moment i z-rikting
   // 8. be om resultat
   // 9. jämför exakta resultat - gjort
-  // 10. implementera bra raise/lower order
+  // 10. implementera bra raise/lower order - gjort
   //
 
   // 
-  // TODO:  Kolla alpha beroende -> hur i helvete kan vi få en negativ propagator!? -> printa bara bis
-  //        10. -> jämför
-  //        7.  -> jämför
-  // 
-
+  // TODO:  1. testa annan lambda i nya raise/lower
+  //        2. testa om den matchar med first order med högt alpha
+  //        2. testa så att den fyller alla diagram på rätt sätt
 
 
   DiagrammaticMonteCarloV2 DMC(

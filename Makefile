@@ -10,7 +10,7 @@ OBJECTS := $(SOURCES:%.cpp=%.o)
 
 CFLAGS := -O3 -g3 -std=c++11 -Wall -pedantic -I Eigen3/
 LIBS := 
-#-lsfml-graphics -lsfml-window -lsfml-system
+# -lsfml-graphics -lsfml-window -lsfml-system
 
 $(TARGETDIR)/$(TARGET): $(OBJECTS)
 	@echo "Linking..."
