@@ -20,7 +20,7 @@
 
 #include <tuple> // return value
 
-#include <eigen3/Eigen/Dense>
+#include <Eigen/Dense>
 
 using namespace Eigen;
 using namespace std;
@@ -32,14 +32,13 @@ class DiagrammaticMonteCarloV2 {
   private:
     mt19937_64 mt;
     bool debug, loud;
-    unsigned int numBins, n00;
+    unsigned int numBins;
     unsigned long int numIterations;
-    double maxLength, mu, alpha, param, lastKeyMargin;
+    double maxLength, mu, alpha, param, binSize;
     struct tm *timeinfo;
     char **argv;
 
-    vector<double> keys;
-    vector<int> bins;
+    vector<unsigned long int> bins, bins0;
 
     shared_ptr<Vertex> vertices2beRemoved [2];
     shared_ptr<Electron> electrons2beRemoved [2];
@@ -59,7 +58,8 @@ class DiagrammaticMonteCarloV2 {
       changeInternalPhononMomentumMagnitude (double param = 1),
       raiseOrder (double param = 1),
       lowerOrder (double param = 1),
-      changeDiagramLength (double param = 1);
+      changeDiagramLength (double param = 1),
+      changeDiagramLengthComplex (double param = 1);
 
     void write2file (const unsigned long int = 0);
 

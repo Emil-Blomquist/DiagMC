@@ -4,7 +4,7 @@
 // #include <iostream>
 // #include <sstream>
 
-// #include <eigen3/Eigen/Dense>
+// #include <Eigen/Dense>
 // #include <SFML/Graphics.hpp>
 // #include <cmath>
 

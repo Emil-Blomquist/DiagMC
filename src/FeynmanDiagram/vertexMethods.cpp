@@ -1,25 +1,22 @@
 #include "FeynmanDiagram.h"
 
-shared_ptr<Vertex> FeynmanDiagram::insertVertex (int gIndex, double dt) {
-  if ( ! isfinite(dt)) {
-    cout << "FeynmanDiagram::insertVertex dt=" << dt << endl;
-  }
-
-  if (dt <= 0) {
-    // cout << "ERROR at FeynmanDiagram::insertVertex: dt <= 0" << endl;
-    // return NULL;
-    dt = DBL_EPSILON;
+shared_ptr<Vertex> FeynmanDiagram::insertVertex (int gIndex, double t) {
+  if ( ! isfinite(t)) {
+    cout << "FeynmanDiagram::insertVertex t=" << t << endl;
   }
 
   shared_ptr<Electron> g = this->Gs[gIndex];
 
-  double t = g->start->position + dt;
-  double tmax = g->end->position;
-
-  if (tmax <= t) {
-    // cout << "ERROR at FeynmanDiagram::insertVertex: tmax <= t" << endl;
+  if (g->start->position >= t) {
+    cout << "ERROR at FeynmanDiagram::insertVertex: tmin >= t" << g->start->position << " >= " << t << endl;
     // return NULL;
-    t = tmax - DBL_EPSILON;
+    t = g->start->position + DBL_EPSILON;
+  }
+
+  if (g->end->position <= t) {
+    cout << "ERROR at FeynmanDiagram::insertVertex: tmax <= t: " << g->end->position << " <= " << t << endl;
+    // return NULL;
+    t = g->end->position - DBL_EPSILON;
   }
 
   // create new vertex
@@ -27,7 +24,9 @@ shared_ptr<Vertex> FeynmanDiagram::insertVertex (int gIndex, double dt) {
 
   // create electronic propagator
   this->Gs.emplace(this->Gs.begin() + gIndex + 1, new Electron(g->momentum));
-  auto g1 = this->Gs[gIndex], g2 = this->Gs[gIndex + 1];
+  shared_ptr<Electron>
+    g1 = this->Gs[gIndex],
+    g2 = this->Gs[gIndex + 1];
 
   // link them accordingly
   g2->setEnd(g1->end);

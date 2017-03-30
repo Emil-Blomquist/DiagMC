@@ -57,7 +57,7 @@
 //   // declare font
 //   //
 //   sf::Font font;
-//   font.loadFromFile("Display/OpenSans-Regular.ttf");
+//   font.loadFromFile("src/Display/OpenSans-Regular.ttf");
 
 //   // 
 //   // find max and min momentum
