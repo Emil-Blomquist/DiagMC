@@ -44,7 +44,7 @@ void DiagrammaticMonteCarloV2::changeInternalPhononMomentumMagnitude (double par
 
   double a = wInvq/oldwInvq * exp(exponent);
 
-  double oldVal;
+  double oldVal = 0;
   if (this->debug) {
     oldVal = this->FD();
   }
@@ -58,8 +58,6 @@ void DiagrammaticMonteCarloV2::changeInternalPhononMomentumMagnitude (double par
 
     accepted = true;
   }
-
-
 
   if (this->debug) {
     double val = this->FD();

@@ -8,11 +8,11 @@ void DiagrammaticMonteCarloV2::changeDiagramLength (double param) {
     tmin = this->FD.end->G[0]->start->position,
     dt = -log(1 - r + r*exp(-l*(this->maxLength - tmin)))/l;
 
-  double oldVal, oldwInvt, wInvt;
+  double oldVal = 0, oldwInvt = 0, wInvt = 0;
   if (this->debug) {
     oldVal = this->FD();
-    oldwInvt = exp(l*(this->FD.end->position - tmin))*(1 - exp(-l*this->maxLength - tmin))/l;
-    wInvt = exp(l*dt)*(1 - exp(-l*this->maxLength - tmin))/l;
+    oldwInvt = exp(l*(this->FD.end->position - tmin))*(1 - exp(-l*(this->maxLength - tmin)))/l;
+    wInvt = exp(l*dt)*(1 - exp(-l*(this->maxLength - tmin)))/l;
   }
 
   // is always accepted

@@ -7,7 +7,7 @@ void DiagrammaticMonteCarloV2::lowerOrder (double param) {
   }
 
   // old configuration value
-  double oldVal;
+  double oldVal = 0;
   if (this->debug) {
     oldVal = this->FD();
   }

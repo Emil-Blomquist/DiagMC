@@ -37,7 +37,7 @@ void DiagrammaticMonteCarloV2::changeInternalPhononMomentumDirection (double par
   }
 
 
-  double oldVal;
+  double oldVal = 0;
   if (this->debug) {
     oldVal = this->FD();
   }
@@ -54,8 +54,6 @@ void DiagrammaticMonteCarloV2::changeInternalPhononMomentumDirection (double par
 
     accepted = true;
   }
-
-
 
   if (this->debug) {
     double

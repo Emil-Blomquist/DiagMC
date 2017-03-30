@@ -50,23 +50,15 @@ void DiagrammaticMonteCarloV2::run () {
   this->bins0 = vector<unsigned long int>(this->numBins, 0);
 
   // specify the relative probability of choosing a specific update function
-  // multimap<unsigned int, void (DiagrammaticMonteCarloV2::*)(double)> updateMethods = {
-  //   {93, &DiagrammaticMonteCarloV2::shiftVertexPosition},
-  //   {62, &DiagrammaticMonteCarloV2::swapPhononConnections},
-  //   {77, &DiagrammaticMonteCarloV2::changeInternalPhononMomentumDirection},
-  //   {52, &DiagrammaticMonteCarloV2::changeInternalPhononMomentumMagnitude},
-  //   {100, &DiagrammaticMonteCarloV2::raiseOrder}, // <- These two must have the same probability
-  //   {100, &DiagrammaticMonteCarloV2::lowerOrder}, // <-
-  //   {58, &DiagrammaticMonteCarloV2::changeDiagramLength}
-  // };
   multimap<unsigned int, void (DiagrammaticMonteCarloV2::*)(double)> updateMethods = {
-    {0, &DiagrammaticMonteCarloV2::shiftVertexPosition},
-    {0, &DiagrammaticMonteCarloV2::swapPhononConnections},
-    {0, &DiagrammaticMonteCarloV2::changeInternalPhononMomentumDirection},
-    {0, &DiagrammaticMonteCarloV2::changeInternalPhononMomentumMagnitude},
-    {1, &DiagrammaticMonteCarloV2::raiseOrder}, // <- These two must have the same probability
-    {1, &DiagrammaticMonteCarloV2::lowerOrder}, // <-
-    {1, &DiagrammaticMonteCarloV2::changeDiagramLength}
+    {2, &DiagrammaticMonteCarloV2::shiftVertexPosition},
+    {2, &DiagrammaticMonteCarloV2::swapPhononConnections},
+    {2, &DiagrammaticMonteCarloV2::changeInternalPhononMomentumDirection},
+    {2, &DiagrammaticMonteCarloV2::changeInternalPhononMomentumMagnitude},
+    {2, &DiagrammaticMonteCarloV2::raiseOrder}, // <- These two must have the same probability
+    {2, &DiagrammaticMonteCarloV2::lowerOrder}, // <-
+    {2, &DiagrammaticMonteCarloV2::changeDiagramLength},
+    {1, &DiagrammaticMonteCarloV2::changeDiagramLengthComplex}
   };
 
   // vector which is going to contain the specified quantity of update functions
@@ -263,4 +255,3 @@ Vector3d DiagrammaticMonteCarloV2::calculateP0 (shared_ptr<Phonon> d) {
 
   return meanP + d->momentum;
 }
-

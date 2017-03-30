@@ -59,11 +59,6 @@ int main (int argc, char **argv) {
   // 10. implementera bra raise/lower order - gjort
   //
 
-  // 
-  // TODO:  1. testa annan lambda i nya raise/lower
-  //        2. testa om den matchar med first order med högt alpha
-  //        2. testa så att den fyller alla diagram på rätt sätt
-
 
   DiagrammaticMonteCarloV2 DMC(
     externalMomentum,

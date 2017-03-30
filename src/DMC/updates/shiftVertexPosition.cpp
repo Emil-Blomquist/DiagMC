@@ -35,7 +35,7 @@ void DiagrammaticMonteCarloV2::shiftVertexPosition (double param) {
     t = t1 - log(1 - r*(1 - exp(-dtdE)))/dE;
   }
 
-  double tOld, oldVal;
+  double tOld = 0, oldVal = 0;
   if (this->debug) {
     tOld = v->position,
     oldVal = this->FD();

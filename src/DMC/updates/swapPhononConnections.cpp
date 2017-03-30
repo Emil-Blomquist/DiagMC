@@ -6,7 +6,7 @@ void DiagrammaticMonteCarloV2::swapPhononConnections (double param) {
     return;
   }
 
-  double oldVal;
+  double oldVal = 0;
   if (this->debug) {
     oldVal = this->FD();
   }
