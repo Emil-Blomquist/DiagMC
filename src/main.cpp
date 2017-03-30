@@ -59,7 +59,6 @@ int main (int argc, char **argv) {
   // 10. implementera bra raise/lower order - gjort
   //
 
-
   DiagrammaticMonteCarloV2 DMC(
     externalMomentum,
     maxLength,
