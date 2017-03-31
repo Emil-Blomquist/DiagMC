@@ -1,6 +1,6 @@
 #include "DiagrammaticMonteCarlo.h"
 
-DiagrammaticMonteCarloV2::DiagrammaticMonteCarloV2 (
+DiagrammaticMonteCarlo::DiagrammaticMonteCarlo (
   Vector3d P,
   double maxLength,
   double alpha,
@@ -38,7 +38,7 @@ DiagrammaticMonteCarloV2::DiagrammaticMonteCarloV2 (
   this->run();
 }
 
-void DiagrammaticMonteCarloV2::run () {
+void DiagrammaticMonteCarlo::run () {
   // to reach start connfiguration
   const unsigned int untilStart = 10000000;
 
@@ -50,19 +50,19 @@ void DiagrammaticMonteCarloV2::run () {
   this->bins0 = vector<unsigned long int>(this->numBins, 0);
 
   // specify the relative probability of choosing a specific update function
-  multimap<unsigned int, void (DiagrammaticMonteCarloV2::*)(double)> updateMethods = {
-    {2, &DiagrammaticMonteCarloV2::shiftVertexPosition},
-    {2, &DiagrammaticMonteCarloV2::swapPhononConnections},
-    {2, &DiagrammaticMonteCarloV2::changeInternalPhononMomentumDirection},
-    {2, &DiagrammaticMonteCarloV2::changeInternalPhononMomentumMagnitude},
-    {2, &DiagrammaticMonteCarloV2::raiseOrder}, // <- These two must have the same probability
-    {2, &DiagrammaticMonteCarloV2::lowerOrder}, // <-
-    {2, &DiagrammaticMonteCarloV2::changeDiagramLength},
-    {1, &DiagrammaticMonteCarloV2::changeDiagramLengthComplex}
+  multimap<unsigned int, void (DiagrammaticMonteCarlo::*)(double)> updateMethods = {
+    {2, &DiagrammaticMonteCarlo::shiftVertexPosition},
+    {2, &DiagrammaticMonteCarlo::swapPhononConnections},
+    {2, &DiagrammaticMonteCarlo::changeInternalPhononMomentumDirection},
+    {2, &DiagrammaticMonteCarlo::changeInternalPhononMomentumMagnitude},
+    {2, &DiagrammaticMonteCarlo::raiseOrder}, // <- These two must have the same probability
+    {2, &DiagrammaticMonteCarlo::lowerOrder}, // <-
+    {2, &DiagrammaticMonteCarlo::changeDiagramLength},
+    {1, &DiagrammaticMonteCarlo::changeDiagramLengthComplex}
   };
 
   // vector which is going to contain the specified quantity of update functions
-  vector<void (DiagrammaticMonteCarloV2::*)(double)> chooseUpdateMethod;
+  vector<void (DiagrammaticMonteCarlo::*)(double)> chooseUpdateMethod;
 
   // populate vector
   for (auto updateMethod = updateMethods.begin(); updateMethod != updateMethods.end(); updateMethod++) {
@@ -107,7 +107,7 @@ void DiagrammaticMonteCarloV2::run () {
 }
 
 
-void DiagrammaticMonteCarloV2::write2file (const unsigned long int iterationNum) {
+void DiagrammaticMonteCarlo::write2file (const unsigned long int iterationNum) {
   // create date and time string
   char buffer[80];
   strftime(buffer, 80, "%Y-%m-%d %H:%M:%S", this->timeinfo);
@@ -195,17 +195,17 @@ void DiagrammaticMonteCarloV2::write2file (const unsigned long int iterationNum)
 
 
 
-double DiagrammaticMonteCarloV2::Udouble (double from, double to) {
+double DiagrammaticMonteCarlo::Udouble (double from, double to) {
   uniform_real_distribution<double> distribution(from, to);
   return distribution(this->mt);
 }
 
-int DiagrammaticMonteCarloV2::Uint (int fromIncluded, int toIncluded) {
+int DiagrammaticMonteCarlo::Uint (int fromIncluded, int toIncluded) {
   uniform_int_distribution<int> distribution(fromIncluded, toIncluded);
   return distribution(this->mt);
 }
 
-Vector3d DiagrammaticMonteCarloV2::calculateMeanP (shared_ptr<Vertex> v1, shared_ptr<Vertex> v2) {
+Vector3d DiagrammaticMonteCarlo::calculateMeanP (shared_ptr<Vertex> v1, shared_ptr<Vertex> v2) {
 
   Vector3d meanP(0, 0, 0);
 
@@ -216,7 +216,7 @@ Vector3d DiagrammaticMonteCarloV2::calculateMeanP (shared_ptr<Vertex> v1, shared
 
       if ( ! isfinite(meanP[0]) || ! isfinite(meanP[1]) || ! isfinite(meanP[2])) {
         cout << "-----------" << endl
-             << "Overflow at DiagrammaticMonteCarloV2::calculateMeanP" << endl
+             << "Overflow at DiagrammaticMonteCarlo::calculateMeanP" << endl
              << "meanP= " << meanP.transpose() << endl
              << "t1= " << v1->position << endl
              << "t2= " << v2->position << endl
@@ -235,7 +235,7 @@ Vector3d DiagrammaticMonteCarloV2::calculateMeanP (shared_ptr<Vertex> v1, shared
 
       if (dt == 0 || ! isfinite(meanP[0]) || ! isfinite(meanP[1]) || ! isfinite(meanP[2])) {
         cout << "-----------" << endl
-             << "Overflow at DiagrammaticMonteCarloV2::calculateMeanP" << endl
+             << "Overflow at DiagrammaticMonteCarlo::calculateMeanP" << endl
              << "dt=" << dt << endl
              << "meanP= " << meanP.transpose() << endl
              << "t1= " << v1->position << endl
@@ -250,7 +250,7 @@ Vector3d DiagrammaticMonteCarloV2::calculateMeanP (shared_ptr<Vertex> v1, shared
   return meanP;
 }
 
-Vector3d DiagrammaticMonteCarloV2::calculateP0 (shared_ptr<Phonon> d) {
+Vector3d DiagrammaticMonteCarlo::calculateP0 (shared_ptr<Phonon> d) {
   Vector3d meanP = this->calculateMeanP(d->start, d->end);
 
   return meanP + d->momentum;

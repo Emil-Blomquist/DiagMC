@@ -1,6 +1,6 @@
 #include "../DiagrammaticMonteCarlo.h"
 
-void DiagrammaticMonteCarloV2::changeInternalPhononMomentumDirection (double param) {
+void DiagrammaticMonteCarlo::changeInternalPhononMomentumDirection (double param) {
   // requirement to lower: must be at least of order 1
   if (this->FD.Ds.size() == 0) {
     return;

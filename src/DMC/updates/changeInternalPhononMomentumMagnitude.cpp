@@ -1,6 +1,6 @@
 #include "../DiagrammaticMonteCarlo.h"
 
-void DiagrammaticMonteCarloV2::changeInternalPhononMomentumMagnitude (double param) {
+void DiagrammaticMonteCarlo::changeInternalPhononMomentumMagnitude (double param) {
   // requirement to lower: must be at least of order 1
   if (this->FD.Ds.size() == 0) {
     return;
@@ -83,7 +83,7 @@ void DiagrammaticMonteCarloV2::changeInternalPhononMomentumMagnitude (double par
 
 
 // -----------
-// Overflow at DiagrammaticMonteCarloV2::calculateQ
+// Overflow at DiagrammaticMonteCarlo::calculateQ
 // Q= inf -nan -inf
 // P0=   0.628175   0.455531 -0.0329462
 // Ep=   0.808818   0.586527 -0.0424205

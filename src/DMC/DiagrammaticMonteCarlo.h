@@ -28,7 +28,7 @@ using namespace std;
 #include "../FeynmanDiagram/FeynmanDiagram.h"
 // #include "../Display/Display.h"
 
-class DiagrammaticMonteCarloV2 {
+class DiagrammaticMonteCarlo {
   private:
     mt19937_64 mt;
     bool debug, loud;
@@ -66,7 +66,7 @@ class DiagrammaticMonteCarloV2 {
   public:
     FeynmanDiagram FD;
 
-    DiagrammaticMonteCarloV2 (
+    DiagrammaticMonteCarlo (
       Vector3d, 
       double,
       double,

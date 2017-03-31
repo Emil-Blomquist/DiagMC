@@ -1,6 +1,6 @@
 #include "../DiagrammaticMonteCarlo.h"
 
-void DiagrammaticMonteCarloV2::shiftVertexPosition (double param) {
+void DiagrammaticMonteCarlo::shiftVertexPosition (double param) {
   // requirement to lower: must be at least of order 1
   if (this->FD.Ds.size() == 0) {
     return;

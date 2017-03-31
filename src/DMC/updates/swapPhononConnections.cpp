@@ -1,6 +1,6 @@
 #include "../DiagrammaticMonteCarlo.h"
 
-void DiagrammaticMonteCarloV2::swapPhononConnections (double param) {
+void DiagrammaticMonteCarlo::swapPhononConnections (double param) {
   // requirement to swap: must be at least of order 2
   if (this->FD.Ds.size() < 2) {
     return;

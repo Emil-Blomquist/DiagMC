@@ -1,6 +1,6 @@
 #include "../DiagrammaticMonteCarlo.h"
 
-void DiagrammaticMonteCarloV2::changeDiagramLength (double param) {
+void DiagrammaticMonteCarlo::changeDiagramLength (double param) {
 
   double
     l = 0.5*this->FD.end->G[0]->momentum.squaredNorm() - this->mu,

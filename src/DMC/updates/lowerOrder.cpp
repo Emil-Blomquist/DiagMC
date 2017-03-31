@@ -1,6 +1,6 @@
 #include "../DiagrammaticMonteCarlo.h"
 
-void DiagrammaticMonteCarloV2::lowerOrder (double param) {
+void DiagrammaticMonteCarlo::lowerOrder (double param) {
   // requirement to lower: must be at least of order 1
   if (this->FD.Ds.size() == 0) {
     return;
@@ -101,7 +101,7 @@ void DiagrammaticMonteCarloV2::lowerOrder (double param) {
 
 
 
-// void DiagrammaticMonteCarloV2::lowerOrder (double param) {
+// void DiagrammaticMonteCarlo::lowerOrder (double param) {
 //   // requirement to lower: must be at least of order 1
 //   if (this->FD.Ds.size() == 0) {
 //     return;

@@ -2,6 +2,7 @@
 #include <time.h> // execution time
 
 #include "DMC/DiagrammaticMonteCarlo.h"
+#include "MC/MonteCarlo.h"
 
 using namespace std;
 
@@ -16,7 +17,7 @@ int main (int argc, char **argv) {
     maxLength = 30,
     param = 0;
 
-  long int numIterations = 4000000000;
+  unsigned long int numIterations = 4000000000;
 
   // input parameters
   unsigned int i = 1;
@@ -44,7 +45,7 @@ int main (int argc, char **argv) {
   // 50 bins per unit time
   const unsigned int numBins = 50*maxLength;
 
-  Vector3d externalMomentum(0, 0, momenta);
+  Vector3d externalMomentum(0, momenta, 0);
 
   //
   // 1. alla updates har olika sannolikhet och jämför olika resultat - gjort
@@ -59,16 +60,28 @@ int main (int argc, char **argv) {
   // 10. implementera bra raise/lower order - gjort
   //
 
-  DiagrammaticMonteCarloV2 DMC(
-    externalMomentum,
-    maxLength,
+  // DiagrammaticMonteCarlo DMC(
+  //   externalMomentum,
+  //   maxLength,
+  //   alpha,
+  //   mu,
+  //   numIterations,
+  //   numBins,
+  //   param,
+  //   argv
+  // );
+
+  MonteCarlo{
+    externalMomentum, 
     alpha,
     mu,
     numIterations,
-    numBins,
-    param,
+    maxLength,
+    50,
     argv
-  );
+  };
+
+
 
   printf("[Finished in %.2fs]\n", (double)(clock() - tStart)/CLOCKS_PER_SEC);
   return 0;

@@ -1,8 +1,8 @@
 #include "../DiagrammaticMonteCarlo.h"
 
-void DiagrammaticMonteCarloV2::raiseOrder (double param) {
+void DiagrammaticMonteCarlo::raiseOrder (double param) {
   // temp
-  // if (this->FD.Ds.size() == 2) {
+  // if (this->FD.Ds.size() == 1) {
   //   return;
   // }
 
@@ -211,7 +211,7 @@ void DiagrammaticMonteCarloV2::raiseOrder (double param) {
 
 
 
-// void DiagrammaticMonteCarloV2::raiseOrder (double param) {
+// void DiagrammaticMonteCarlo::raiseOrder (double param) {
 //   // temp
 //   // if (this->FD.Ds.size() == 1) {
 //   //   return;
