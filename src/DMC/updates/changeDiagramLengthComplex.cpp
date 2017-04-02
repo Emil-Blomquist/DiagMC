@@ -43,7 +43,7 @@ void DiagrammaticMonteCarlo::changeDiagramLengthComplex (double param) {
         }
 
         if (foundLastVertex) {
-          phononContribution += 1;
+          phononContribution += this->FD.phononEnergy(d->q);
         }
       }
     }
@@ -51,7 +51,7 @@ void DiagrammaticMonteCarlo::changeDiagramLengthComplex (double param) {
     // neighbours have separate times
     for (shared_ptr<Phonon> d : this->FD.Ds) {
       if (d->start->position <= g->start->position && d->end->position >= g->end->position) {
-        phononContribution += 1;
+        phononContribution += this->FD.phononEnergy(d->q);
       }
     }
   }

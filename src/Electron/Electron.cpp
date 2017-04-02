@@ -1,12 +1,7 @@
 #include "Electron.h"
 
-Electron::Electron (Vector3d P) : Propagator(0, P) {}
-
-void Electron::print () {
-  cout << "Electron: " << this->shared_from_this() << endl
-       << "\tmomentum: " << this->momentum.transpose() << endl
-       << "\tstart: " << this->start << endl
-       << "\tend: " << this->end << endl;
+Electron::Electron (Vector3d P) {
+  this->momentum = P;
 }
 
 void Electron::setStart (shared_ptr<Vertex> v) {
@@ -41,10 +36,18 @@ void Electron::setEnd (shared_ptr<Vertex> v) {
   this->end = v;
 }
 
+void Electron::addMomentum (Vector3d P) {
+  this->momentum += P;
+
+  if ( ! isfinite(P[0]) || ! isfinite(P[1]) || ! isfinite(P[2])) {
+    cout << "Phonon::addMomentum P=" << P.transpose() << endl;
+  }
+}
+
 double Electron::operator() () {
-  double E, t;
-  E = 0.5*this->momentum.squaredNorm();
-  t = this->end->position - this->start->position;
+  double
+    E = 0.5*this->momentum.squaredNorm(),
+    t = this->end->position - this->start->position;
 
   return exp(-E*t);
 }

@@ -28,14 +28,29 @@ void DiagrammaticMonteCarlo::swapPhononConnections (double param) {
     return;
   }
 
+  double c1, c2, e1, e2;
+  if (v1->D[1]) {
+    c1 = 1;
+    e1 = this->FD.phononEnergy(v1->D[1]->q);
+  } else {
+    c1 = -1;
+    e1 = -this->FD.phononEnergy(v1->D[0]->q);
+  }
+
+  if (v2->D[1]) {
+    c2 = 1;
+    e2 = this->FD.phononEnergy(v2->D[1]->q);
+  } else {
+    c2 = -1;
+    e2 = -this->FD.phononEnergy(v2->D[0]->q);
+  }
+
   double
-    c1 = (v1->D[1]) ? 1 : -1,
-    c2 = (v2->D[1]) ? 1 : -1,
     t = v2->position - v1->position,
     Eafter = 0.5*(g->momentum + c1*d1->momentum - c2*d2->momentum).squaredNorm(),
     Ebefore = 0.5*g->momentum.squaredNorm();
 
-  double exponent = -t*(Eafter - Ebefore + c2 - c1);
+  double exponent = -t*(Eafter - Ebefore + e2 - e1);
 
   // acceptance ration
   double a;
@@ -79,7 +94,7 @@ void DiagrammaticMonteCarlo::swapPhononConnections (double param) {
            << "exponent=" << exponent << endl
            << "--------------------------------------------------------------------" << endl;
     } else if (this->loud) {
-      cout << "swapPhononConnections: "  << this->FD.Ds.size() << " " << a << endl;
+      cout << "swapPhononConnections: " << accepted << " " << a << " " << exp(exponent)/(val/oldVal) << endl;
     }
   }
 }

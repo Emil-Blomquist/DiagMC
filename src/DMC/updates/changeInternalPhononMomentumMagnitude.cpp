@@ -29,7 +29,11 @@ void DiagrammaticMonteCarlo::changeInternalPhononMomentumMagnitude (double param
     wInvq = sqrt(0.5*M_PI*pow(std, 2.0)) * exp(0.5*pow(q/std, 2.0));
 
   Vector3d
-    Q(q*sin(d->theta)*cos(d->phi), q*sin(d->theta)*sin(d->phi), q*cos(d->theta)),
+    Q{
+      q*sin(d->theta)*cos(d->phi),
+      q*sin(d->theta)*sin(d->phi),
+      q*cos(d->theta)
+    },
     oldQ = d->momentum,
     dQ = Q - oldQ,
     meanP = this->calculateMeanP(d->start, d->end);
@@ -40,7 +44,7 @@ void DiagrammaticMonteCarlo::changeInternalPhononMomentumMagnitude (double param
 
   double
     dq2 = dQ.squaredNorm(),
-    exponent = (dQ.dot(meanP) - 0.5*dq2)*(t2 - t1);
+    exponent = (-this->FD.phononEnergy(q) + this->FD.phononEnergy(d->q) + dQ.dot(meanP) - 0.5*dq2)*(t2 - t1);
 
   double a = wInvq/oldwInvq * exp(exponent);
 
@@ -54,7 +58,7 @@ void DiagrammaticMonteCarlo::changeInternalPhononMomentumMagnitude (double param
   if (a > this->Udouble(0, 1)) {
 
     // set new momentum
-    this->FD.setInternalPhononMomentum(d, Q);
+    this->FD.setInternalPhononMomentum(d, Q, q);
 
     accepted = true;
   }
@@ -73,36 +77,7 @@ void DiagrammaticMonteCarlo::changeInternalPhononMomentumMagnitude (double param
            << "Q=" << Q.transpose() << endl
            << "--------------------------------------------------------------------" << endl;
     } else if (this->loud) {
-      cout << "changeInternalPhononMomentumMagnitude " << a << endl;
+      cout << "changeInternalPhononMomentumMagnitude: " << accepted << " " << a << " " << exp(exponent)/(val/oldVal) << endl;
     }
   }
 }
-
-
-
-
-
-// -----------
-// Overflow at DiagrammaticMonteCarlo::calculateQ
-// Q= inf -nan -inf
-// P0=   0.628175   0.455531 -0.0329462
-// Ep=   0.808818   0.586527 -0.0424205
-// Eo1=          0 -0.0721364  -0.997395
-// Eo2=  -0.588059   0.806711 -0.0583452
-// q= inf
-// theta= 1.21672
-// phi= 5.11482
-// -----------
-// -------------------------
-// DMC::changeInternalPhononMomentumMagnitude: nan encountered
-// Q= inf -nan -inf
-// q=inf
-// erf_inv=0.533844
-// param1=0
-// param2=0.269286
-// param3=0.549732
-// dt=0                <-----
-// d->theta=1.21672
-// P0=  0.628175   0.455531 -0.0329462
-// p0=0.776658
-// -------------------------

@@ -1,18 +1,12 @@
 #include "Phonon.h"
 
-Phonon::Phonon (Vector3d _p, double theta, double phi) : Propagator(1, _p) {
+Phonon::Phonon (Vector3d Q, double q, double theta, double phi) {
+  this->momentum = Q;
+  this->q = q;
   this->theta = theta;
   this->phi = phi;
 }
 
-void Phonon::print () {
-  cout << "Phonon: " << this->shared_from_this() << endl
-       << "\tmomentum: " << this->momentum.transpose() << endl
-       << "\ttheta: " << this->theta << endl
-       << "\tphi: " << this->phi << endl
-       << "\tstart: " << this->start << endl
-       << "\tend: " << this->end << endl;
-}
 
 void Phonon::setStart (shared_ptr<Vertex> v) {
   // unlink propagator from previous vertex
@@ -46,6 +40,15 @@ void Phonon::setEnd (shared_ptr<Vertex> v) {
   this->end = v;
 }
 
+void Phonon::setMomentum (Vector3d Q, double q) {
+  this->momentum = Q;
+  this->q = q;
+
+  if ( ! isfinite(q)) {
+    cout << "Phonon::setMomentum Q=" << Q.transpose() << endl;
+  }
+}
+
 void Phonon::setTheta (double theta) {
   this->theta = theta;
 
@@ -62,22 +65,8 @@ void Phonon::setPhi (double phi) {
   }
 }
 
-double Phonon::operator() (double alpha) {
-  double E, t;
-  E = 1;
-  t = this->end->position - this->start->position;
+double Phonon::operator() (double alpha, double E) {
+  double t = this->end->position - this->start->position;
 
   return alpha/(sqrt(8)*M_PI*M_PI) * sin(this->theta) * exp(-E*t);
-}
-
-void Phonon::save () {
-  Propagator::save();
-  this->savedTheta = this->theta;
-  this->savedPhi = this->phi;
-}
-
-void Phonon::revert () {
-  Propagator::revert();
-  this->theta = this->savedTheta;
-  this->phi = this->savedPhi;
 }

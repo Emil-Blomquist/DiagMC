@@ -22,7 +22,7 @@ void DiagrammaticMonteCarlo::shiftVertexPosition (double param) {
 
   // calculate exponent
   double
-    c = (v->D[0]) ? -1 : 1,
+    c = (v->D[0]) ? -this->FD.phononEnergy(v->D[0]->q) : this->FD.phononEnergy(v->D[1]->q),
     dE = 0.5*v->G[0]->momentum.squaredNorm() - 0.5*v->G[1]->momentum.squaredNorm() - c,
     dtdE = (t2 - t1)*dE;
 

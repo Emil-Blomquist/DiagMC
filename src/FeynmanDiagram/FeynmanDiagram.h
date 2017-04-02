@@ -11,16 +11,14 @@
 using namespace Eigen;
 using namespace std;
 
-#include "../Propagator/Electron.h"
-#include "../Propagator/Phonon.h"
+#include "../Electron/Electron.h"
+#include "../Phonon/Phonon.h"
 #include "../Vertex/Vertex.h"
 
 class FeynmanDiagram {
   private:
-    vector<shared_ptr<Electron> > savedGs;
-    vector<shared_ptr<Phonon> > savedDs;
-
     unsigned int binaryElectronSearch(shared_ptr<Electron>, unsigned int lowerBound = 0);
+
   public:
     double length, couplingConstant, chemicalPotential;
     Vector3d externalMomentum;
@@ -31,23 +29,20 @@ class FeynmanDiagram {
 
     FeynmanDiagram (Vector3d, double, double, double);
 
-    // vertex methods
     shared_ptr<Vertex> insertVertex (int, double);
+    shared_ptr<Phonon> addInternalPhonon (shared_ptr<Vertex>, shared_ptr<Vertex>, Vector3d, double, double, double);
     void
       removeVertex (shared_ptr<Vertex>),
       setVertexPosition (shared_ptr<Vertex>, double),
-      swapPhonons (shared_ptr<Vertex>, shared_ptr<Vertex>);
-    // phonon methods
-    shared_ptr<Phonon> addInternalPhonon (shared_ptr<Vertex>, shared_ptr<Vertex>, Vector3d, double, double);
-    // void removeInternalPhonon (shared_ptr<Phonon>);
-    void
+      swapPhonons (shared_ptr<Vertex>, shared_ptr<Vertex>),
       removeInternalPhonon (unsigned int),
-      setInternalPhononMomentum (shared_ptr<Phonon>, Vector3d),
-      setInternalPhononMomentumDirection (shared_ptr<Phonon>, double, double);
+      setInternalPhononMomentum (shared_ptr<Phonon>, Vector3d, double),
+      setInternalPhononMomentumDirection (shared_ptr<Phonon>, double, double),
+      setLength (double);
 
-    double operator() ();
-
-    void setLength (double);
+    double
+      phononEnergy (double),
+      operator() ();
 };
 
 #endif

@@ -1,6 +1,13 @@
 #include "FeynmanDiagram.h"
 
-shared_ptr<Phonon> FeynmanDiagram::addInternalPhonon (shared_ptr<Vertex> v1, shared_ptr<Vertex> v2, Vector3d Q, double theta, double phi) {
+shared_ptr<Phonon> FeynmanDiagram::addInternalPhonon (
+  shared_ptr<Vertex> v1,
+  shared_ptr<Vertex> v2,
+  Vector3d Q, 
+  double q,
+  double theta,
+  double phi
+) {
   // first make sure that v1 and v2 does not already are attached to a phonon
   if (v1->D[0] != NULL or v1->D[1] != NULL or v2->D[0] != NULL or v2->D[1] != NULL) {
     cout << "ERROR at FeynmanDiagram::addInternalPhonon: a phonon is already attached to either/both of these vertices" << endl;
@@ -8,7 +15,7 @@ shared_ptr<Phonon> FeynmanDiagram::addInternalPhonon (shared_ptr<Vertex> v1, sha
   }
 
   // create new phonon
-  this->Ds.emplace_back(new Phonon(Q, theta, phi));
+  this->Ds.emplace_back(new Phonon(Q, q, theta, phi));
 
   // attach to vertices
   this->Ds.back()->setStart(v1);
@@ -44,11 +51,12 @@ void FeynmanDiagram::removeInternalPhonon (unsigned int phononIndex) {
   this->Ds.erase(this->Ds.begin() + phononIndex);
 }
 
-void FeynmanDiagram::setInternalPhononMomentum (shared_ptr<Phonon> d, Vector3d Q) {
+void FeynmanDiagram::setInternalPhononMomentum (shared_ptr<Phonon> d, Vector3d Q, double q) {
+  // obviously need to be calculated before adding the momentum
   Vector3d dQ = Q - d->momentum;
 
   // add momentum difference
-  d->addMomentum(dQ);
+  d->setMomentum(Q, q);
 
   // momentum conservation
   shared_ptr<Electron> g = d->start->G[1];

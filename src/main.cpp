@@ -45,7 +45,7 @@ int main (int argc, char **argv) {
   // 50 bins per unit time
   const unsigned int numBins = 50*maxLength;
 
-  Vector3d externalMomentum(0, momenta, 0);
+  Vector3d externalMomentum(0, 0, momenta);
 
   //
   // 1. alla updates har olika sannolikhet och jämför olika resultat - gjort
@@ -60,26 +60,26 @@ int main (int argc, char **argv) {
   // 10. implementera bra raise/lower order - gjort
   //
 
-  // DiagrammaticMonteCarlo DMC(
-  //   externalMomentum,
-  //   maxLength,
-  //   alpha,
-  //   mu,
-  //   numIterations,
-  //   numBins,
-  //   param,
-  //   argv
-  // );
-
-  MonteCarlo{
-    externalMomentum, 
+  DiagrammaticMonteCarlo DMC(
+    externalMomentum,
+    maxLength,
     alpha,
     mu,
     numIterations,
-    maxLength,
-    50,
+    numBins,
+    param,
     argv
-  };
+  );
+
+  // MonteCarlo{
+  //   externalMomentum, 
+  //   alpha,
+  //   mu,
+  //   numIterations,
+  //   maxLength,
+  //   50,
+  //   argv
+  // };
 
 
 

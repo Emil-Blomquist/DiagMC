@@ -1,10 +1,11 @@
 #include "MonteCarlo.h"
 
 void MonteCarlo::diagramOrder2 (double length, unsigned int index) {
-  double value = 0;
   Vector3d P0 = this->externalMomentum;
 
   for (unsigned int diagramType = 0; diagramType != 3; diagramType++) {
+    double value = 0;
+    
     for (long unsigned int i = 0; i != this->numIterations; i++) {
 
       // sample times
@@ -15,9 +16,22 @@ void MonteCarlo::diagramOrder2 (double length, unsigned int index) {
         t4 = this->Udouble(t3, length),
         wInv_ts = length * (length - t1) * (length - t2) * (length - t3);
 
+
+      // integrand value
+      double std1, std2;
+      if (diagramType == 1) {
+        std1 = pow(t2 - t1, -0.5);
+        std2 = pow(t4 - t3, -0.5);
+      } else if (diagramType == 2) {
+        std1 = pow(t3 - t1, -0.5);
+        std2 = pow(t4 - t2, -0.5);
+      } else {
+        std1 = pow(t4 - t1, -0.5);
+        std2 = pow(t3 - t2, -0.5);
+      }
+
       // sample momentum
       double
-        std1 = pow(t2 - t1, -0.5),
         q1 = abs(this->Ndouble(std1)),
         theta1 = this->Udouble(0, M_PI),
         phi1 = this->Udouble(0, 2*M_PI),
@@ -31,7 +45,6 @@ void MonteCarlo::diagramOrder2 (double length, unsigned int index) {
 
       // sample momentum
       double
-        std2 = pow(t4 - t3, -0.5),
         q2 = abs(this->Ndouble(std2)),
         theta2 = this->Udouble(0, M_PI),
         phi2 = this->Udouble(0, 2*M_PI),
@@ -73,7 +86,6 @@ void MonteCarlo::diagramOrder2 (double length, unsigned int index) {
 
       value += integrand * wInv_ts * wInv_Q1 * wInv_Q2;
     }
+    this->values[index] += value/this->numIterations;
   }
-
-  this->values[index] += value/this->numIterations;
 }

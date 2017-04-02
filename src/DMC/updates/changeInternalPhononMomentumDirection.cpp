@@ -16,7 +16,11 @@ void DiagrammaticMonteCarlo::changeInternalPhononMomentumDirection (double param
     q = d->momentum.norm();
 
   Vector3d
-    Q(q*sin(theta)*cos(phi), q*sin(theta)*sin(phi), q*cos(theta)),
+    Q{
+      q*sin(theta)*cos(phi),
+      q*sin(theta)*sin(phi),
+      q*cos(theta)
+    },
     oldQ = d->momentum,
     dQ = Q - oldQ,
     meanP = this->calculateMeanP(d->start, d->end);
@@ -47,7 +51,7 @@ void DiagrammaticMonteCarlo::changeInternalPhononMomentumDirection (double param
   if (a > this->Udouble(0, 1)) {
 
     // set new momentum
-    this->FD.setInternalPhononMomentum(d, Q);
+    this->FD.setInternalPhononMomentum(d, Q, q);
 
     // set angles corresponding to new momentum
     this->FD.setInternalPhononMomentumDirection(d, theta, phi);
@@ -75,7 +79,7 @@ void DiagrammaticMonteCarlo::changeInternalPhononMomentumDirection (double param
            << "sin(theta)=" << sin(theta) << endl
            << "--------------------------------------------------------------------" << endl;
     } else if (this->loud) {
-      cout << "changeInternalPhononMomentumDirection " << a  << " " << acc << endl;
+      cout << "changeInternalPhononMomentumDirection: " << accepted << " " << a << " " << acc/a << endl;
     }
   }
 }

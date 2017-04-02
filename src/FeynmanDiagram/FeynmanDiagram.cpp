@@ -23,6 +23,10 @@ FeynmanDiagram::FeynmanDiagram (
   this->Gs[0]->setEnd(this->end);
 }
 
+double FeynmanDiagram::phononEnergy (double q) {
+  return q*q + q;
+}
+
 double FeynmanDiagram::operator() () {
   double val;
 
@@ -36,7 +40,7 @@ double FeynmanDiagram::operator() () {
   }
 
   for (auto d : this->Ds) {
-    val *= (*d)(this->couplingConstant);
+    val *= (*d)(this->couplingConstant, this->phononEnergy(d->q));
   }
 
   return val;

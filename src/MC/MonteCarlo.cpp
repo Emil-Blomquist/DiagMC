@@ -120,7 +120,7 @@ double MonteCarlo::D (Vector3d Q, double theta, double t1, double t2) {
 }
 
 double MonteCarlo::phononDispersionRelation (Vector3d Q) {
-  return 0.5*Q.squaredNorm() + 1;
+  return Q.squaredNorm() + Q.norm();
 }
 
 
