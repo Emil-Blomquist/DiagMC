@@ -115,7 +115,7 @@ void DiagrammaticMonteCarlo::write2file (const unsigned long int iterationNum) {
 
   // create file name
   stringstream stream;
-  stream << fixed << setprecision(3)
+  stream << fixed << setprecision(7)
          << "p=" << this->FD.externalMomentum.norm()
          << " tmax=" << this->maxLength
          << " a=" << this->FD.couplingConstant

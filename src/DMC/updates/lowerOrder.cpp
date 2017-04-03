@@ -37,7 +37,7 @@ void DiagrammaticMonteCarlo::lowerOrder (double param) {
     wInvt2 = exp(l*dt2)*(1 - exp(-l*(t2up - t2low)))/l,
 
     std = 1/sqrt(v2->position - v1->position),
-    wInvQ = 2*pow(M_PI, 2.0) * sqrt(0.5*M_PI*pow(std, 2.0)) * exp(0.5*pow(d->momentum.norm()/std, 2.0));
+    wInvQ = 2*pow(M_PI, 2.0) * sqrt(0.5*M_PI*pow(std, 2.0)) * exp(0.5*pow(d->q/std, 2.0));
 
   // to calculate the acceptance ratio
   Vector3d
@@ -47,7 +47,7 @@ void DiagrammaticMonteCarlo::lowerOrder (double param) {
   double
     sinTheta = sin(d->theta),
     alpha = this->alpha,
-    q2 = Q.squaredNorm(),
+    q2 = d->q*d->q,
     dt = v2->position - v1->position,
     exponential = exp(dt*(this->FD.phononEnergy(d->q) + 0.5*q2 - Q.dot(P0)));
 

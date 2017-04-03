@@ -71,7 +71,7 @@ void MonteCarlo::write2file () {
 
   // create file name
   stringstream stream;
-  stream << fixed << setprecision(3)
+  stream << fixed << setprecision(7)
          << "p=" << this->externalMomentum.norm()
          << " a=" << this->alpha
          << " mu=" << this->mu
@@ -120,7 +120,7 @@ double MonteCarlo::D (Vector3d Q, double theta, double t1, double t2) {
 }
 
 double MonteCarlo::phononDispersionRelation (Vector3d Q) {
-  return Q.squaredNorm() + Q.norm();
+  return 1;
 }
 
 

@@ -13,7 +13,7 @@ void DiagrammaticMonteCarlo::changeInternalPhononMomentumDirection (double param
     theta = this->Udouble(0, M_PI),
     oldTheta = d->theta,
     phi = this->Udouble(0, 2*M_PI),
-    q = d->momentum.norm();
+    q = d->q;
 
   Vector3d
     Q{

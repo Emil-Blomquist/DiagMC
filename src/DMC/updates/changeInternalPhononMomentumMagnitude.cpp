@@ -39,7 +39,7 @@ void DiagrammaticMonteCarlo::changeInternalPhononMomentumMagnitude (double param
     meanP = this->calculateMeanP(d->start, d->end);
 
   double
-    oldq = oldQ.norm(),
+    oldq = d->q,
     oldwInvq = sqrt(0.5*M_PI*pow(std, 2.0)) * exp(0.5*pow(oldq/std, 2.0));
 
   double

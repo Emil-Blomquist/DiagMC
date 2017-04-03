@@ -24,7 +24,7 @@ FeynmanDiagram::FeynmanDiagram (
 }
 
 double FeynmanDiagram::phononEnergy (double q) {
-  return q*q + q;
+  return 1;
 }
 
 double FeynmanDiagram::operator() () {

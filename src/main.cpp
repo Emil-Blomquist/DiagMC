@@ -20,7 +20,7 @@ int main (int argc, char **argv) {
   unsigned long int numIterations = 4000000000;
 
   // input parameters
-  unsigned int i = 1;
+  int i = 1;
   while (i < argc) {
     if (strcmp(argv[i], "-p") == 0) {
       momenta = stod(argv[i + 1]);
