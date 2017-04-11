@@ -25,6 +25,8 @@ class MonteCarlo {
     struct tm *timeinfo;
     string path;
 
+    bool externalLegs, irreducibleDiagrams;
+
     Vector3d externalMomentum;
     unsigned long int numIterations;
     double mu, alpha, tMax;

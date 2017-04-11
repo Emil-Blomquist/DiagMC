@@ -19,6 +19,9 @@ DiagrammaticMonteCarlo::DiagrammaticMonteCarlo (
   // will print acceptance ratios etc. (debug must be true)
   this->loud = false;
 
+  // if the diagram should have external legs or not
+  this->externalLegs = false;
+
   this->mu = mu;
   this->alpha = alpha;
   this->maxLength = maxLength;
@@ -51,13 +54,13 @@ void DiagrammaticMonteCarlo::run () {
 
   // specify the relative probability of choosing a specific update function
   multimap<unsigned int, void (DiagrammaticMonteCarlo::*)(double)> updateMethods = {
-    {2, &DiagrammaticMonteCarlo::shiftVertexPosition},
-    {2, &DiagrammaticMonteCarlo::swapPhononConnections},
-    {2, &DiagrammaticMonteCarlo::changeInternalPhononMomentumDirection},
-    {2, &DiagrammaticMonteCarlo::changeInternalPhononMomentumMagnitude},
+    {10, &DiagrammaticMonteCarlo::shiftVertexPosition},
+    {3, &DiagrammaticMonteCarlo::swapPhononConnections},
+    {5, &DiagrammaticMonteCarlo::changeInternalPhononMomentumDirection},
+    {7, &DiagrammaticMonteCarlo::changeInternalPhononMomentumMagnitude},
     {2, &DiagrammaticMonteCarlo::raiseOrder}, // <- These two must have the same probability
     {2, &DiagrammaticMonteCarlo::lowerOrder}, // <-
-    {2, &DiagrammaticMonteCarlo::changeDiagramLength},
+    {5, &DiagrammaticMonteCarlo::changeDiagramLength},
     {1, &DiagrammaticMonteCarlo::changeDiagramLengthComplex}
   };
 
@@ -79,9 +82,6 @@ void DiagrammaticMonteCarlo::run () {
     (this->*updateMethod)(this->param);
   }
 
-  // Display disp(&this->FD);
-  // disp.render();
-
   // main loop
   for (unsigned long int i = 0; i < this->numIterations; ++i) {
     auto updateMethod = chooseUpdateMethod[this->Uint(0, chooseUpdateMethod.size() - 1)];
@@ -93,11 +93,14 @@ void DiagrammaticMonteCarlo::run () {
     }
 
     // bin
-    unsigned int index = this->FD.length/this->binSize;
-    bins[index]++;
+    if (this->FD.diagramIsIrreducible(this->externalLegs)) {
+      unsigned int index = this->FD.length/this->binSize;
+      bins[index]++;
+    }
 
     // if zeroth order, bin again
     if (this->FD.Ds.size() == 0) {
+      unsigned int index = this->FD.length/this->binSize;
       bins0[index]++;
     }
   }
@@ -227,11 +230,9 @@ Vector3d DiagrammaticMonteCarlo::calculateMeanP (shared_ptr<Vertex> v1, shared_p
 
       // loop through electrons between phonon propagator ends
       shared_ptr<Electron> g = v1->G[1];
-      while (g->start != v2) {
+      do {
         meanP += g->momentum*(g->end->position - g->start->position);
-
-        g = g->end->G[1];
-      }
+      } while (g->end != v2 && (g = g->end->G[1]));
 
       if (dt == 0 || ! isfinite(meanP[0]) || ! isfinite(meanP[1]) || ! isfinite(meanP[2])) {
         cout << "-----------" << endl

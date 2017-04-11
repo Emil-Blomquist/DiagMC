@@ -5,29 +5,53 @@ void MonteCarlo::diagramOrder2 (double length, unsigned int index) {
 
   for (unsigned int diagramType = 0; diagramType != 3; diagramType++) {
     double value = 0;
+
+    if (this->irreducibleDiagrams && diagramType == 1) {
+      continue;
+    }
+
+    cout << diagramType << endl;
     
     for (long unsigned int i = 0; i != this->numIterations; i++) {
 
-      // sample times
-      double 
-        t1 = this->Udouble(0, length),
-        t2 = this->Udouble(t1, length),
-        t3 = this->Udouble(t2, length),
-        t4 = this->Udouble(t3, length),
+      double t1, t2, t3, t4, wInv_ts, std1, std2;
+
+      if (this->externalLegs) {
+        // sample times
+        t1 = this->Udouble(0, length);
+        t2 = this->Udouble(t1, length);
+        t3 = this->Udouble(t2, length);
+        t4 = this->Udouble(t3, length);
         wInv_ts = length * (length - t1) * (length - t2) * (length - t3);
 
-
-      // integrand value
-      double std1, std2;
-      if (diagramType == 1) {
-        std1 = pow(t2 - t1, -0.5);
-        std2 = pow(t4 - t3, -0.5);
-      } else if (diagramType == 2) {
-        std1 = pow(t3 - t1, -0.5);
-        std2 = pow(t4 - t2, -0.5);
+        // integrand value
+        if (diagramType == 1) {
+          std1 = pow(t2 - t1, -0.5);
+          std2 = pow(t4 - t3, -0.5);
+        } else if (diagramType == 2) {
+          std1 = pow(t3 - t1, -0.5);
+          std2 = pow(t4 - t2, -0.5);
+        } else {
+          std1 = pow(t4 - t1, -0.5);
+          std2 = pow(t3 - t2, -0.5);
+        }
       } else {
-        std1 = pow(t4 - t1, -0.5);
-        std2 = pow(t3 - t2, -0.5);
+        // sample times
+        t1 = this->Udouble(0, length),
+        t2 = this->Udouble(t1, length),
+        wInv_ts = length * (length - t1);
+
+        // integrand value
+        if (diagramType == 1) {
+          std1 = pow(t1, -0.5);
+          std2 = pow(length - t2, -0.5);
+        } else if (diagramType == 2) {
+          std1 = pow(t2, -0.5);
+          std2 = pow(length - t1, -0.5);
+        } else {
+          std1 = pow(length, -0.5);
+          std2 = pow(t2 - t1, -0.5);
+        }
       }
 
       // sample momentum
@@ -57,31 +81,52 @@ void MonteCarlo::diagramOrder2 (double length, unsigned int index) {
       };
 
       // chemical potential factor
-      double chemFac = exp(this->mu*length);
+      double
+        integrand,
+        chemFac = exp(this->mu*length);
 
-      // integrand value
-      double integrand;
-      if (diagramType == 1) {
-        integrand = chemFac
-                  * this->G(P0, 0, t1)
-                  * this->G(P0 - Q1, t1, t2) * this->D(Q1, theta1, t1, t2)
-                  * this->G(P0, t2, t3)
-                  * this->G(P0 - Q2, t3, t4) * this->D(Q2, theta2, t3, t4)
-                  * this->G(P0, t4, length);
-      } else if (diagramType == 2) {
-        integrand = chemFac
-                  * this->G(P0, 0, t1)
-                  * this->G(P0 - Q1, t1, t2) * this->D(Q1, theta1, t1, t3)
-                  * this->G(P0 - Q1 - Q2, t2, t3) * this->D(Q2, theta2, t2, t4)
-                  * this->G(P0 - Q2, t3, t4)
-                  * this->G(P0, t4, length);
+      if (this->externalLegs) {
+        // integrand value
+        if (diagramType == 1) {
+          integrand = chemFac
+                    * this->G(P0, 0, t1)
+                    * this->G(P0 - Q1, t1, t2) * this->D(Q1, theta1, t1, t2)
+                    * this->G(P0, t2, t3)
+                    * this->G(P0 - Q2, t3, t4) * this->D(Q2, theta2, t3, t4)
+                    * this->G(P0, t4, length);
+        } else if (diagramType == 2) {
+          integrand = chemFac
+                    * this->G(P0, 0, t1)
+                    * this->G(P0 - Q1, t1, t2) * this->D(Q1, theta1, t1, t3)
+                    * this->G(P0 - Q1 - Q2, t2, t3) * this->D(Q2, theta2, t2, t4)
+                    * this->G(P0 - Q2, t3, t4)
+                    * this->G(P0, t4, length);
+        } else {
+          integrand = chemFac
+                    * this->G(P0, 0, t1)
+                    * this->G(P0 - Q1, t1, t2) * this->D(Q1, theta1, t1, t4)
+                    * this->G(P0 - Q1 - Q2, t2, t3) * this->D(Q2, theta2, t2, t3)
+                    * this->G(P0 - Q1, t3, t4)
+                    * this->G(P0, t4, length);
+        }
       } else {
-        integrand = chemFac
-                  * this->G(P0, 0, t1)
-                  * this->G(P0 - Q1, t1, t2) * this->D(Q1, theta1, t1, t4)
-                  * this->G(P0 - Q1 - Q2, t2, t3) * this->D(Q2, theta2, t2, t3)
-                  * this->G(P0 - Q1, t3, t4)
-                  * this->G(P0, t4, length);
+        // integrand value
+        if (diagramType == 1) {
+          integrand = chemFac
+                    * this->G(P0 - Q1, 0, t1) * this->D(Q1, theta1, 0, t1)
+                    * this->G(P0, t1, t2)
+                    * this->G(P0 - Q2, t2, length) * this->D(Q2, theta2, t2, length);
+        } else if (diagramType == 2) {
+          integrand = chemFac
+                    * this->G(P0 - Q1, 0, t1) * this->D(Q1, theta1, 0, t2)
+                    * this->G(P0 - Q1 - Q2, t1, t2) * this->D(Q2, theta2, t1, length)
+                    * this->G(P0 - Q2, t2, length);
+        } else {
+          integrand = chemFac
+                    * this->G(P0 - Q1, 0, t1) * this->D(Q1, theta1, 0, length)
+                    * this->G(P0 - Q1 - Q2, t1, t2) * this->D(Q2, theta2, t1, t2)
+                    * this->G(P0 - Q1, t2, length);
+        }
       }
 
       value += integrand * wInv_ts * wInv_Q1 * wInv_Q2;

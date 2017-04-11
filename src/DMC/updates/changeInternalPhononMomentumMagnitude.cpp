@@ -6,17 +6,14 @@ void DiagrammaticMonteCarlo::changeInternalPhononMomentumMagnitude (double param
     return;
   }
 
-
   // select internal phonon on random
   shared_ptr<Phonon> d = this->FD.Ds[this->Uint(0, this->FD.Ds.size() - 1)];
-
 
   if (d->end->position - d->start->position == 0) {
     // if time difference is zero momentum does not matter...
     cout << "DMC::changeInternalPhononMomentumMagnitude: dt = 0 -> return" << endl;
     return;
   }
-
 
   double
     t1 = d->start->position,

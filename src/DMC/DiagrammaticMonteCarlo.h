@@ -31,7 +31,7 @@ using namespace std;
 class DiagrammaticMonteCarlo {
   private:
     mt19937_64 mt;
-    bool debug, loud;
+    bool debug, loud, externalLegs;
     unsigned int numBins;
     unsigned long int numIterations;
     double maxLength, mu, alpha, param, binSize;

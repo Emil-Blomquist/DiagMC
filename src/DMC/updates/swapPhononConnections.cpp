@@ -12,7 +12,12 @@ void DiagrammaticMonteCarlo::swapPhononConnections (double param) {
   }
 
   // select internal electron propagator on random
-  shared_ptr<Electron> g = this->FD.Gs[this->Uint(1, this->FD.Gs.size() - 2)];
+  shared_ptr<Electron> g;
+  if (this->externalLegs) {
+    g = this->FD.Gs[this->Uint(1, this->FD.Gs.size() - 2)];
+  } else {
+    g = this->FD.Gs[this->Uint(0, this->FD.Gs.size() - 1)];
+  }
   
   shared_ptr<Vertex>
     v1 = g->start,

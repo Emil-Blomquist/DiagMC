@@ -47,18 +47,35 @@ int main (int argc, char **argv) {
 
   Vector3d externalMomentum(0, 0, momenta);
 
-  //
-  // 1. alla updates har olika sannolikhet och jämför olika resultat - gjort
-  // 2. samma som 1. fast gör med flit så att en uppdatering blir felaktig och se om det skiljer - gjort
-  // 3. bin size - gjort
-  // 4. kolla olika riktingar på external momentum - gjort
-  // 5. kolla momentum konservation efter varje uppdatering
-  // 6. kolla de där konstiga potentialerna som krävdes när man skulle ändra tid enligt artikeln
-  // 7. testa med hardcore mode fast med moment i z-rikting
-  // 8. be om resultat
-  // 9. jämför exakta resultat - gjort
-  // 10. implementera bra raise/lower order - gjort
-  //
+
+  // Todo:
+  // 1. Dyson equation
+  //    1. Hash table of electron momenta
+  //    2. determine proper diagrams
+  // 2. function space
+  // 3. skeleton diagrams
+
+
+  // unordered_multimap<double, double> myMap;
+
+  // myMap.insert({123.0, 1.0});
+  // myMap.insert({123.0, 1.1});
+  // myMap.insert({123.0, 1.2});
+  // myMap.insert({123.1, 1.2});
+
+  // // for (auto& x : myMap)
+  // //   std::cout << x.first << ": " << x.second << std::endl;
+
+
+  // auto range = myMap.equal_range(123.0);
+  // for_each (
+  //   range.first,
+  //   range.second,
+  //   [](pair<const double, double> x) {
+  //     std::cout << x.second << endl;
+  //   }
+  // );
+
 
   DiagrammaticMonteCarlo DMC(
     externalMomentum,

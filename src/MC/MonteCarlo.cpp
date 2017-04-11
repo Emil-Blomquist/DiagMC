@@ -29,6 +29,9 @@ MonteCarlo::MonteCarlo (
   this->tMax = maxLength;
   this->numIterations = numIterations;
 
+  this->externalLegs = false;
+  this->irreducibleDiagrams = true;
+
   // create times vector
   for (unsigned int i = 0; i !=  maxLength * (int) valuesPerLength; i++) {
     this->times.push_back((i + 0.5)/valuesPerLength);
@@ -46,8 +49,10 @@ void MonteCarlo::run () {
     // initiate
     this->values.push_back(0);
 
-    // first order
-    this->values[i] = exp(-(0.5*this->externalMomentum.squaredNorm() - this->mu)*this->times[i]);
+    // zeroth order
+    if ( ! this->irreducibleDiagrams) {
+      this->values[i] = exp(-(0.5*this->externalMomentum.squaredNorm() - this->mu)*this->times[i]);
+    }
 
     this->diagramOrder1(this->times[i], i);
     this->diagramOrder2(this->times[i], i);

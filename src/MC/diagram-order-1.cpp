@@ -6,15 +6,20 @@ void MonteCarlo::diagramOrder1 (double length, unsigned int index) {
 
   for (long unsigned int i = 0; i != this->numIterations; i++) {
 
-    // sample times
-    double 
+    double std, t1, t2, wInv_ts;
+    if (this->externalLegs) {
+      // sample times
       t1 = this->Udouble(0, length),
       t2 = this->Udouble(t1, length),
       wInv_ts = length * (length - t1);
 
+      std = pow(t2 - t1, -0.5);
+    } else {
+      std = pow(length, -0.5);
+    }
+
     // sample momentum
     double
-      std = pow(t2 - t1, -0.5),
       q = abs(this->Ndouble(std)),
       theta = this->Udouble(0, M_PI),
       phi = this->Udouble(0, 2*M_PI),
@@ -29,13 +34,21 @@ void MonteCarlo::diagramOrder1 (double length, unsigned int index) {
     // chemical potential factor
     double chemFac = exp(this->mu*length);
 
-    // integrand value
-    double integrand = chemFac
-                     * this->G(P0, 0, t1)
-                     * this->G(P0 - Q, t1, t2) * this->D(Q, theta, t1, t2)
-                     * this->G(P0, t2, length);
+    if (this->externalLegs) {
+      // integrand value
+      double integrand = chemFac
+                       * this->G(P0, 0, t1)
+                       * this->G(P0 - Q, t1, t2) * this->D(Q, theta, t1, t2)
+                       * this->G(P0, t2, length);
 
-    value += integrand * wInv_ts * wInv_Q;
+      value += integrand * wInv_ts * wInv_Q;
+    } else {
+      // integrand value
+      double integrand = chemFac
+                       * this->G(P0 - Q, 0, length) * this->D(Q, theta, 0, length);
+
+      value += integrand * wInv_Q;
+    }
   }
 
   this->values[index] += value/this->numIterations;

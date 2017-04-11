@@ -133,7 +133,7 @@
 //         // three lines connected
 //         if ( ! (v->G[0] && v->G[1] && ((v->D[0] != NULL) ^ (v->D[1] != NULL)))) {
 //           cout << i << ": DIAGRAM ERROR: Not exactly three lines connected to a vertex" << endl;
-//           v->print();
+//           // v->print();
 //           validVertex = false;
 //         }
 
@@ -146,14 +146,14 @@
 //         }
 //         if (dP.norm() > pow(10.0, -10.0)) {
 //           cout << i << ": DIAGRAM ERROR: Momentum nonconservation at vertex" << endl;
-//           v->print();
+//           // v->print();
 //           validVertex = false;
 //         }
 
 //         // increasing vertex times
 //         if ( ! (v->G[0]->start->position < v->position && v->position < v->G[1]->end->position)) {
 //           cout << i << ": DIAGRAM ERROR: Vertices not chronologically ordered" << endl;
-//           v->print();
+//           // v->print();
 //           validVertex = false;
 //         }
 
@@ -181,7 +181,7 @@
 
 //         if (d->end->position <= d->start->position) {
 //           cout << "DIAGRAM ERROR: Phonon propagating backwards" << endl;
-//           d->print();
+//           // d->print();
 //           validPhonon = false;
 //         }
 //       }

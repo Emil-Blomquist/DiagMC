@@ -2,7 +2,10 @@
 
 void DiagrammaticMonteCarlo::shiftVertexPosition (double param) {
   // requirement to lower: must be at least of order 1
-  if (this->FD.Ds.size() == 0) {
+  if (
+    this->FD.Ds.size() == 0 ||
+    ( ! this->externalLegs && this->FD.Ds.size() == 1)
+  ) {
     return;
   }
 
@@ -80,7 +83,7 @@ void DiagrammaticMonteCarlo::shiftVertexPosition (double param) {
            << "exp=" << exp(dE*(t - tOld)) << endl
            << "--------------------------------------------------------------------" << endl;
     } else if (this->loud) {
-      cout << "shiftVertexPosition " << a << endl;
+      cout << "shiftVertexPosition: " << a << endl;
     }
   }
 }

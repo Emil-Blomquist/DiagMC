@@ -8,7 +8,7 @@ shared_ptr<Phonon> FeynmanDiagram::addInternalPhonon (
   double theta,
   double phi
 ) {
-  // first make sure that v1 and v2 does not already are attached to a phonon
+  // first make sure that v1 and v2 are not already attached to a phonon
   if (v1->D[0] != NULL or v1->D[1] != NULL or v2->D[0] != NULL or v2->D[1] != NULL) {
     cout << "ERROR at FeynmanDiagram::addInternalPhonon: a phonon is already attached to either/both of these vertices" << endl;
     return NULL;
@@ -23,11 +23,15 @@ shared_ptr<Phonon> FeynmanDiagram::addInternalPhonon (
 
   // momentum conservation
   shared_ptr<Electron> g = v1->G[1];
-  while (g->start != v2) {
+  do {
+    // remove from hash table
+    this->removeFromHashTable(g);  
+
     g->addMomentum(-Q);
 
-    g = g->end->G[1];
-  }
+    // reinsert into hash table
+    this->insertIntoHashTable(g);
+  } while (g->end != v2 && (g = g->end->G[1]));
 
   return this->Ds.back();
 }
@@ -37,11 +41,16 @@ void FeynmanDiagram::removeInternalPhonon (unsigned int phononIndex) {
 
   // momentum conservation
   shared_ptr<Electron> g = d->start->G[1];
-  while (g->start != d->end) {
+
+  do {
+    // remove from hash table
+    this->removeFromHashTable(g);  
+
     g->addMomentum(d->momentum);
 
-    g = g->end->G[1];
-  }
+    // reinsert into hash table
+    this->insertIntoHashTable(g);
+  } while (g->end != d->end && (g = g->end->G[1]));
 
   // unlink phonon from vertices
   d->setStart(NULL);
@@ -60,11 +69,15 @@ void FeynmanDiagram::setInternalPhononMomentum (shared_ptr<Phonon> d, Vector3d Q
 
   // momentum conservation
   shared_ptr<Electron> g = d->start->G[1];
-  while (g->start != d->end) {
-    g->addMomentum(-dQ);
+  do {
+    // remove from hash table
+    this->removeFromHashTable(g);  
 
-    g = g->end->G[1];
-  }
+    g->addMomentum(-dQ);
+    
+    // reinsert into hash table
+    this->insertIntoHashTable(g);
+  } while (g->end != d->end && (g = g->end->G[1]));
 }
 
 void FeynmanDiagram::setInternalPhononMomentumDirection (shared_ptr<Phonon> d, double theta, double phi) {

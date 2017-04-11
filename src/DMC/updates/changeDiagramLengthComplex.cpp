@@ -128,7 +128,7 @@ void DiagrammaticMonteCarlo::changeDiagramLengthComplex (double param) {
            << "oldwInvt=" << oldwInvt << endl
            << "--------------------------------------------------------------------" << endl;
     } else if (this->loud) {
-      cout << "changeDiagramLengthComplex " << a << endl;
+      cout << "changeDiagramLengthComplex: " << a << endl;
     }
   } 
 }

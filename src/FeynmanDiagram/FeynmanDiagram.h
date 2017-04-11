@@ -5,6 +5,9 @@
 #include <memory>
 #include <vector>
 #include <float.h>
+#include <unordered_map>
+#include <cmath>
+#include <iterator>
 
 #include <Eigen/Dense>
 
@@ -19,6 +22,11 @@ class FeynmanDiagram {
   private:
     unsigned int binaryElectronSearch(shared_ptr<Electron>, unsigned int lowerBound = 0);
 
+    void
+      insertIntoHashTable (shared_ptr<Electron>),
+      removeFromHashTable (shared_ptr<Electron>);
+      
+
   public:
     double length, couplingConstant, chemicalPotential;
     Vector3d externalMomentum;
@@ -26,6 +34,9 @@ class FeynmanDiagram {
     shared_ptr<Vertex> start, end;
     vector<shared_ptr<Electron> > Gs;
     vector<shared_ptr<Phonon> > Ds;
+
+    // the key being the first component of the momentum
+    unordered_multimap<double, shared_ptr<Electron> > electronHashTable;
 
     FeynmanDiagram (Vector3d, double, double, double);
 
@@ -43,6 +54,12 @@ class FeynmanDiagram {
     double
       phononEnergy (double),
       operator() ();
+
+    bool diagramIsIrreducible (bool);
+
+
+
+    // void printHashTable ();
 };
 
 #endif

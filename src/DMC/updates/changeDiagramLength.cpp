@@ -5,8 +5,14 @@ void DiagrammaticMonteCarlo::changeDiagramLength (double param) {
   double
     l = 0.5*this->FD.end->G[0]->momentum.squaredNorm() - this->mu,
     r = this->Udouble(0, 1),
-    tmin = this->FD.end->G[0]->start->position,
-    dt = -log(1 - r + r*exp(-l*(this->maxLength - tmin)))/l;
+    tmin = this->FD.end->G[0]->start->position;
+
+  // phonon contribution
+  if ( ! this->externalLegs && this->FD.Ds.size() > 0) {
+    l += this->FD.phononEnergy(this->FD.end->D[0]->q);
+  }
+
+  double dt = -log(1 - r + r*exp(-l*(this->maxLength - tmin)))/l;
 
   double oldVal = 0, oldwInvt = 0, wInvt = 0;
   if (this->debug) {
@@ -53,7 +59,7 @@ void DiagrammaticMonteCarlo::changeDiagramLength (double param) {
            << "oldwInvt=" << oldwInvt << endl
            << "--------------------------------------------------------------------" << endl;
     } else if (this->loud) {
-      cout << "changeDiagramLength " << a << endl;
+      cout << "changeDiagramLength: " << a << endl;
     }
   }
 }

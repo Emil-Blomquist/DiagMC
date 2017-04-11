@@ -33,6 +33,9 @@ shared_ptr<Vertex> FeynmanDiagram::insertVertex (int gIndex, double t) {
   g1->setEnd(v);
   g2->setStart(v);
 
+  // insert the new propagator into the electron hash table
+  this->insertIntoHashTable(g2);
+
   // return pointer to vertex
   return v;
 }
@@ -61,7 +64,10 @@ void FeynmanDiagram::removeVertex (shared_ptr<Vertex> v) {
   g->setStart(NULL);
 
   // remove g from Gs
-  this->Gs.erase(this->Gs.begin() + i);   
+  this->Gs.erase(this->Gs.begin() + i);
+
+  // remove propagator to be deleted from the hash table
+  this->removeFromHashTable(g);  
 }
 
 void FeynmanDiagram::setVertexPosition (shared_ptr<Vertex> v, double t) {
@@ -81,7 +87,7 @@ void FeynmanDiagram::setVertexPosition (shared_ptr<Vertex> v, double t) {
 
   if (v->G[0]->start->position >= t) {
     t = v->G[0]->start->position + DBL_EPSILON;
-  } else if (t >= v->G[1]->end->position) {
+  } else if (v->G[1] && t >= v->G[1]->end->position) {
     t = v->G[1]->end->position - DBL_EPSILON;
   }
 
@@ -89,11 +95,11 @@ void FeynmanDiagram::setVertexPosition (shared_ptr<Vertex> v, double t) {
 }
 
 void FeynmanDiagram::swapPhonons (shared_ptr<Vertex> v1, shared_ptr<Vertex> v2) {
-  // cannot be first or last vertex
-  if (v1 == this->start || v2 == this->start || v1 == this->end || v2 == this->end) {
-    cout << "ERROR at FeynmanDiagram::swapPhonons: Not allowed to swap phonon with the first nor the last vertex" << endl;
-    return;
-  }
+  // // cannot be first or last vertex
+  // if (v1 == this->start || v2 == this->start || v1 == this->end || v2 == this->end) {
+  //   cout << "ERROR at FeynmanDiagram::swapPhonons: Not allowed to swap phonon with the first nor the last vertex" << endl;
+  //   return;
+  // }
 
   // must be neighbouring vertices and sent here in proper order
   if (v1->G[1]->end != v2) {
@@ -116,8 +122,14 @@ void FeynmanDiagram::swapPhonons (shared_ptr<Vertex> v1, shared_ptr<Vertex> v2) 
   dP2 = d2->momentum * ((v2->D[1]) ? -1 : 1);
   dP = dP1 + dP2;
 
+  // remove from hash table
+  this->removeFromHashTable(v1->G[1]);  
+
   // momentum conservation
   v1->G[1]->addMomentum(dP);
+
+  // reinsert into hash table
+  this->insertIntoHashTable(v1->G[1]);
 
   // vector of pointers to member function of Phonon
   vector<void (Phonon::*)(shared_ptr<Vertex>)> startOrEnd = {&Phonon::setStart, &Phonon::setEnd};
