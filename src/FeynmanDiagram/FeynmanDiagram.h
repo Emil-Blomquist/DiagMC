@@ -8,6 +8,7 @@
 #include <unordered_map>
 #include <cmath>
 #include <iterator>
+#include <map>
 
 #include <Eigen/Dense>
 
@@ -28,7 +29,7 @@ class FeynmanDiagram {
       
 
   public:
-    double length, couplingConstant, chemicalPotential;
+    double length, couplingConstant, chemicalPotential, tolerance;
     Vector3d externalMomentum;
 
     shared_ptr<Vertex> start, end;
@@ -56,6 +57,8 @@ class FeynmanDiagram {
       operator() ();
 
     bool diagramIsIrreducible (bool);
+
+    string diagramName ();
 
 
 

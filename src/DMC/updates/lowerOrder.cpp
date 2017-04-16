@@ -23,7 +23,6 @@ void DiagrammaticMonteCarlo::lowerOrder (double param) {
     v2 = d->end;
 
   double wInvQ, wInvt1, wInvt2, wInvG1, wInvd;
-  // Vector3d Q, P0;
 
   if ( ! this->externalLegs && this->FD.Ds.size() == 1) {
     // go down to zeroth order
@@ -39,7 +38,7 @@ void DiagrammaticMonteCarlo::lowerOrder (double param) {
     wInvQ = 2*pow(M_PI, 2.0) * sqrt(0.5*M_PI*pow(std, 2.0)) * exp(0.5*pow(d->q/std, 2.0));
 
   } else {
-    if (v1 == this->FD.start || v2 == this->FD.end) {
+    if ( ! this->externalLegs && (v1 == this->FD.start || v2 == this->FD.end)) {
       // invalid diagram to lower
       return;
     }
@@ -63,7 +62,6 @@ void DiagrammaticMonteCarlo::lowerOrder (double param) {
 
     wInvQ = 2*pow(M_PI, 2.0) * sqrt(0.5*M_PI*pow(std, 2.0)) * exp(0.5*pow(d->q/std, 2.0));
   }
-
 
   // to calculate the acceptance ratio
   Vector3d
@@ -90,7 +88,10 @@ void DiagrammaticMonteCarlo::lowerOrder (double param) {
     // remove phonon
     this->FD.removeInternalPhonon(phononIndex);
 
-    if ( ! this->externalLegs && this->FD.Ds.size() > 0) {
+    if (
+      this->externalLegs ||
+      ( ! this->externalLegs && this->FD.Ds.size() > 0))
+    {
       // remove vertices
       this->FD.removeVertex(v1);
       this->FD.removeVertex(v2);
@@ -101,6 +102,10 @@ void DiagrammaticMonteCarlo::lowerOrder (double param) {
 
   if (this->debug) {
     double val = this->FD();
+
+    if (accepted) {
+      this->checkAcceptanceRatio(exponential * sqrt(8)*M_PI*M_PI/(alpha*sinTheta) /(val/oldVal), "lowerOrder");
+    }
 
     if (a < 0 || ! isfinite(a)) {
       cout << "--------------------------------------------------------------------" << endl

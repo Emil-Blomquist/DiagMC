@@ -87,6 +87,10 @@ void DiagrammaticMonteCarlo::swapPhononConnections (double param) {
   if (this->debug) {
     double val = this->FD();
 
+    if (accepted) {
+      this->checkAcceptanceRatio(exp(exponent)/(val/oldVal), "swapPhononConnections");
+    }
+
     if (a < 0 || ! isfinite(a)) {
       cout << "--------------------------------------------------------------------" << endl
            << "overflow at DMC::swapPhononConnections " << endl

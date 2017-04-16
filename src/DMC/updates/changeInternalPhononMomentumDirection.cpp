@@ -64,7 +64,9 @@ void DiagrammaticMonteCarlo::changeInternalPhononMomentumDirection (double param
       val = this->FD(),
       acc = val/oldVal;
 
-    // cout << "changeInternalPhononMomentumDirection " << (abs(a - acc) < pow(10.0, -10)) << endl;
+    if (accepted) {
+      this->checkAcceptanceRatio(acc/a, "changeInternalPhononMomentumDirection");
+    }
 
     if (a < 0 || ! isfinite(a)) {
       cout << "--------------------------------------------------------------------" << endl

@@ -11,7 +11,7 @@ DiagrammaticMonteCarlo::DiagrammaticMonteCarlo (
   char **argv
 ) : FD(P, maxLength/2, alpha, mu) {
   // seed random generator
-  unsigned seed1 = std::chrono::system_clock::now().time_since_epoch().count();
+  unsigned seed1 = chrono::system_clock::now().time_since_epoch().count();
   this->mt.seed(seed1);
 
   // will print overflow exceptions etc. (code is half as fast with this activated)
@@ -21,6 +21,7 @@ DiagrammaticMonteCarlo::DiagrammaticMonteCarlo (
 
   // if the diagram should have external legs or not
   this->externalLegs = false;
+  this->irreducibleDiagrams = true;
 
   this->mu = mu;
   this->alpha = alpha;
@@ -92,11 +93,55 @@ void DiagrammaticMonteCarlo::run () {
       this->write2file(i + 1);
     }
 
-    // bin
-    if (this->FD.diagramIsIrreducible(this->externalLegs)) {
-      unsigned int index = this->FD.length/this->binSize;
-      bins[index]++;
+    if (
+      this->externalLegs ||
+      ( ! this->externalLegs && this->FD.Ds.size() >= 2)
+    ) {
+      if (
+        ! this->irreducibleDiagrams ||
+        (this->irreducibleDiagrams && this->FD.diagramIsIrreducible(this->externalLegs))
+      ) {
+        unsigned int index = this->FD.length/this->binSize;
+        bins[index]++;
+      }
     }
+
+    // bin
+    // if (this->FD.Ds.size() >= 2 && this->FD.diagramIsIrreducible(this->externalLegs)) {
+
+
+        
+    //   // to verify
+    //   bool isIrreducibleVerified = true;
+    //   map<shared_ptr<Phonon>, bool> hash;
+    //   shared_ptr<Vertex> v = this->FD.start;
+    //   do {
+    //     if (v->D[1]) {
+    //       // outgoing phonon
+    //       hash[v->D[1]] = true;
+    //     } else if (v->D[0]) {
+    //       // ingoing phonon
+    //       hash.erase(v->D[0]);
+    //       if (hash.size() == 0 && v != this->FD.end) {
+    //         isIrreducibleVerified = false;
+    //         break;
+    //       }
+    //     }
+    //   } while (v != this->FD.end && (v = v->G[1]->end));
+
+    //   if ( ! isIrreducibleVerified) {
+    //     cout.precision(17);
+
+    //     cout << "actual: " << round(this->FD.externalMomentum[2] * 1000000000) / 1000000000 << endl;
+
+    //     for (auto iter = this->FD.electronHashTable.begin(); iter != this->FD.electronHashTable.end(); ++iter) {
+    //       cout << "keys: " << iter->first << endl;
+    //     }
+
+    //     Display disp(&this->FD);
+    //     disp.render();
+    //   }
+    // }
 
     // if zeroth order, bin again
     if (this->FD.Ds.size() == 0) {
@@ -255,4 +300,10 @@ Vector3d DiagrammaticMonteCarlo::calculateP0 (shared_ptr<Phonon> d) {
   Vector3d meanP = this->calculateMeanP(d->start, d->end);
 
   return meanP + d->momentum;
+}
+
+void DiagrammaticMonteCarlo::checkAcceptanceRatio (double a, string updateFunction) {
+  if (abs(a - 1) > pow(10.0, -7)) {
+    cout << "Acceptance ratio at " << updateFunction << ": " << setprecision(17) << a - 1 << endl;
+  }
 }

@@ -11,6 +11,9 @@ FeynmanDiagram::FeynmanDiagram (
   this->couplingConstant = couplingConstant;
   this->chemicalPotential = chemicalPotential;
 
+  // tolerance for hash table
+  this->tolerance = 10000000;
+
   // create vertices
   this->start.reset(new Vertex(0));
   this->end.reset(new Vertex(length));
@@ -86,14 +89,14 @@ unsigned int FeynmanDiagram::binaryElectronSearch(shared_ptr<Electron> g, unsign
 
 void FeynmanDiagram::insertIntoHashTable (shared_ptr<Electron> g) {
   // decrease precision so numerical errors wont affect
-  const double key = round(g->momentum[0] * 1000000000) / 1000000000;
+  const double key = round(g->momentum[2] * this->tolerance) / this->tolerance;
 
   this->electronHashTable.insert({key, g});
 }
 
 void FeynmanDiagram::removeFromHashTable (shared_ptr<Electron> g) {
   // decrease precision so numerical errors wont affect
-  const double key = round(g->momentum[0] * 1000000000) / 1000000000;
+  const double key = round(g->momentum[2] * this->tolerance) / this->tolerance;
 
   // obtain iterator pointer pointing towards the propagator
   auto range = this->electronHashTable.equal_range(key);
@@ -118,14 +121,45 @@ void FeynmanDiagram::removeFromHashTable (shared_ptr<Electron> g) {
 
 
 bool FeynmanDiagram::diagramIsIrreducible (bool externalLegs) {
+  bool isIrreducible;
+
   // decrease precision so numerical errors wont affect
-  const double key = round(this->externalMomentum[0] * 1000000000) / 1000000000;
+  const double key = round(this->externalMomentum[2] * this->tolerance) / this->tolerance;
 
   if (externalLegs) {
-    return (this->electronHashTable.count(key) == 2);
+    isIrreducible = (this->electronHashTable.count(key) == 2);
   } else {
-    return (this->electronHashTable.count(key) == 0);
+    isIrreducible = (this->electronHashTable.count(key) == 0);
   }
+
+  return isIrreducible;
+}
+
+string FeynmanDiagram::diagramName () {
+  string name = "";
+
+  map<shared_ptr<Phonon>, unsigned int> hash;
+
+  unsigned int n = 1;
+
+  shared_ptr<Vertex> v = this->start;
+  do {
+    if (v->D[1]) {
+      // outgoing phonon
+      hash[v->D[1]] = n;
+      name += to_string(n++);
+    } else if (v->D[0]) {
+      // ingoing phonon
+      name += to_string(hash.find(v->D[0])->second);
+    }
+  } while (v != this->end && (v = v->G[1]->end));
+
+
+  if (name == "") {
+    return "0";
+  }
+
+  return name;
 }
 
 // void FeynmanDiagram::printHashTable () {

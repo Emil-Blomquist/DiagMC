@@ -26,12 +26,12 @@ using namespace Eigen;
 using namespace std;
 
 #include "../FeynmanDiagram/FeynmanDiagram.h"
-// #include "../Display/Display.h"
+#include "../Display/Display.h"
 
 class DiagrammaticMonteCarlo {
   private:
     mt19937_64 mt;
-    bool debug, loud, externalLegs;
+    bool debug, loud, externalLegs, irreducibleDiagrams;
     unsigned int numBins;
     unsigned long int numIterations;
     double maxLength, mu, alpha, param, binSize;
@@ -61,7 +61,10 @@ class DiagrammaticMonteCarlo {
       changeDiagramLength (double param = 1),
       changeDiagramLengthComplex (double param = 1);
 
-    void write2file (const unsigned long int = 0);
+
+    void
+      write2file (const unsigned long int = 0),
+      checkAcceptanceRatio (double, string);
 
   public:
     FeynmanDiagram FD;

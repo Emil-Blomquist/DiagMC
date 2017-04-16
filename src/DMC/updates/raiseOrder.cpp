@@ -2,9 +2,9 @@
 
 void DiagrammaticMonteCarlo::raiseOrder (double param) {
   // temp
-  if (this->FD.Ds.size() == 2) {
-    return;
-  }
+  // if (this->FD.Ds.size() == 2) {
+  //   return;
+  // }
 
   double oldVal = 0;
   if (this->debug) {
@@ -176,6 +176,10 @@ void DiagrammaticMonteCarlo::raiseOrder (double param) {
     //        << "exp=" << exponential << endl
     //        << "--------------------------------------------------------------------" << endl;
     // }
+
+    if (accepted) {
+      this->checkAcceptanceRatio(exponential * alpha*sinTheta/(sqrt(8)*M_PI*M_PI)/(val/oldVal), "raiseOrder");
+    }
 
     if (a < 0 || ! isfinite(a)) {
       cout << "--------------------------------------------------------------------" << endl

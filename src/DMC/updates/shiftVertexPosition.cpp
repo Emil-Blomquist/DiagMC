@@ -72,6 +72,8 @@ void DiagrammaticMonteCarlo::shiftVertexPosition (double param) {
       a = val/oldVal * exp(dE*(t - tOld));
     }
 
+    this->checkAcceptanceRatio(a, "shiftVertexPosition");
+
     if (a < 0 || ! isfinite(a)) {
       cout << "--------------------------------------------------------------------" << endl
            << "overflow at DMC::shiftVertexPosition " << endl

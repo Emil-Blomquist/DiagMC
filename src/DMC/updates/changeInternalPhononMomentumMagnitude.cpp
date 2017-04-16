@@ -63,6 +63,10 @@ void DiagrammaticMonteCarlo::changeInternalPhononMomentumMagnitude (double param
   if (this->debug) {
     double val = this->FD();
 
+    if (accepted) {
+      this->checkAcceptanceRatio(exp(exponent)/(val/oldVal), "changeInternalPhononMomentumMagnitude");
+    }
+
     if (a < 0 || ! isfinite(a)) {
       cout << "--------------------------------------------------------------------" << endl
            << "overflow at DMC::changeInternalPhononMomentumMagnitude " << endl

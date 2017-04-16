@@ -9,8 +9,6 @@ void MonteCarlo::diagramOrder2 (double length, unsigned int index) {
     if (this->irreducibleDiagrams && diagramType == 1) {
       continue;
     }
-
-    cout << diagramType << endl;
     
     for (long unsigned int i = 0; i != this->numIterations; i++) {
 

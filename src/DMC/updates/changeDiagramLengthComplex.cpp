@@ -117,6 +117,8 @@ void DiagrammaticMonteCarlo::changeDiagramLengthComplex (double param) {
       a = val/oldVal * wInvt/oldwInvt;
     }
 
+    this->checkAcceptanceRatio(a, "changeDiagramLengthComplex");
+
     if (a < 0 || ! isfinite(a)) {
       cout << "--------------------------------------------------------------------" << endl
            << "overflow at DMC::changeDiagramLengthComplex " << endl
