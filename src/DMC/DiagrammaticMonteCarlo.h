@@ -7,7 +7,7 @@
 #include <random>
 #include <chrono> // seed mt
 #include <math.h>
-#include <boost/math/special_functions/erf.hpp>
+#include <boost/math/special_functions/erf.hpp> // inverse error function
 #include <limits>
 #include <algorithm>
 #include <map>
@@ -31,14 +31,15 @@ using namespace std;
 class DiagrammaticMonteCarlo {
   private:
     mt19937_64 mt;
-    bool debug, loud, externalLegs, irreducibleDiagrams;
-    unsigned int numBins;
-    unsigned long int numIterations;
-    double maxLength, mu, alpha, param, binSize;
+    bool debug, loud, externalLegs, irreducibleDiagrams, fixedExternalMomentum;
+    unsigned long int numIterations, N0;
+    double maxLength, mu, alpha, param, dt, dp, maxMomenta;
     struct tm *timeinfo;
     char **argv;
 
     vector<unsigned long int> bins, bins0;
+
+    Array<unsigned long int, Dynamic, Dynamic> hist;
 
     shared_ptr<Vertex> vertices2beRemoved [2];
     shared_ptr<Electron> electrons2beRemoved [2];
@@ -59,8 +60,8 @@ class DiagrammaticMonteCarlo {
       raiseOrder (double param = 1),
       lowerOrder (double param = 1),
       changeDiagramLength (double param = 1),
-      changeDiagramLengthComplex (double param = 1);
-
+      changeDiagramLengthComplex (double param = 1),
+      changeExternalMomentumMagnitude (double param = 1);
 
     void
       write2file (const unsigned long int = 0),
@@ -75,7 +76,7 @@ class DiagrammaticMonteCarlo {
       double,
       double,
       unsigned long int,
-      unsigned int,
+      // unsigned int,
       double param,
       char **argv
     );

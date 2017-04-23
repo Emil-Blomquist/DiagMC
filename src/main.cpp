@@ -42,63 +42,29 @@ int main (int argc, char **argv) {
     }
   }
 
-  // 50 bins per unit time
-  const unsigned int numBins = 50*maxLength;
-
   Vector3d externalMomentum(0, 0, momenta);
 
-
-  // Todo:
-  // 1. Dyson equation
-  //    1. Hash table of electron momenta
-  //    2. determine proper diagrams
-  // 2. function space
-  // 3. skeleton diagrams
-
-
-  // unordered_multimap<double, double> myMap;
-
-  // myMap.insert({123.0, 1.0});
-  // myMap.insert({123.0, 1.1});
-  // myMap.insert({123.0, 1.2});
-  // myMap.insert({123.1, 1.2});
-
-  // // for (auto& x : myMap)
-  // //   std::cout << x.first << ": " << x.second << std::endl;
-
-
-  // auto range = myMap.equal_range(123.0);
-  // for_each (
-  //   range.first,
-  //   range.second,
-  //   [](pair<const double, double> x) {
-  //     std::cout << x.second << endl;
-  //   }
-  // );
-
-
-  DiagrammaticMonteCarlo DMC(
-    externalMomentum,
-    maxLength,
-    alpha,
-    mu,
-    numIterations,
-    numBins,
-    param,
-    argv
-  );
-
-  // MonteCarlo{
-  //   externalMomentum, 
-  //   alpha,
-  //   mu,
-  //   numIterations,
-  //   maxLength,
-  //   50,
-  //   argv
-  // };
-
-
+  if (true) {
+    DiagrammaticMonteCarlo DMC(
+      externalMomentum,
+      maxLength,
+      alpha,
+      mu,
+      numIterations,
+      param,
+      argv
+    );
+  } else {
+    MonteCarlo{
+      externalMomentum, 
+      alpha,
+      mu,
+      numIterations,
+      maxLength,
+      50,
+      argv
+    };
+  }
 
   printf("[Finished in %.2fs]\n", (double)(clock() - tStart)/CLOCKS_PER_SEC);
   return 0;

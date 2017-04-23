@@ -1,12 +1,13 @@
 #include "FeynmanDiagram.h"
 
 FeynmanDiagram::FeynmanDiagram (
-  Vector3d externalMomentum,
+  Vector3d ExternalMomentum,
   double length,
   double couplingConstant,
   double chemicalPotential
 ) {
-  this->externalMomentum = externalMomentum;
+  this->ExternalMomentum = ExternalMomentum;
+  this->externalMomentum = ExternalMomentum.norm();
   this->length = length;
   this->couplingConstant = couplingConstant;
   this->chemicalPotential = chemicalPotential;
@@ -19,7 +20,7 @@ FeynmanDiagram::FeynmanDiagram (
   this->end.reset(new Vertex(length));
   
   // create electronic propagator
-  this->Gs.emplace_back(new Electron(externalMomentum));
+  this->Gs.emplace_back(new Electron(ExternalMomentum));
 
   // add the default electron propagator to the hash table
   this->insertIntoHashTable(this->Gs[0]);
@@ -124,7 +125,7 @@ bool FeynmanDiagram::diagramIsIrreducible (bool externalLegs) {
   bool isIrreducible;
 
   // decrease precision so numerical errors wont affect
-  const double key = round(this->externalMomentum[2] * this->tolerance) / this->tolerance;
+  const double key = round(this->ExternalMomentum[2] * this->tolerance) / this->tolerance;
 
   if (externalLegs) {
     isIrreducible = (this->electronHashTable.count(key) == 2);
@@ -183,3 +184,19 @@ string FeynmanDiagram::diagramName () {
 //   // }
 //   // cout << "---------------------" << endl;
 // }
+
+void FeynmanDiagram::setExternalMomentum (Vector3d P, double p, Vector3d dP) {
+  this->ExternalMomentum = P;
+  this->externalMomentum = p;
+
+  shared_ptr<Electron> g = this->Gs[0];
+  do {
+    // remove from hash table
+    this->removeFromHashTable(g);  
+
+    g->addMomentum(dP);
+
+    // reinsert into hash table
+    this->insertIntoHashTable(g);
+  } while (g->end != this->end && (g = g->end->G[1]));
+}

@@ -6,7 +6,7 @@ DiagrammaticMonteCarlo::DiagrammaticMonteCarlo (
   double alpha,
   double mu,
   unsigned long int numIterations,
-  unsigned int numBins,
+  // unsigned int numBins,
   double param,
   char **argv
 ) : FD(P, maxLength/2, alpha, mu) {
@@ -21,22 +21,40 @@ DiagrammaticMonteCarlo::DiagrammaticMonteCarlo (
 
   // if the diagram should have external legs or not
   this->externalLegs = false;
+  // if we should only take into account irreducible diagrams
   this->irreducibleDiagrams = true;
+  // if we should let hte external momentum vary or not
+  this->fixedExternalMomentum = false;
 
   this->mu = mu;
   this->alpha = alpha;
-  this->maxLength = maxLength;
   this->numIterations = numIterations;
-  this->numBins = numBins;
   this->param = param;
   this->argv = argv;
-
-  this->binSize = this->maxLength/this->numBins;
 
   // store time at which the calculation began
   time_t rawtime;
   time (&rawtime);
   this->timeinfo = localtime(&rawtime);
+
+  // in order to create the histogram
+  this->maxLength = maxLength;
+  this->dt = 0.02;
+
+  if ( ! this->fixedExternalMomentum) {
+    this->maxMomenta = 10;
+    this->dp = 0.02;
+
+    const unsigned int
+      Np = this->maxMomenta/this->dp,
+      Nt = this->maxLength/this->dt;
+
+    this->N0 = 0;
+    this->hist = Array<unsigned long int, Dynamic, Dynamic>::Zero(Np, Nt);
+  } else {
+    this->bins = vector<unsigned long int>(this->maxLength/this->dt, 0);
+    this->bins0 = vector<unsigned long int>(this->maxLength/this->dt, 0);
+  }
 
   this->write2file();
   this->run();
@@ -49,10 +67,6 @@ void DiagrammaticMonteCarlo::run () {
   // to save data under the process
   const unsigned int saveAfter = 500*1000000;
 
-  // bins for counting
-  this->bins = vector<unsigned long int>(this->numBins, 0);
-  this->bins0 = vector<unsigned long int>(this->numBins, 0);
-
   // specify the relative probability of choosing a specific update function
   multimap<unsigned int, void (DiagrammaticMonteCarlo::*)(double)> updateMethods = {
     {10, &DiagrammaticMonteCarlo::shiftVertexPosition},
@@ -62,7 +76,8 @@ void DiagrammaticMonteCarlo::run () {
     {2, &DiagrammaticMonteCarlo::raiseOrder}, // <- These two must have the same probability
     {2, &DiagrammaticMonteCarlo::lowerOrder}, // <-
     {5, &DiagrammaticMonteCarlo::changeDiagramLength},
-    {1, &DiagrammaticMonteCarlo::changeDiagramLengthComplex}
+    {1, &DiagrammaticMonteCarlo::changeDiagramLengthComplex},
+    {(fixedExternalMomentum ? 0 : 1), &DiagrammaticMonteCarlo::changeExternalMomentumMagnitude}
   };
 
   // vector which is going to contain the specified quantity of update functions
@@ -93,66 +108,36 @@ void DiagrammaticMonteCarlo::run () {
       this->write2file(i + 1);
     }
 
-    if (
-      this->externalLegs ||
-      ( ! this->externalLegs && this->FD.Ds.size() >= 2)
-    ) {
-      if (
-        ! this->irreducibleDiagrams ||
-        (this->irreducibleDiagrams && this->FD.diagramIsIrreducible(this->externalLegs))
-      ) {
-        unsigned int index = this->FD.length/this->binSize;
-        bins[index]++;
+    // bin diagrams of order higher than 0
+    if (this->externalLegs || ( ! this->externalLegs && this->FD.Ds.size() >= 1)) {
+      if ( ! this->irreducibleDiagrams || this->FD.diagramIsIrreducible(this->externalLegs)) {
+        if (this->fixedExternalMomentum) {
+          unsigned int index = this->FD.length/this->dt;
+          bins[index]++;
+        } else {
+          unsigned int
+            pi = this->FD.externalMomentum/this->dp,
+            ti = this->FD.length/this->dt;
+          this->hist(pi, ti)++;
+        }
       }
     }
 
-    // bin
-    // if (this->FD.Ds.size() >= 2 && this->FD.diagramIsIrreducible(this->externalLegs)) {
-
-
-        
-    //   // to verify
-    //   bool isIrreducibleVerified = true;
-    //   map<shared_ptr<Phonon>, bool> hash;
-    //   shared_ptr<Vertex> v = this->FD.start;
-    //   do {
-    //     if (v->D[1]) {
-    //       // outgoing phonon
-    //       hash[v->D[1]] = true;
-    //     } else if (v->D[0]) {
-    //       // ingoing phonon
-    //       hash.erase(v->D[0]);
-    //       if (hash.size() == 0 && v != this->FD.end) {
-    //         isIrreducibleVerified = false;
-    //         break;
-    //       }
-    //     }
-    //   } while (v != this->FD.end && (v = v->G[1]->end));
-
-    //   if ( ! isIrreducibleVerified) {
-    //     cout.precision(17);
-
-    //     cout << "actual: " << round(this->FD.externalMomentum[2] * 1000000000) / 1000000000 << endl;
-
-    //     for (auto iter = this->FD.electronHashTable.begin(); iter != this->FD.electronHashTable.end(); ++iter) {
-    //       cout << "keys: " << iter->first << endl;
-    //     }
-
-    //     Display disp(&this->FD);
-    //     disp.render();
-    //   }
-    // }
-
     // if zeroth order, bin again
     if (this->FD.Ds.size() == 0) {
-      unsigned int index = this->FD.length/this->binSize;
-      bins0[index]++;
+      if (this->fixedExternalMomentum) {
+        unsigned int index = this->FD.length/this->dt;
+        bins0[index]++;
+      } else {
+        this->N0++;
+      }
     }
   }
 
   // save final result
   this->write2file();
 }
+
 
 
 void DiagrammaticMonteCarlo::write2file (const unsigned long int iterationNum) {
@@ -163,11 +148,14 @@ void DiagrammaticMonteCarlo::write2file (const unsigned long int iterationNum) {
 
   // create file name
   stringstream stream;
-  stream << fixed << setprecision(7)
-         << "p=" << this->FD.externalMomentum.norm()
-         << " tmax=" << this->maxLength
+  stream << fixed << setprecision(6) // match the precision of "to_string()"
          << " a=" << this->FD.couplingConstant
+         << ( this->fixedExternalMomentum ? " p=" + to_string(this->FD.externalMomentum) : "" )
          << " mu=" << this->FD.chemicalPotential
+         << " tmax=" << this->maxLength
+         << " dt=" << this->dt
+         << ( ! this->fixedExternalMomentum ? " pmax=" + to_string(this->maxMomenta) : "" )
+         << ( ! this->fixedExternalMomentum ? " dp=" + to_string(this->dp) : "" )
          << " N=" << numIterations
          << " date=" << dateAndTimeString
          << " unique=" << param;
@@ -182,22 +170,41 @@ void DiagrammaticMonteCarlo::write2file (const unsigned long int iterationNum) {
 
   // write to file
   ofstream myfile;
-  myfile.open(path + "../data/" + fileName + ".txt");
-  myfile << "-------- " + fileName;
+  myfile.open(path + "../data/" + fileName.substr(1) + ".txt");
+  myfile << "--------" + fileName;
   if (iterationNum) {
     myfile << " Ntemp=" << iterationNum;
   }
   myfile << " --------" << endl;
   myfile.close();
 
-  if (! this->bins.empty()) {
-    // data to write to file
-    myfile.open(path + "../data/" + fileName + ".txt", ios_base::app);
+  if ( ! this->fixedExternalMomentum && this->N0) {
+    // open file
+    myfile.open(path + "../data/" + fileName.substr(1) + ".txt", ios_base::app);
+
+    // G0 bin
+    myfile << this->N0 << endl;
+
+    // histogram corresponding to higher order diagrams
+    for (unsigned int i = 0; i != this->hist.rows(); i++) {
+      for (unsigned int j = 0; j != this->hist.cols(); j++) {
+        myfile << this->hist(i, j);
+        if (j + 1 < this->hist.cols()) {
+          myfile << " ";
+        }
+      }
+      if (i + 1 < this->hist.rows()) {
+        myfile << endl;
+      }
+    }
+  } else if (this->fixedExternalMomentum && this->bins0[0] > 0) {
+    // open file
+    myfile.open(path + "../data/" + fileName.substr(1) + ".txt", ios_base::app);
 
     // times
-    for (unsigned int i = 0; i != this->numBins; ++i) {
-      myfile << fixed << setprecision(7) << (i + 0.5)*this->binSize;
-      if (i == this->numBins - 1) {
+    for (unsigned int i = 0; i != this->maxLength/this->dt; ++i) {
+      myfile << fixed << setprecision(7) << (i + 0.5)*this->dt;
+      if (i == this->maxLength/this->dt - 1) {
         myfile << "\n";
       } else {
         myfile << " ";
@@ -215,14 +222,14 @@ void DiagrammaticMonteCarlo::write2file (const unsigned long int iterationNum) {
     }
     double scaleFactor = 0;
     for (unsigned int i = 0; i != until; ++i) {
-      scaleFactor += exp(-(0.5*this->FD.externalMomentum.squaredNorm() - this->mu)*(i + 0.5)*this->binSize)
+      scaleFactor += exp(-(0.5*this->FD.externalMomentum - this->mu)*(i + 0.5)*this->dt)
                   /(sqrt(this->bins0[i]) * Z);
     }
 
     // greens function
-    for (unsigned int i = 0; i != this->numBins; ++i) {
+    for (unsigned int i = 0; i != this->maxLength/this->dt; ++i) {
       myfile << fixed << setprecision(7) << (double) this->bins[i]*scaleFactor;
-      if (i < this->numBins - 1) {
+      if (i < this->maxLength/this->dt - 1) {
         myfile << " ";
       }
     }

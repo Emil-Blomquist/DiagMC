@@ -55,7 +55,7 @@ void MonteCarlo::run () {
     }
 
     this->diagramOrder1(this->times[i], i);
-    this->diagramOrder2(this->times[i], i);
+    // this->diagramOrder2(this->times[i], i);
 
     this->write2file();
   }

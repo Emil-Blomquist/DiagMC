@@ -29,8 +29,8 @@ class FeynmanDiagram {
       
 
   public:
-    double length, couplingConstant, chemicalPotential, tolerance;
-    Vector3d externalMomentum;
+    double length, couplingConstant, chemicalPotential, tolerance, externalMomentum;
+    Vector3d ExternalMomentum;
 
     shared_ptr<Vertex> start, end;
     vector<shared_ptr<Electron> > Gs;
@@ -50,7 +50,8 @@ class FeynmanDiagram {
       removeInternalPhonon (unsigned int),
       setInternalPhononMomentum (shared_ptr<Phonon>, Vector3d, double),
       setInternalPhononMomentumDirection (shared_ptr<Phonon>, double, double),
-      setLength (double);
+      setLength (double),
+      setExternalMomentum (Vector3d, double, Vector3d);
 
     double
       phononEnergy (double),
