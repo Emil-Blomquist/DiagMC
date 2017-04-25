@@ -24,7 +24,12 @@ DiagrammaticMonteCarlo::DiagrammaticMonteCarlo (
   // if we should only take into account irreducible diagrams
   this->irreducibleDiagrams = true;
   // if we should let hte external momentum vary or not
-  this->fixedExternalMomentum = false;
+  this->fixedExternalMomentum = true;
+
+  // for when to bin the diagram
+  this->minDiagramOrder = 1;
+
+  // maxDiagramOrder
 
   this->mu = mu;
   this->alpha = alpha;
@@ -109,7 +114,7 @@ void DiagrammaticMonteCarlo::run () {
     }
 
     // bin diagrams of order higher than 0
-    if (this->externalLegs || ( ! this->externalLegs && this->FD.Ds.size() >= 1)) {
+    if (this->externalLegs || ( ! this->externalLegs && this->FD.Ds.size() >= this->minDiagramOrder)) {
       if ( ! this->irreducibleDiagrams || this->FD.diagramIsIrreducible(this->externalLegs)) {
         if (this->fixedExternalMomentum) {
           unsigned int index = this->FD.length/this->dt;
@@ -178,17 +183,38 @@ void DiagrammaticMonteCarlo::write2file (const unsigned long int iterationNum) {
   myfile << " --------" << endl;
   myfile.close();
 
+
   if ( ! this->fixedExternalMomentum && this->N0) {
     // open file
     myfile.open(path + "../data/" + fileName.substr(1) + ".txt", ios_base::app);
 
-    // G0 bin
-    myfile << this->N0 << endl;
+    // calculate scale factor
+    ArrayXd ps = ArrayXd::LinSpaced(this->hist.rows(), 0, this->maxMomenta - this->dp) + 0.5*this->dp;
+    ArrayXd ts = ArrayXd::LinSpaced(this->hist.cols(), 0, this->maxLength - this->dt) + 0.5*this->dt;
+
+    double sumG0 = 0;
+    for (unsigned int i = 0; i != ps.size(); i++) {
+      for (unsigned int j = 0; j != ts.size(); j++) {
+        sumG0 += exp((this->mu - 0.5*ps[i]*ps[i])*ts[j]);
+      }
+    }
+
+    double scaleFactor = sumG0/this->N0;
 
     // histogram corresponding to higher order diagrams
     for (unsigned int i = 0; i != this->hist.rows(); i++) {
       for (unsigned int j = 0; j != this->hist.cols(); j++) {
-        myfile << this->hist(i, j);
+
+        double singularityFix = 0;
+        if ( ! this->externalLegs && this->minDiagramOrder >= 1) {
+          // to remove the error due the combination of a singular diagram and a discretized time
+          singularityFix = this->alpha*(
+            exp(-0.5*(2*j + 1)*this->dt)/sqrt(M_PI*0.5*(2*j + 1)*this->dt)
+            - (erf(sqrt((j + 1)*this->dt)) - erf(sqrt(j*this->dt)))/this->dt
+          );
+        }
+
+        myfile << this->hist(i, j)*scaleFactor + singularityFix;
         if (j + 1 < this->hist.cols()) {
           myfile << " ";
         }
@@ -227,9 +253,21 @@ void DiagrammaticMonteCarlo::write2file (const unsigned long int iterationNum) {
     }
 
     // greens function
-    for (unsigned int i = 0; i != this->maxLength/this->dt; ++i) {
-      myfile << fixed << setprecision(7) << (double) this->bins[i]*scaleFactor;
-      if (i < this->maxLength/this->dt - 1) {
+    for (unsigned int j = 0; j != this->maxLength/this->dt; ++j) {
+
+      double singularityFix = 0;
+      if ( ! this->externalLegs && this->minDiagramOrder >= 1) {
+        // to remove the error due the combination of a singular diagram and a discretized time
+
+        singularityFix = this->alpha*(
+          exp(-0.5*(2*j + 1)*this->dt)/sqrt(M_PI*0.5*(2*j + 1)*this->dt)
+          - (erf(sqrt((j + 1)*this->dt)) - erf(sqrt(j*this->dt)))/this->dt
+        );
+      }
+
+
+      myfile << fixed << setprecision(7) << this->bins[j]*scaleFactor + singularityFix;
+      if (j < this->maxLength/this->dt - 1) {
         myfile << " ";
       }
     }

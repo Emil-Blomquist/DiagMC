@@ -80,3 +80,15 @@ int main (int argc, char **argv) {
 // ... code ...
 
 // MPI_Finalize();
+
+
+// 1D och 2D överenstämmer ej. 2D verkar inte heller överenstämma mot andra 2D...
+//   1. kör 1D i lång tid på clustret och se om long time 1D överenstämmer med 2D 
+//   2. kan ha blivit knas när ny update funktion implementerades
+//   3. testa att köra 2D fast med mindre pMax
+//   4. variera dp
+// Liknande problem uppstod när vi introducerade irreducible diagrams
+//   1. testa att bara beräkna den vanliga greens functionen?
+//   2. irreducible + external legs, funkar det? -> om inte, irreducible funkar inte!
+//   3. Om G0 verkar funka, skit it och gå vidare istället
+// Kolla om updateTime ger a - 1 ≈10^-6 när man försöker sampla G0

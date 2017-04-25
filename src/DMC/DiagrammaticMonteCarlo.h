@@ -36,6 +36,7 @@ class DiagrammaticMonteCarlo {
     double maxLength, mu, alpha, param, dt, dp, maxMomenta;
     struct tm *timeinfo;
     char **argv;
+    unsigned int minDiagramOrder, maxDiagramOrder;
 
     vector<unsigned long int> bins, bins0;
 
