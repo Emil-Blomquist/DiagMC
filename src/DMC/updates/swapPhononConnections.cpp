@@ -69,7 +69,8 @@ void DiagrammaticMonteCarlo::swapPhononConnections (double param) {
   bool accepted = false;
   if (a > this->Udouble(0, 1)) {
     this->FD.swapPhonons(v1, v2);
-
+    
+    this->FD.setNewStructure();
     accepted = true;
   }
 

@@ -15,14 +15,13 @@ void DiagrammaticMonteCarlo::lowerOrder (double param) {
   // pick a phonon line
   int phononIndex = this->Uint(0, this->FD.Ds.size() - 1);
   shared_ptr<Phonon> d = this->FD.Ds[phononIndex];
-  double Winvd = this->FD.Ds.size();
 
   // vertices
   shared_ptr<Vertex>
     v1 = d->start,
     v2 = d->end;
 
-  double wInvQ, wInvt1, wInvt2, wInvG1, wInvd;
+  double wInvQ, wInvt1, wInvt2, wInvG1;
 
   if ( ! this->externalLegs && this->FD.Ds.size() == 1) {
     // go down to zeroth order
@@ -30,7 +29,6 @@ void DiagrammaticMonteCarlo::lowerOrder (double param) {
     wInvt1 = 1;
     wInvt2 = 1;
     wInvG1 = 1;
-    wInvd = 1;
 
     double std = (v2->position - v1->position < pow(10.0, -10.0) ? 100000 : 1/sqrt(v2->position - v1->position)); 
     normal_distribution<double> normal(0.0, std);
@@ -42,6 +40,18 @@ void DiagrammaticMonteCarlo::lowerOrder (double param) {
       // invalid diagram to lower
       return;
     }
+
+    // if (this->externalLegs) {
+      // wInvd = this->FD.Ds.size();
+    // } else {
+    //   // how many phonons where allowed to be pick
+    //   if (this->FD.start->D[1] == this->FD.end->D[0]) {
+    //     wInvd = this->FD.Ds.size() - 1;
+    //   } else {
+    //     wInvd = this->FD.Ds.size() - 2;
+    //   }
+    // }
+
 
     // calculate vertex probability
     wInvG1 = this->FD.Gs.size() - 2;
@@ -69,6 +79,7 @@ void DiagrammaticMonteCarlo::lowerOrder (double param) {
     P0 = this->calculateP0(d);
 
   double
+    wInvd = this->FD.Ds.size(),
     sinTheta = sin(d->theta),
     alpha = this->alpha,
     q2 = d->q*d->q,
@@ -79,8 +90,9 @@ void DiagrammaticMonteCarlo::lowerOrder (double param) {
   if (wInvQ == 0 || sinTheta == 0 || wInvt2 == 0 || ! isfinite(exponential)) {
     a = 1;
   } else {
-    a = exponential * sqrt(8)*M_PI*M_PI/(alpha*sinTheta) * Winvd/(wInvG1*wInvt1*wInvt2*wInvQ);
+    a = exponential * sqrt(8)*M_PI*M_PI/(alpha*sinTheta) * wInvd/(wInvG1*wInvt1*wInvt2*wInvQ);
   }
+
 
   // accept or reject update
   bool accepted = false;
@@ -97,6 +109,7 @@ void DiagrammaticMonteCarlo::lowerOrder (double param) {
       this->FD.removeVertex(v2);
     }
 
+    this->FD.setNewStructure();
     accepted = true;
   }
 
@@ -112,8 +125,8 @@ void DiagrammaticMonteCarlo::lowerOrder (double param) {
            << "overflow at DMC::lowerOrder " << endl
            << "accepted=" << accepted << endl
            << "a=" << a << endl
-           << "a_diag=" << val/oldVal * Winvd/(wInvG1*wInvt1*wInvt2*wInvQ) << endl
-           << "ratio=" << a/(val/oldVal * Winvd/(wInvG1*wInvt1*wInvt2*wInvQ)) << endl
+           << "a_diag=" << val/oldVal * wInvd/(wInvG1*wInvt1*wInvt2*wInvQ) << endl
+           << "ratio=" << a/(val/oldVal * wInvd/(wInvG1*wInvt1*wInvt2*wInvQ)) << endl
            << "order=" << this->FD.Ds.size() << endl
            << "val=" << val << endl
            << "oldVal=" << oldVal << endl

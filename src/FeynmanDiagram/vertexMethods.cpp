@@ -34,7 +34,7 @@ shared_ptr<Vertex> FeynmanDiagram::insertVertex (int gIndex, double t) {
   g2->setStart(v);
 
   // insert the new propagator into the electron hash table
-  this->insertIntoHashTable(g2);
+  // this->insertIntoHashTable(g2);
 
   // return pointer to vertex
   return v;
@@ -67,7 +67,7 @@ void FeynmanDiagram::removeVertex (shared_ptr<Vertex> v) {
   this->Gs.erase(this->Gs.begin() + i);
 
   // remove propagator to be deleted from the hash table
-  this->removeFromHashTable(g);  
+  // this->removeFromHashTable(g);  
 }
 
 void FeynmanDiagram::setVertexPosition (shared_ptr<Vertex> v, double t) {
@@ -123,13 +123,13 @@ void FeynmanDiagram::swapPhonons (shared_ptr<Vertex> v1, shared_ptr<Vertex> v2) 
   dP = dP1 + dP2;
 
   // remove from hash table
-  this->removeFromHashTable(v1->G[1]);  
+  // this->removeFromHashTable(v1->G[1]);  
 
   // momentum conservation
   v1->G[1]->addMomentum(dP);
 
   // reinsert into hash table
-  this->insertIntoHashTable(v1->G[1]);
+  // this->insertIntoHashTable(v1->G[1]);
 
   // vector of pointers to member function of Phonon
   vector<void (Phonon::*)(shared_ptr<Vertex>)> startOrEnd = {&Phonon::setStart, &Phonon::setEnd};

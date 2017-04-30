@@ -6,7 +6,7 @@ void MonteCarlo::diagramOrder1 (double length, unsigned int index) {
 
   for (long unsigned int i = 0; i != this->numIterations; i++) {
 
-    double std, t1, t2, wInv_ts;
+    double std = 0, t1 = 0, t2 = 0, wInv_ts = 0;
     if (this->externalLegs) {
       // sample times
       t1 = this->Udouble(0, length),

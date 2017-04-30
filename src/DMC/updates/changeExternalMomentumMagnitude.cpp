@@ -23,10 +23,8 @@ void DiagrammaticMonteCarlo::changeExternalMomentumMagnitude (double param) {
     oldwInvp = sqrt(0.5*M_PI)*std*boost::math::erf(sqrt(0.5)*this->maxMomenta/std)*exp(0.5*pow(oldp/std, 2.0));
 
   double
-    dp2 = dP.squaredNorm(),
-    exponent = -(dP.dot(meanP) + 0.5*dp2)*this->FD.length;
-
-  double a = wInvp/oldwInvp * exp(exponent);
+    exponent = -(dP.dot(meanP) + 0.5*dP.squaredNorm())*this->FD.length,
+    a = wInvp/oldwInvp * exp(exponent);
 
   double oldVal = 0;
   if (this->debug) {

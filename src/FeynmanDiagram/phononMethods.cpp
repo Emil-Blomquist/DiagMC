@@ -25,12 +25,12 @@ shared_ptr<Phonon> FeynmanDiagram::addInternalPhonon (
   shared_ptr<Electron> g = v1->G[1];
   do {
     // remove from hash table
-    this->removeFromHashTable(g);  
+    // this->removeFromHashTable(g);  
 
     g->addMomentum(-Q);
 
     // reinsert into hash table
-    this->insertIntoHashTable(g);
+    // this->insertIntoHashTable(g);
   } while (g->end != v2 && (g = g->end->G[1]));
 
   return this->Ds.back();
@@ -44,12 +44,12 @@ void FeynmanDiagram::removeInternalPhonon (unsigned int phononIndex) {
 
   do {
     // remove from hash table
-    this->removeFromHashTable(g);  
+    // this->removeFromHashTable(g);  
 
     g->addMomentum(d->momentum);
 
     // reinsert into hash table
-    this->insertIntoHashTable(g);
+    // this->insertIntoHashTable(g);
   } while (g->end != d->end && (g = g->end->G[1]));
 
   // unlink phonon from vertices
@@ -71,12 +71,12 @@ void FeynmanDiagram::setInternalPhononMomentum (shared_ptr<Phonon> d, Vector3d Q
   shared_ptr<Electron> g = d->start->G[1];
   do {
     // remove from hash table
-    this->removeFromHashTable(g);  
+    // this->removeFromHashTable(g);  
 
     g->addMomentum(-dQ);
     
     // reinsert into hash table
-    this->insertIntoHashTable(g);
+    // this->insertIntoHashTable(g);
   } while (g->end != d->end && (g = g->end->G[1]));
 }
 

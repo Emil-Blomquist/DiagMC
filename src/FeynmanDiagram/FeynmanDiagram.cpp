@@ -12,6 +12,10 @@ FeynmanDiagram::FeynmanDiagram (
   this->couplingConstant = couplingConstant;
   this->chemicalPotential = chemicalPotential;
 
+  // initial value
+  this->isIrreducible = false;
+  this->newStructure = true;
+
   // tolerance for hash table
   this->tolerance = 10000000;
 
@@ -23,7 +27,7 @@ FeynmanDiagram::FeynmanDiagram (
   this->Gs.emplace_back(new Electron(ExternalMomentum));
 
   // add the default electron propagator to the hash table
-  this->insertIntoHashTable(this->Gs[0]);
+  // this->insertIntoHashTable(this->Gs[0]);
 
   // link propagator to vertices
   this->Gs[0]->setStart(this->start);
@@ -88,52 +92,70 @@ unsigned int FeynmanDiagram::binaryElectronSearch(shared_ptr<Electron> g, unsign
   return index;
 }
 
-void FeynmanDiagram::insertIntoHashTable (shared_ptr<Electron> g) {
-  // decrease precision so numerical errors wont affect
-  const double key = round(g->momentum[2] * this->tolerance) / this->tolerance;
+// void FeynmanDiagram::insertIntoHashTable (shared_ptr<Electron> g) {
+//   // decrease precision so numerical errors wont affect
+//   const double key = round(g->momentum[2] * this->tolerance) / this->tolerance;
 
-  this->electronHashTable.insert({key, g});
-}
+//   this->electronHashTable.insert({key, g});
+// }
 
-void FeynmanDiagram::removeFromHashTable (shared_ptr<Electron> g) {
-  // decrease precision so numerical errors wont affect
-  const double key = round(g->momentum[2] * this->tolerance) / this->tolerance;
+// void FeynmanDiagram::removeFromHashTable (shared_ptr<Electron> g) {
+//   // decrease precision so numerical errors wont affect
+//   const double key = round(g->momentum[2] * this->tolerance) / this->tolerance;
 
-  // obtain iterator pointer pointing towards the propagator
-  auto range = this->electronHashTable.equal_range(key);
+//   // obtain iterator pointer pointing towards the propagator
+//   auto range = this->electronHashTable.equal_range(key);
 
-  if (distance(range.first, range.second) == 1) {
-    // only one propagator with this key
-    this->electronHashTable.erase(range.first);
-  } else {
-    // multiple propagators with this key
+//   if (distance(range.first, range.second) == 1) {
+//     // only one propagator with this key
+//     this->electronHashTable.erase(range.first);
+//   } else {
+//     // multiple propagators with this key
 
-    // linear search
-    for (auto i = range.first; i != range.second; i++) {
-      if (i->second == g) {
-        this->electronHashTable.erase(i);
-        return;
-      }
-    }
+//     // linear search
+//     for (auto i = range.first; i != range.second; i++) {
+//       if (i->second == g) {
+//         this->electronHashTable.erase(i);
+//         return;
+//       }
+//     }
 
-    cout << "PROPAGATOR NOT FOUND" << endl;
-  }
-}
+//     cout << "PROPAGATOR NOT FOUND" << endl;
+//   }
+// }
 
 
 bool FeynmanDiagram::diagramIsIrreducible (bool externalLegs) {
-  bool isIrreducible;
+  
+  if (this->newStructure) {
+    // need to check since structure is changed
+    map<shared_ptr<Phonon>, bool> phononMap;
 
-  // decrease precision so numerical errors wont affect
-  const double key = round(this->ExternalMomentum[2] * this->tolerance) / this->tolerance;
+    shared_ptr<Vertex> v = this->start;
+    while (true) {
+      if (v->D[1]) {
+        // outgoing phonon
+        phononMap[v->D[1]] = true;
+      } else if (v->D[0]) {
+        // ingoing phonon
+        phononMap.erase(v->D[0]);
+        if (phononMap.empty()) {
+          if (v != this->end) {
+            this->isIrreducible = true;
+          } else {
+            this->isIrreducible = false;
+          }
+          break;
+        }
+      }
 
-  if (externalLegs) {
-    isIrreducible = (this->electronHashTable.count(key) == 2);
-  } else {
-    isIrreducible = (this->electronHashTable.count(key) == 0);
+      v = v->G[1]->end;
+    }
+
+    this->newStructure = false;
   }
-
-  return isIrreducible;
+  
+  return this->isIrreducible;
 }
 
 string FeynmanDiagram::diagramName () {
@@ -192,11 +214,15 @@ void FeynmanDiagram::setExternalMomentum (Vector3d P, double p, Vector3d dP) {
   shared_ptr<Electron> g = this->Gs[0];
   do {
     // remove from hash table
-    this->removeFromHashTable(g);  
+    // this->removeFromHashTable(g);  
 
     g->addMomentum(dP);
 
     // reinsert into hash table
-    this->insertIntoHashTable(g);
+    // this->insertIntoHashTable(g);
   } while (g->end != this->end && (g = g->end->G[1]));
+}
+
+void FeynmanDiagram::setNewStructure () {
+  this->newStructure = true;
 }

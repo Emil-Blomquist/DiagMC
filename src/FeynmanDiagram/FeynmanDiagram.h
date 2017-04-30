@@ -26,6 +26,8 @@ class FeynmanDiagram {
     void
       insertIntoHashTable (shared_ptr<Electron>),
       removeFromHashTable (shared_ptr<Electron>);
+
+    bool newStructure, isIrreducible;
       
 
   public:
@@ -51,7 +53,8 @@ class FeynmanDiagram {
       setInternalPhononMomentum (shared_ptr<Phonon>, Vector3d, double),
       setInternalPhononMomentumDirection (shared_ptr<Phonon>, double, double),
       setLength (double),
-      setExternalMomentum (Vector3d, double, Vector3d);
+      setExternalMomentum (Vector3d, double, Vector3d),
+      setNewStructure ();
 
     double
       phononEnergy (double),

@@ -2,9 +2,9 @@
 
 void DiagrammaticMonteCarlo::raiseOrder (double param) {
   // temp
-  // if (this->FD.Ds.size() == 2) {
-  //   return;
-  // }
+  if (this->maxDiagramOrder && this->FD.Ds.size() == maxDiagramOrder) {
+    return;
+  }
 
   double oldVal = 0;
   if (this->debug) {
@@ -12,8 +12,8 @@ void DiagrammaticMonteCarlo::raiseOrder (double param) {
     oldVal = this->FD();
   }
 
-  unsigned int i1, i2;
-  double q, theta, phi, wInvQ, t1, t2, wInvt1, wInvt2, wInvG1, wInvd;
+  unsigned int i1 = 0, i2 = 0;
+  double q, theta, phi, wInvQ, t1, t2, wInvt1, wInvt2, wInvG1;
   Vector3d Q, meanP;
   shared_ptr<Electron> g1, g2;
 
@@ -26,7 +26,6 @@ void DiagrammaticMonteCarlo::raiseOrder (double param) {
     wInvt1 = 1;
     wInvt2 = 1;
     wInvG1 = 1;
-    wInvd = 1;
 
     double std = (t2 - t1 < pow(10.0, -10.0) ? 100000 : 1/sqrt(t2 - t1)); 
     normal_distribution<double> normal(0.0, std);
@@ -96,8 +95,6 @@ void DiagrammaticMonteCarlo::raiseOrder (double param) {
 
     // the Z-axis defines theta
     Q << q*sin(theta)*cos(phi), q*sin(theta)*sin(phi), q*cos(theta);
-   
-    wInvd = this->FD.Ds.size() + 1;
 
     // calculate meanP
     if (i1 == i2) {
@@ -107,10 +104,10 @@ void DiagrammaticMonteCarlo::raiseOrder (double param) {
       meanP += this->calculateMeanP(g1->end, g2->start)*(g2->start->position - g1->end->position);
       meanP /= (t2 - t1);
     }
-
   }
 
   double
+    wInvd = this->FD.Ds.size() + 1,
     sinTheta = sin(theta),
     alpha = this->alpha,
     dt = t2 - t1,
@@ -124,18 +121,6 @@ void DiagrammaticMonteCarlo::raiseOrder (double param) {
   } else {
     a = exponential * alpha*sinTheta/(sqrt(8)*M_PI*M_PI) * (wInvG1*wInvt1*wInvt2*wInvQ)/wInvd;
   }
-
-  // for (auto g : this->FD.Gs) {
-  //   cout << "Electron: " << (*g)() << endl
-  //        << "\tP=" << g->momentum.transpose() << endl
-  //        << "\tdt=" << g->end->position - g->start->position << endl;
-  // }
-  // for (auto d : this->FD.Ds) {
-  //   cout << "Phonon: " << (*d)(alpha) << endl
-  //        << "\tP=" << d->momentum.transpose() << endl
-  //        << "\tdt=" << d->end->position - d->start->position << endl
-  //        << "\tsinTheta=" << sin(d->theta) << endl;
-  // }
 
   // accept or reject update
   bool accepted = false;
@@ -154,28 +139,12 @@ void DiagrammaticMonteCarlo::raiseOrder (double param) {
       shared_ptr<Phonon> d = this->FD.addInternalPhonon(v1, v2, Q, q, theta, phi);
     }
 
+    this->FD.setNewStructure();
     accepted = true;
   }
 
   if (this->debug) {
     double val = this->FD();
-
-
-    // if ( ! this->externalLegs) {
-    //   cout << "--------------------------------------------------------------------" << endl
-    //        << "overflow at DMC::raiseOrder " << endl
-    //        << "accepted=" << accepted << endl
-    //        << "a=" << a << endl
-    //        << "a_diag=" << val/oldVal * (wInvG1*wInvt1*wInvt2*wInvQ)/wInvd << endl
-    //        << "ratio=" << a/(val/oldVal * (wInvG1*wInvt1*wInvt2*wInvQ)/wInvd) << endl
-    //        << "order=" << this->FD.Ds.size() << endl
-    //        << "val=" << val << endl
-    //        << "oldVal=" << oldVal << endl
-    //        << "wInvQ=" << wInvQ << endl
-    //        << "wInvt2=" << wInvt2 << endl
-    //        << "exp=" << exponential << endl
-    //        << "--------------------------------------------------------------------" << endl;
-    // }
 
     if (accepted) {
       this->checkAcceptanceRatio(exponential * alpha*sinTheta/(sqrt(8)*M_PI*M_PI)/(val/oldVal), "raiseOrder");
