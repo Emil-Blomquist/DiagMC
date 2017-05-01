@@ -28,10 +28,9 @@ class FeynmanDiagram {
       removeFromHashTable (shared_ptr<Electron>);
 
     bool newStructure, isIrreducible;
-      
 
   public:
-    double length, couplingConstant, chemicalPotential, tolerance, externalMomentum;
+    double length, couplingConstant, chemicalPotential, externalMomentum;
     Vector3d ExternalMomentum;
 
     shared_ptr<Vertex> start, end;
@@ -60,7 +59,7 @@ class FeynmanDiagram {
       phononEnergy (double),
       operator() ();
 
-    bool diagramIsIrreducible (bool);
+    bool diagramIsIrreducible ();
 
     string diagramName ();
 

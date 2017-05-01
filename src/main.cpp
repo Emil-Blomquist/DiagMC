@@ -44,11 +44,6 @@ int main (int argc, char **argv) {
 
   Vector3d externalMomentum(0, 0, momenta);
 
-  cout << "verifiera att diagrammet är irreducible!!!" << endl;
-  cout << "testa att sätta en vinkel på external momentum" << endl;
-  cout << "är det en annan funktion som kanske använder external momentum" << endl;
-  cout << "skala bort updateringsfunktioner och se om felet kvarstår" << endl;
-
   if (true) {
     DiagrammaticMonteCarlo DMC(
       externalMomentum,

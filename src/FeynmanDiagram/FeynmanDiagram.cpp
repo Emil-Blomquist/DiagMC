@@ -17,7 +17,7 @@ FeynmanDiagram::FeynmanDiagram (
   this->newStructure = true;
 
   // tolerance for hash table
-  this->tolerance = 10000000;
+  // this->tolerance = 10000000;
 
   // create vertices
   this->start.reset(new Vertex(0));
@@ -125,14 +125,13 @@ unsigned int FeynmanDiagram::binaryElectronSearch(shared_ptr<Electron> g, unsign
 // }
 
 
-bool FeynmanDiagram::diagramIsIrreducible (bool externalLegs) {
-  
+bool FeynmanDiagram::diagramIsIrreducible () {
   if (this->newStructure) {
     // need to check since structure is changed
     map<shared_ptr<Phonon>, bool> phononMap;
 
     shared_ptr<Vertex> v = this->start;
-    while (true) {
+    do {
       if (v->D[1]) {
         // outgoing phonon
         phononMap[v->D[1]] = true;
@@ -141,16 +140,14 @@ bool FeynmanDiagram::diagramIsIrreducible (bool externalLegs) {
         phononMap.erase(v->D[0]);
         if (phononMap.empty()) {
           if (v != this->end) {
-            this->isIrreducible = true;
-          } else {
             this->isIrreducible = false;
+          } else {
+            this->isIrreducible = true;
           }
           break;
         }
       }
-
-      v = v->G[1]->end;
-    }
+    } while (v != this->end && (v = v->G[1]->end));
 
     this->newStructure = false;
   }

@@ -22,7 +22,7 @@ DiagrammaticMonteCarlo::DiagrammaticMonteCarlo (
   // if the diagram should have external legs or not
   this->externalLegs = false;
   // if we should only take into account irreducible diagrams
-  this->irreducibleDiagrams = true;
+  this->reducibleDiagrams = false;
   // if we should let hte external momentum vary or not
   this->fixedExternalMomentum = false;
   // for when to bin the diagram
@@ -33,7 +33,7 @@ DiagrammaticMonteCarlo::DiagrammaticMonteCarlo (
   this->mu = mu;
   this->alpha = alpha;
   this->numIterations = numIterations;
-  this->param = this->Uint(100000, 999999);
+  this->param = this->Udouble(0, 1);
   this->argv = argv;
 
   // store time at which the calculation began
@@ -73,15 +73,15 @@ void DiagrammaticMonteCarlo::run () {
 
   // specify the relative probability of choosing a specific update function
   multimap<unsigned int, void (DiagrammaticMonteCarlo::*)(double)> updateMethods = {
-    {10, &DiagrammaticMonteCarlo::shiftVertexPosition},
-    {3, &DiagrammaticMonteCarlo::swapPhononConnections},
-    {5, &DiagrammaticMonteCarlo::changeInternalPhononMomentumDirection},
-    {7, &DiagrammaticMonteCarlo::changeInternalPhononMomentumMagnitude},
-    {2, &DiagrammaticMonteCarlo::raiseOrder}, // <- These two must have the same probability
-    {2, &DiagrammaticMonteCarlo::lowerOrder}, // <-
-    {5, &DiagrammaticMonteCarlo::changeDiagramLength},
+    {1, &DiagrammaticMonteCarlo::shiftVertexPosition},
+    {1, &DiagrammaticMonteCarlo::swapPhononConnections},
+    {1, &DiagrammaticMonteCarlo::changeInternalPhononMomentumDirection},
+    {1, &DiagrammaticMonteCarlo::changeInternalPhononMomentumMagnitude},
+    {1, &DiagrammaticMonteCarlo::raiseOrder}, // <- These two must have the same probability
+    {1, &DiagrammaticMonteCarlo::lowerOrder}, // <-
+    {1, &DiagrammaticMonteCarlo::changeDiagramLength},
     {1, &DiagrammaticMonteCarlo::changeDiagramLengthComplex},
-    {(fixedExternalMomentum ? 0 : 1), &DiagrammaticMonteCarlo::changeExternalMomentumMagnitude}
+    {(this->fixedExternalMomentum ? 0 : 1), &DiagrammaticMonteCarlo::changeExternalMomentumMagnitude}
   };
 
   // vector which is going to contain the specified quantity of update functions
@@ -113,8 +113,8 @@ void DiagrammaticMonteCarlo::run () {
     }
 
     // bin diagrams of order higher than 0
-    if (this->externalLegs || ( ! this->externalLegs && this->FD.Ds.size() >= this->minDiagramOrder)) {
-      if ( ! this->irreducibleDiagrams || this->FD.diagramIsIrreducible(this->externalLegs)) {
+    if (this->FD.Ds.size() >= this->minDiagramOrder) {
+      if (this->reducibleDiagrams || this->FD.diagramIsIrreducible()) {
         if (this->fixedExternalMomentum) {
           unsigned int index = this->FD.length/this->dt;
           bins[index]++;
@@ -185,7 +185,7 @@ void DiagrammaticMonteCarlo::write2file (const unsigned long int iterationNum) {
 
   // to remove the error due the combination of a singular diagram and a discretized time
   vector<double> singularityFix((int) this->maxLength/this->dt, 0);
-  if ( ! this->externalLegs && this->minDiagramOrder <= 1 && this->maxDiagramOrder >= 1) {
+  if ( ! this->externalLegs && this->minDiagramOrder <= 1) {
     for (unsigned int i = 0; i != this->maxLength/this->dt; ++i) {
       singularityFix[i] = this->alpha*(
         exp(-0.5*(2*i + 1)*this->dt)/sqrt(M_PI*0.5*(2*i + 1)*this->dt)

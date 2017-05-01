@@ -26,12 +26,12 @@ using namespace Eigen;
 using namespace std;
 
 #include "../FeynmanDiagram/FeynmanDiagram.h"
-#include "../Display/Display.h"
+// #include "../Display/Display.h"
 
 class DiagrammaticMonteCarlo {
   private:
     mt19937_64 mt;
-    bool debug, loud, externalLegs, irreducibleDiagrams, fixedExternalMomentum;
+    bool debug, loud, externalLegs, reducibleDiagrams, fixedExternalMomentum;
     unsigned long int numIterations, N0;
     double maxLength, mu, alpha, param, dt, dp, maxMomenta;
     struct tm *timeinfo;
