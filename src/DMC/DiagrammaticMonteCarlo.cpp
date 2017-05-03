@@ -62,11 +62,13 @@ DiagrammaticMonteCarlo::DiagrammaticMonteCarlo (
 
   this->write2file();
   this->run();
+
+  this->Dyson();
 }
 
 void DiagrammaticMonteCarlo::run () {
   // to reach start connfiguration
-  const unsigned int untilStart = 10000000;
+  const unsigned int untilStart = 10000000*0 + 1;
 
   // to save data under the process
   const unsigned int saveAfter = 500*1000000;
@@ -264,10 +266,42 @@ void DiagrammaticMonteCarlo::write2file (const unsigned long int iterationNum) {
   myfile.close();
 }
 
+Array<double, Dynamic, Dynamic> DiagrammaticMonteCarlo::normalizeHistogram () {
+  Array<double, Dynamic, Dynamic> output = Array<double, Dynamic, Dynamic>::Zero(this->hist.rows(), this->hist.cols());
 
+  // calculate scale factor
+  ArrayXd ps = ArrayXd::LinSpaced(this->hist.rows(), 0, this->maxMomenta - this->dp) + 0.5*this->dp;
+  ArrayXd ts = ArrayXd::LinSpaced(this->hist.cols(), 0, this->maxLength - this->dt) + 0.5*this->dt;
 
+  double sumG0 = 0;
+  for (unsigned int i = 0; i != ps.size(); i++) {
+    for (unsigned int j = 0; j != ts.size(); j++) {
+      sumG0 += exp((this->mu - 0.5*ps[i]*ps[i])*ts[j]);
+    }
+  }
 
+  double scaleFactor = sumG0/this->N0;
 
+  // to remove the error due the combination of a singular diagram and a discretized time
+  vector<double> singularityFix((int) this->maxLength/this->dt, 0);
+  if ( ! this->externalLegs && this->minDiagramOrder <= 1) {
+    for (unsigned int i = 0; i != this->maxLength/this->dt; ++i) {
+      singularityFix[i] = this->alpha*(
+        exp(-0.5*(2*i + 1)*this->dt)/sqrt(M_PI*0.5*(2*i + 1)*this->dt)
+        - (erf(sqrt((i + 1)*this->dt)) - erf(sqrt(i*this->dt)))/this->dt
+      );
+    }
+  }
+
+  // histogram corresponding to higher order diagrams
+  for (unsigned int i = 0; i != this->hist.rows(); i++) {
+    for (unsigned int j = 0; j != this->hist.cols(); j++) {
+      output(i, j) = abs(this->hist(i, j)*scaleFactor + singularityFix[j]);
+    }
+  }
+
+  return output;
+}
 
 
 

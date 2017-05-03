@@ -21,6 +21,7 @@
 #include <tuple> // return value
 
 #include <Eigen/Dense>
+#include <unsupported/Eigen/FFT>
 
 using namespace Eigen;
 using namespace std;
@@ -41,6 +42,7 @@ class DiagrammaticMonteCarlo {
     vector<unsigned long int> bins, bins0;
 
     Array<unsigned long int, Dynamic, Dynamic> hist;
+    Array<double, Dynamic, Dynamic> G;
 
     shared_ptr<Vertex> vertices2beRemoved [2];
     shared_ptr<Electron> electrons2beRemoved [2];
@@ -48,6 +50,8 @@ class DiagrammaticMonteCarlo {
 
     double Udouble (double, double);
     int Uint (int, int);
+
+    Array<double, Dynamic, Dynamic> normalizeHistogram ();
 
     Vector3d
       calculateMeanP (shared_ptr<Vertex>, shared_ptr<Vertex>),
@@ -66,6 +70,7 @@ class DiagrammaticMonteCarlo {
 
     void
       write2file (const unsigned long int = 0),
+      Dyson (),
       checkAcceptanceRatio (double, string);
 
   public:
