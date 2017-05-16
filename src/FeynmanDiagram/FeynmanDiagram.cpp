@@ -35,6 +35,7 @@ FeynmanDiagram::FeynmanDiagram (
 }
 
 double FeynmanDiagram::phononEnergy (double q) {
+  // OBS, need to recalculate "singularityFix" if this is other than one
   return 1;
 }
 
@@ -92,41 +93,10 @@ unsigned int FeynmanDiagram::binaryElectronSearch(shared_ptr<Electron> g, unsign
   return index;
 }
 
-// void FeynmanDiagram::insertIntoHashTable (shared_ptr<Electron> g) {
-//   // decrease precision so numerical errors wont affect
-//   const double key = round(g->momentum[2] * this->tolerance) / this->tolerance;
-
-//   this->electronHashTable.insert({key, g});
-// }
-
-// void FeynmanDiagram::removeFromHashTable (shared_ptr<Electron> g) {
-//   // decrease precision so numerical errors wont affect
-//   const double key = round(g->momentum[2] * this->tolerance) / this->tolerance;
-
-//   // obtain iterator pointer pointing towards the propagator
-//   auto range = this->electronHashTable.equal_range(key);
-
-//   if (distance(range.first, range.second) == 1) {
-//     // only one propagator with this key
-//     this->electronHashTable.erase(range.first);
-//   } else {
-//     // multiple propagators with this key
-
-//     // linear search
-//     for (auto i = range.first; i != range.second; i++) {
-//       if (i->second == g) {
-//         this->electronHashTable.erase(i);
-//         return;
-//       }
-//     }
-
-//     cout << "PROPAGATOR NOT FOUND" << endl;
-//   }
-// }
 
 
-bool FeynmanDiagram::diagramIsIrreducible () {
-  if (this->newStructure) {
+bool FeynmanDiagram::isIrreducibleDiagram (bool checkAnyway) {
+  if (this->newStructure || checkAnyway) {
     // need to check since structure is changed
     map<shared_ptr<Phonon>, bool> phononMap;
 
@@ -153,6 +123,153 @@ bool FeynmanDiagram::diagramIsIrreducible () {
   }
   
   return this->isIrreducible;
+}
+
+bool FeynmanDiagram::phononGoesBeyond (shared_ptr<Phonon> d, shared_ptr<Vertex> end) {
+  // compare times
+  if (d->end->position < end->position) {
+    return false;
+  } else if (d->end->position > end->position) {
+    return true;
+  } else {
+    // times are equal, we need to do a linear search
+
+    shared_ptr<Vertex> v = end;
+    do {
+      if (v == d->end) {
+        // if the end is found between "d->start" and the end of the subdiagram
+        return false;
+      }
+    } while ((v = v->G[0]->start) && v != d->start);
+
+    return true;
+  }
+}
+
+bool FeynmanDiagram::isIrreducibleSubdiagram (shared_ptr<Vertex> start, shared_ptr<Vertex> end) {
+  // start and end of the subdiagram
+
+  // need to check since structure is changed
+  set<shared_ptr<Phonon>> phononSet;
+
+  shared_ptr<Vertex> v = start;
+  do {
+    if (v->D[1]) {
+      // outgoing phonon
+
+      // check if this phonon preceedes the end vertex
+      // if this is the case, clear the hash table since they intersect each other
+      // otherwise add to the hashtable
+      if (this->phononGoesBeyond(v->D[1], end)) {
+        phononSet.clear();
+      } else {
+        phononSet.insert(v->D[1]);
+      }
+    } else if (v->D[0]) {
+      // ingoing phonon
+
+      // check if this phonon exists in the hash table
+      // if this is the case, simply remove and check wheter or not the hash table is empty
+      // if not, clear the hash table since they intersect each other
+      if (phononSet.find(v->D[0]) != phononSet.end()) {
+        phononSet.erase(v->D[0]);
+        if (phononSet.empty()) {
+          return false;
+        }
+      } else {
+        phononSet.clear();
+      }
+
+    }
+  } while (v != end && (v = v->G[1]->end));
+  
+  // if we have reached this line the subdiagram must be irreducible
+  return true;
+}
+
+bool FeynmanDiagram::isSkeletonDiagram () {
+  if (this->newStructure) {
+    this->newStructure = false;
+
+    // the first order diagram is an exception
+    if (this->Ds.size() == 1) {
+      this->isSkeleton = true;
+      return true;
+    }
+
+    // first we should make sure that the diagram is not reducible
+    if ( ! this->isIrreducibleDiagram(true)) {
+      this->isSkeleton = false;
+      return false;
+    }
+
+    // next we need to make sure that each subdiagram also is irreducible
+    for (shared_ptr<Phonon> d : this->Ds) {
+      if (
+        d->start->G[1]->end == d->end ||
+        ! this->isIrreducibleSubdiagram(d->start->G[1]->end, d->end->G[0]->start)
+      ) {
+        this->isSkeleton = false;
+        return false;
+      }
+    }
+
+    // if we reach this line, the diagram sure is a skeleton one
+    this->isSkeleton = true;
+  }
+
+  return this->isSkeleton;
+
+
+  //   // need to check since structure is changed
+  //   vector<unsigned int> ids;
+  //   ids.reserve(this->Ds.size());
+
+  //   unsigned int
+  //     id = 0,
+  //     numPhononsCounted = 0,
+  //     tmp = 0;
+
+  //   shared_ptr<Vertex> v = this->start;
+  //   do {
+  //     if (v->D[1]) {
+  //       // outgoing phonon
+  //       v->setIndex(++id);
+
+  //       // keep the vector sorted
+  //       vector<unsigned int>::iterator itr = std::upper_bound(ids.begin(), ids.end(), id);
+  //       ids.insert(itr, id);
+
+  //       // increment the number of phonons we have counted
+  //       numPhononsCounted++;
+  //     } else if (v->D[0]) {
+
+
+  //       if (this->diagramName() == "123132") {
+  //         cout << tmp << ": " << v->D[0]->start->index << " vs " << id << " (" << (ids.size() > 1) << " " << (numPhononsCounted != this->Ds.size()) << ")" << endl;
+  //       }
+
+
+
+  //       // ingoing phonon
+  //       if (v->D[0]->start->index == id && (ids.size() > 1 || numPhononsCounted != this->Ds.size())) {
+  //         // There must only be one id used atm or we have not counted all the phonons
+  //         // has insertion
+  //         return false;
+  //       } else {
+  //         // remove the id from ids using a binary search
+  //         vector<unsigned int>::iterator itr = lower_bound(ids.begin(), ids.end(), v->D[0]->start->index);
+  //         ids.erase(itr);
+  //         // use the smallest id possible
+  //         id = ids[ids.size() - 1];
+  //       }
+  //     }
+
+  //     tmp++;
+
+  //   } while (v != this->end && (v = v->G[1]->end));
+  // }
+
 }
 
 string FeynmanDiagram::diagramName () {
@@ -182,27 +299,11 @@ string FeynmanDiagram::diagramName () {
   return name;
 }
 
-// void FeynmanDiagram::printHashTable () {
 
 
-//   if (this->Gs.size() - this->electronHashTable.size() != 0) {
-//     cout << "Mismatch: " << this->Gs.size() << " vs " << this->electronHashTable.size() << endl;
-//   }
 
-//   // vector<double> uniqueKeys;
 
-//   // cout << "--------------------- " << this->Gs.size() << endl;
-//   // for (auto& x : this->electronHashTable) {
-//   //   if (! uniqueKeys.size() || find(uniqueKeys.begin(), uniqueKeys.end(), x.first) == uniqueKeys.end()) {
-//   //     uniqueKeys.push_back(x.first);
 
-//   //     cout.precision(17);
-//   //     cout << "\t" << fixed << x.first << ": " << this->electronHashTable.count(x.first) << endl;
-//   //   }
-
-//   // }
-//   // cout << "---------------------" << endl;
-// }
 
 void FeynmanDiagram::setExternalMomentum (Vector3d P, double p, Vector3d dP) {
   this->ExternalMomentum = P;

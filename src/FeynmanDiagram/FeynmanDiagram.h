@@ -9,6 +9,7 @@
 #include <cmath>
 #include <iterator>
 #include <map>
+#include <set>
 
 #include <Eigen/Dense>
 
@@ -21,15 +22,23 @@ using namespace std;
 
 class FeynmanDiagram {
   private:
-    unsigned int binaryElectronSearch(shared_ptr<Electron>, unsigned int lowerBound = 0);
+    unsigned int binaryElectronSearch (shared_ptr<Electron>, unsigned int lowerBound = 0);
 
     void
       insertIntoHashTable (shared_ptr<Electron>),
       removeFromHashTable (shared_ptr<Electron>);
 
-    bool newStructure, isIrreducible;
+    bool isIrreducible, isSkeleton;
+
+    bool
+      isIrreducibleSubdiagram (shared_ptr<Vertex>, shared_ptr<Vertex>),
+      phononGoesBeyond (shared_ptr<Phonon>, shared_ptr<Vertex>);
 
   public:
+
+    bool newStructure;
+
+
     double length, couplingConstant, chemicalPotential, externalMomentum;
     Vector3d ExternalMomentum;
 
@@ -59,7 +68,9 @@ class FeynmanDiagram {
       phononEnergy (double),
       operator() ();
 
-    bool diagramIsIrreducible ();
+    bool
+      isIrreducibleDiagram (bool checkAnyway = false),
+      isSkeletonDiagram ();
 
     string diagramName ();
 

@@ -32,7 +32,7 @@ using namespace std;
 class DiagrammaticMonteCarlo {
   private:
     mt19937_64 mt;
-    bool debug, loud, externalLegs, reducibleDiagrams, fixedExternalMomentum;
+    bool debug, loud, externalLegs, reducibleDiagrams, fixedExternalMomentum, Dyson, skeletonDiagrams;
     unsigned long int numIterations, N0;
     double maxLength, mu, alpha, param, dt, dp, maxMomenta;
     struct tm *timeinfo;
@@ -42,7 +42,7 @@ class DiagrammaticMonteCarlo {
     vector<unsigned long int> bins, bins0;
 
     Array<unsigned long int, Dynamic, Dynamic> hist;
-    Array<double, Dynamic, Dynamic> G;
+    Array<double, Dynamic, Dynamic> dG;
 
     shared_ptr<Vertex> vertices2beRemoved [2];
     shared_ptr<Electron> electrons2beRemoved [2];
@@ -50,8 +50,6 @@ class DiagrammaticMonteCarlo {
 
     double Udouble (double, double);
     int Uint (int, int);
-
-    Array<double, Dynamic, Dynamic> normalizeHistogram ();
 
     Vector3d
       calculateMeanP (shared_ptr<Vertex>, shared_ptr<Vertex>),
@@ -70,7 +68,8 @@ class DiagrammaticMonteCarlo {
 
     void
       write2file (const unsigned long int = 0),
-      Dyson (),
+      doDyson (Array<double, Dynamic, Dynamic>&),
+      normalizeHistogram (Array<double, Dynamic, Dynamic>&),
       checkAcceptanceRatio (double, string);
 
   public:
