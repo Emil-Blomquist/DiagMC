@@ -32,23 +32,29 @@ using namespace std;
 class DiagrammaticMonteCarlo {
   private:
     mt19937_64 mt;
-    bool debug, loud, externalLegs, reducibleDiagrams, fixedExternalMomentum, Dyson, skeletonDiagrams;
+    bool debug, loud, externalLegs, reducibleDiagrams, fixedExternalMomentum, Dyson, skeletonDiagrams, bold;
     unsigned long int numIterations, N0;
     double maxLength, mu, alpha, param, dt, dp, maxMomenta;
     struct tm *timeinfo;
     char **argv;
-    unsigned int minDiagramOrder, maxDiagramOrder;
+    unsigned int minDiagramOrder, maxDiagramOrder, numBoldIterations, boldIteration;
 
     vector<unsigned long int> bins, bins0;
 
     Array<unsigned long int, Dynamic, Dynamic> hist;
-    Array<double, Dynamic, Dynamic> dG;
+    Array<double, Dynamic, Dynamic> dG, dE;
 
     shared_ptr<Vertex> vertices2beRemoved [2];
     shared_ptr<Electron> electrons2beRemoved [2];
     shared_ptr<Phonon> phonon2beRemoved;
 
-    double Udouble (double, double);
+    double
+      dEOf (shared_ptr<Electron>),
+      additionalPhase (shared_ptr<Electron>),
+      additionalPhase (Vector3d, double),
+      additionalPhase (double, double),
+      evaluateDiagram (),
+      Udouble (double, double);
     int Uint (int, int);
 
     Vector3d
@@ -69,8 +75,9 @@ class DiagrammaticMonteCarlo {
     void
       write2file (const unsigned long int = 0),
       doDyson (Array<double, Dynamic, Dynamic>&),
-      normalizeHistogram (Array<double, Dynamic, Dynamic>&),
-      checkAcceptanceRatio (double, string);
+      normalizedHistogram (Array<double, Dynamic, Dynamic>&),
+      checkAcceptanceRatio (double, string),
+      calculateEnergyDiff ();
 
   public:
     FeynmanDiagram FD;

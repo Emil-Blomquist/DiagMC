@@ -16,14 +16,36 @@ void DiagrammaticMonteCarlo::changeDiagramLength (double param) {
 
   double oldVal = 0, oldwInvt = 0, wInvt = 0;
   if (this->debug) {
-    oldVal = this->FD();
+    oldVal = this->evaluateDiagram();
     oldwInvt = exp(l*(this->FD.end->position - tmin))*(1 - exp(-l*(this->maxLength - tmin)))/l;
     wInvt = exp(l*dt)*(1 - exp(-l*(this->maxLength - tmin)))/l;
   }
 
-  // is always accepted
-  this->FD.setLength(tmin + dt);
-  this->FD.end->setPosition(tmin + dt);
+  double boldContribution = 1;
+  bool accepted = false;
+  if (this->bold && this->boldIteration > 0) {
+    // contribution from boldification
+    shared_ptr<Electron> g = this->FD.Gs.back();
+
+    boldContribution = exp(
+                         this->additionalPhase(g->p, dt)
+                         - this->additionalPhase(g)
+                       );
+
+    // the rest of the acceptance ratio is unity
+    if (boldContribution > this->Udouble(0, 1)) {
+      this->FD.setLength(tmin + dt);
+      this->FD.end->setPosition(tmin + dt);
+      accepted = true;
+    }
+
+  } else {
+    // is always accepted
+    this->FD.setLength(tmin + dt);
+    this->FD.end->setPosition(tmin + dt);
+    accepted = true;
+  }
+
 
   if ( ! isfinite(dt)) {
     cout
@@ -37,7 +59,7 @@ void DiagrammaticMonteCarlo::changeDiagramLength (double param) {
   }
 
   if (this->debug) {
-    double val = this->FD();
+    double val = this->evaluateDiagram();
 
     double a;
     if (val == 0) {
@@ -45,10 +67,12 @@ void DiagrammaticMonteCarlo::changeDiagramLength (double param) {
     } else if (oldwInvt == 0 || oldVal == 0) {
       a = 1;
     } else {
-      a = val/oldVal * wInvt/oldwInvt;
+      a = boldContribution * oldwInvt/wInvt / (val/oldVal);
     }
 
-    this->checkAcceptanceRatio(a, "changeDiagramLength");
+    if (accepted) {
+      this->checkAcceptanceRatio(a, "changeDiagramLength");
+    }
 
     if (a < 0 || ! isfinite(a)) {
       cout << "--------------------------------------------------------------------" << endl

@@ -42,6 +42,10 @@ int main (int argc, char **argv) {
     }
   }
 
+  cout << "1) Import G from file and calculate corresponding dE." << endl
+       << "2) Check that using this dE, G is always obtained, no matter what order we allow." << endl
+       << "3) Starting from dE = 0 and allowing only first order, check so that the G obtained from bold is larger then the one obtained from Dyson." << endl;
+
   Vector3d externalMomentum(0, 0, momenta);
 
   if (true) {

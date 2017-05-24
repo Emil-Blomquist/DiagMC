@@ -12,6 +12,7 @@ using namespace std;
 
 class Electron: public enable_shared_from_this<Electron> {
   public:
+    double p;
     Vector3d momentum;
 
     shared_ptr<Vertex> start, end;
@@ -23,7 +24,7 @@ class Electron: public enable_shared_from_this<Electron> {
       setEnd (shared_ptr<Vertex>),
       addMomentum (Vector3d);
     
-    double operator() ();
+    double operator() (double mu, double dE = 0);
 };
 
 #endif

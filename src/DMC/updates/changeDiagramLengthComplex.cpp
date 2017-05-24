@@ -66,47 +66,65 @@ void DiagrammaticMonteCarlo::changeDiagramLengthComplex (double param) {
 
   double oldVal = 0, oldwInvt = 0, wInvt = 0;
   if (this->debug) {
-    oldVal = this->FD();
+    oldVal = this->evaluateDiagram();
     oldwInvt = exp(l*(g->end->position - g->start->position))*(1 - exp(-l*(upperBound - lowerBound)))/l;
     wInvt = exp(l*gLength)*(1 - exp(-l*(upperBound - lowerBound)))/l;
   }
 
-  // is always accepted
-  this->FD.setLength(this->FD.length + dt);
+  double boldContribution = 1;
+  bool accepted = true;
+  if (this->bold && this->boldIteration > 0) {
+    // contribution from boldification
 
-  if (dt > 0) {
-    // increasing time -> start from back
-    shared_ptr<Vertex> v = this->FD.end;
+    boldContribution = exp(
+                         this->additionalPhase(g->p, gLength)
+                         - this->additionalPhase(g)
+                       );
 
-    while (v != g->start) {
-      v->setPosition(v->position + dt);
+    // the rest of the acceptance ratio is unity
+    if (boldContribution <= this->Udouble(0, 1)) {
+      accepted = false;
+    }
+  }
 
-      v = v->G[0]->start;
+  if (accepted) {
+    this->FD.setLength(this->FD.length + dt);
+
+    if (dt > 0) {
+      // increasing time -> start from back
+      shared_ptr<Vertex> v = this->FD.end;
+
+      while (v != g->start) {
+        v->setPosition(v->position + dt);
+
+        v = v->G[0]->start;
+      }
+
+    } else {
+      // decreasing time -> start from front
+      shared_ptr<Vertex> v = g->start;
+
+      do {
+        v = v->G[1]->end;
+
+        v->setPosition(v->position + dt);
+      } while (v->G[1]);
     }
 
-  } else {
-    // decreasing time -> start from front
-    shared_ptr<Vertex> v = g->start;
-
-    do {
-      v = v->G[1]->end;
-
-      v->setPosition(v->position + dt);
-    } while (v->G[1]);
+    if ( ! isfinite(dt)) {
+      cout
+        << "-------------------------" << endl
+        << "DMC::changeDiagramLengthComplex: nan encountered" << endl
+        << "gLength=" << gLength << endl
+        << "r=" << r << endl
+        << "l=" << l << endl
+        << "-------------------------" << endl;
+    }
   }
 
-  if ( ! isfinite(dt)) {
-    cout
-      << "-------------------------" << endl
-      << "DMC::changeDiagramLengthComplex: nan encountered" << endl
-      << "gLength=" << gLength << endl
-      << "r=" << r << endl
-      << "l=" << l << endl
-      << "-------------------------" << endl;
-  }
 
   if (this->debug) {
-    double val = this->FD();
+    double val = this->evaluateDiagram();
 
     double a;
     if (val == 0) {
@@ -114,10 +132,12 @@ void DiagrammaticMonteCarlo::changeDiagramLengthComplex (double param) {
     } else if (oldwInvt == 0 || oldVal == 0) {
       a = 1;
     } else {
-      a = val/oldVal * wInvt/oldwInvt;
+      a = val/oldVal * wInvt/oldwInvt / boldContribution;
     }
 
-    this->checkAcceptanceRatio(a, "changeDiagramLengthComplex");
+    if (accepted) {
+      this->checkAcceptanceRatio(a, "changeDiagramLengthComplex");
+    }
 
     if (a < 0 || ! isfinite(a)) {
       cout << "--------------------------------------------------------------------" << endl
@@ -132,5 +152,5 @@ void DiagrammaticMonteCarlo::changeDiagramLengthComplex (double param) {
     } else if (this->loud) {
       cout << "changeDiagramLengthComplex: " << a << endl;
     }
-  } 
+  }
 }

@@ -39,24 +39,24 @@ double FeynmanDiagram::phononEnergy (double q) {
   return 1;
 }
 
-double FeynmanDiagram::operator() () {
-  double val;
+// double FeynmanDiagram::operator() () {
+//   double val;
 
-  //
-  // need to change when diagram length becomes variable
-  //
-  val = exp(this->chemicalPotential*this->length);
+//   //
+//   // need to change when diagram length becomes variable
+//   //
+//   val = exp(this->chemicalPotential*this->length);
 
-  for (auto g : this->Gs) {
-    val *= (*g)();
-  }
+//   for (auto g : this->Gs) {
+//     val *= (*g)();
+//   }
 
-  for (auto d : this->Ds) {
-    val *= (*d)(this->couplingConstant, this->phononEnergy(d->q));
-  }
+//   for (auto d : this->Ds) {
+//     val *= (*d)(this->couplingConstant, this->phononEnergy(d->q));
+//   }
 
-  return val;
-}
+//   return val;
+// }
 
 void FeynmanDiagram::setLength (double length) {
   this->length = length;
@@ -219,57 +219,6 @@ bool FeynmanDiagram::isSkeletonDiagram () {
   }
 
   return this->isSkeleton;
-
-
-  //   // need to check since structure is changed
-  //   vector<unsigned int> ids;
-  //   ids.reserve(this->Ds.size());
-
-  //   unsigned int
-  //     id = 0,
-  //     numPhononsCounted = 0,
-  //     tmp = 0;
-
-  //   shared_ptr<Vertex> v = this->start;
-  //   do {
-  //     if (v->D[1]) {
-  //       // outgoing phonon
-  //       v->setIndex(++id);
-
-  //       // keep the vector sorted
-  //       vector<unsigned int>::iterator itr = std::upper_bound(ids.begin(), ids.end(), id);
-  //       ids.insert(itr, id);
-
-  //       // increment the number of phonons we have counted
-  //       numPhononsCounted++;
-  //     } else if (v->D[0]) {
-
-
-  //       if (this->diagramName() == "123132") {
-  //         cout << tmp << ": " << v->D[0]->start->index << " vs " << id << " (" << (ids.size() > 1) << " " << (numPhononsCounted != this->Ds.size()) << ")" << endl;
-  //       }
-
-
-
-  //       // ingoing phonon
-  //       if (v->D[0]->start->index == id && (ids.size() > 1 || numPhononsCounted != this->Ds.size())) {
-  //         // There must only be one id used atm or we have not counted all the phonons
-  //         // has insertion
-  //         return false;
-  //       } else {
-  //         // remove the id from ids using a binary search
-  //         vector<unsigned int>::iterator itr = lower_bound(ids.begin(), ids.end(), v->D[0]->start->index);
-  //         ids.erase(itr);
-  //         // use the smallest id possible
-  //         id = ids[ids.size() - 1];
-  //       }
-  //     }
-
-  //     tmp++;
-
-  //   } while (v != this->end && (v = v->G[1]->end));
-  // }
-
 }
 
 string FeynmanDiagram::diagramName () {

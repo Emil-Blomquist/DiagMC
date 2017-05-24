@@ -43,7 +43,7 @@ void DiagrammaticMonteCarlo::doDyson (Array<double, Dynamic, Dynamic>& dG) {
 
   // whole part of the self energy
   Array<double, Dynamic, Dynamic> SE_t_all;
-  this->normalizeHistogram(SE_t_all);
+  this->normalizedHistogram(SE_t_all);
 
   // we want to go to at least t=500
   double L = (this->maxLength > 500 ? this->maxLength : 500);

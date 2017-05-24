@@ -26,13 +26,18 @@ DiagrammaticMonteCarlo::DiagrammaticMonteCarlo (
   // if we should sample only skeleton diagrams (reducibleDiagrams must be false)
   this->skeletonDiagrams = true;
   // if we should let the external momentum vary or not
-  this->fixedExternalMomentum = true;
+  this->fixedExternalMomentum = false;
   // if we want to use Dyson equation (fixedExternalMomentum must be false)
-  this->Dyson = false;
+  this->Dyson = true;
+  // wether or not we should employ boldification (fixedExternalMomentum must be false and Dyson must me set true)
+  this->bold = true;
+
   // for when to bin the diagram
   this->minDiagramOrder = 1;
   // raise diagrm order will look at this (zero -> turned off)
-  this->maxDiagramOrder = 0;
+  this->maxDiagramOrder = 3;
+  // how many iterations in the bold scheme shall be done
+  this->numBoldIterations = 4;
 
   this->mu = mu;
   this->alpha = alpha;
@@ -49,31 +54,81 @@ DiagrammaticMonteCarlo::DiagrammaticMonteCarlo (
   this->maxLength = maxLength;
   this->dt = 0.02;
 
-  if ( ! this->fixedExternalMomentum) {
-    this->maxMomenta = 10;
-    this->dp = 0.02;
+  this->maxMomenta = 10;
+  this->dp = 0.02;
 
+  // initiate dE and dG which are going to be overwritten for each iteration
+  if ( ! this->fixedExternalMomentum) {
+    const unsigned int
+      Np = this->maxMomenta/this->dp,
+      Nt = this->maxLength/this->dt;
+
+    if (this->Dyson) {
+      this->dG = Array<double, Dynamic, Dynamic>::Zero(Np, Nt);
+      if (this->bold) {
+        this->dE = Array<double, Dynamic, Dynamic>::Zero(Np, Nt);
+      }
+    }
+  }
+
+  if (this->bold) {
+    for (this->boldIteration = 0; this->boldIteration != this->numBoldIterations + 1; this->boldIteration++) {
+      this->run();
+
+      this->calculateEnergyDiff();
+
+
+      Array<double, Dynamic, Dynamic> normHist = ArrayXXd::Zero(this->hist.rows(), this->hist.cols());
+      this->normalizedHistogram(normHist);
+
+
+      // normalized histogram 
+      cout << "normHist" << this->boldIteration + 1 << " = np.array([";
+      for (unsigned int i = 0; i != normHist.cols(); i++) {
+        cout << normHist(0, i);
+
+        if (i < normHist.cols() - 1) {
+          cout << ", ";
+        }
+      }
+      cout << "])" << endl << endl;
+
+
+      cout << "dG" << this->boldIteration + 1 << " = np.array([";
+      for (unsigned int i = 0; i != this->dG.cols(); i++) {
+        cout << this->dG(0, i);
+
+        if (i < this->dG.cols() - 1) {
+          cout << ", ";
+        }
+      }
+      cout << "])" << endl << endl;
+
+      cout << "---------" << endl;
+    }
+
+  } else {
+    this->run();
+  }
+}
+
+void DiagrammaticMonteCarlo::run () {
+  // initiate/reset histogram
+  if ( ! this->fixedExternalMomentum) {
     const unsigned int
       Np = this->maxMomenta/this->dp,
       Nt = this->maxLength/this->dt;
 
     this->N0 = 0;
     this->hist = Array<unsigned long int, Dynamic, Dynamic>::Zero(Np, Nt);
-    if (this->Dyson) {
-      this->dG = Array<double, Dynamic, Dynamic>::Zero(Np, Nt);
-    }
   } else {
     this->bins = vector<unsigned long int>(this->maxLength/this->dt, 0);
     this->bins0 = vector<unsigned long int>(this->maxLength/this->dt, 0);
   }
 
+  // save an empty file
   this->write2file();
-  this->run();
 
-  // this->doDyson(this->dG);
-}
-
-void DiagrammaticMonteCarlo::run () {
   // to reach start connfiguration
   const unsigned int untilStart = 10000000*0;
 
@@ -111,9 +166,6 @@ void DiagrammaticMonteCarlo::run () {
     (this->*updateMethod)(this->param);
   }
 
-
-    unordered_map<string, bool> diagramNames;
-
   // main loop
   for (unsigned long int i = 0; i < this->numIterations; ++i) {
     auto updateMethod = chooseUpdateMethod[this->Uint(0, chooseUpdateMethod.size() - 1)];
@@ -124,13 +176,6 @@ void DiagrammaticMonteCarlo::run () {
       this->write2file(i + 1);
     }
 
-    // if (this->FD.Ds.size() > 1) {
-    //   Display disp(&this->FD);
-    //   disp.render();
-    // }
-
-    bool newStructure = this->FD.newStructure;
-
     // bin diagrams of desired order and desired structure
     if (this->FD.Ds.size() >= this->minDiagramOrder) {
       if (
@@ -138,25 +183,6 @@ void DiagrammaticMonteCarlo::run () {
         ( this->skeletonDiagrams && this->FD.isSkeletonDiagram() ) ||
         ( ! this->skeletonDiagrams && this->FD.isIrreducibleDiagram() )
       ) {
-
-        // if (this->FD.Ds.size() > 1) {
-        //   cout << 123123123 << endl;
-        // }
-
-        // if (newStructure && this->FD.Ds.size() > 2) {
-        //   Display disp(&this->FD);
-        //   disp.render();
-        // }
-
-        if (this->FD.Ds.size() < 5 && diagramNames.find(this->FD.diagramName()) == diagramNames.end()) {
-          diagramNames[this->FD.diagramName()] = true;
-          cout << "------------" << endl;
-          for(auto kv : diagramNames) {
-            cout << kv.first << endl;
-          } 
-        }
-
-
 
         if (this->fixedExternalMomentum) {
           unsigned int index = this->FD.length/this->dt;
@@ -169,23 +195,6 @@ void DiagrammaticMonteCarlo::run () {
         }
       }
     }
-
-    // if (this->FD.Ds.size() >= this->minDiagramOrder) {
-    //   if (
-    //     this->reducibleDiagrams || this->FD.diagramIsIrreducible()
-    //     this->skeletonDiagrams
-    //   ) {
-    //     if (this->fixedExternalMomentum) {
-    //       unsigned int index = this->FD.length/this->dt;
-    //       bins[index]++;
-    //     } else {
-    //       unsigned int
-    //         pi = this->FD.externalMomentum/this->dp,
-    //         ti = this->FD.length/this->dt;
-    //       this->hist(pi, ti)++;
-    //     }
-    //   }
-    // }
 
     // bin zeroth order diagrams used for normalization
     if (this->FD.Ds.size() == 0) {
@@ -201,169 +210,6 @@ void DiagrammaticMonteCarlo::run () {
   // save final result
   this->write2file();
 }
-
-
-
-void DiagrammaticMonteCarlo::write2file (const unsigned long int iterationNum) {
-  // create date and time string
-  char buffer[80];
-  strftime(buffer, 80, "%Y-%m-%d %H:%M:%S", this->timeinfo);
-  string dateAndTimeString(buffer);
-
-  // create file name
-  stringstream stream;
-  stream << fixed << setprecision(6) // match the precision of "to_string()"
-         << " a=" << this->FD.couplingConstant
-         << ( this->fixedExternalMomentum ? " p=" + to_string(this->FD.externalMomentum) : "" )
-         << " mu=" << this->FD.chemicalPotential
-         << " tmax=" << this->maxLength
-         << " dt=" << this->dt
-         << ( ! this->fixedExternalMomentum ? " pmax=" + to_string(this->maxMomenta) : "" )
-         << ( ! this->fixedExternalMomentum ? " dp=" + to_string(this->dp) : "" )
-         << " N=" << numIterations
-         << " date=" << dateAndTimeString
-         << " unique=" << param;
-  string fileName = stream.str();
-
-  // obtain path relative binary file
-  string path = this->argv[0]; // program full path + name of binary file
-  path.erase(path.find_last_of('/') + 1); // remove name of binary file
-
-  // create data folder if not already existing
-  system(("mkdir -p " + path + "../data").c_str());
-
-  // write to file
-  ofstream myfile;
-  myfile.open(path + "../data/" + fileName.substr(1) + ".txt");
-  myfile << "--------" + fileName;
-  if (iterationNum) {
-    myfile << " Ntemp=" << iterationNum;
-  }
-  myfile << " --------" << endl;
-  myfile.close();
-
-  if ( ! this->fixedExternalMomentum && this->N0) {
-    // open file
-    myfile.open(path + "../data/" + fileName.substr(1) + ".txt", ios_base::app);
-
-    Array<double, Dynamic, Dynamic> hist;
-    this->normalizeHistogram(hist);
-
-    if (this->Dyson) {
-      this->doDyson(hist);
-    }
-
-    // histogram corresponding to higher order diagrams
-    for (unsigned int i = 0; i != hist.rows(); i++) {
-      for (unsigned int j = 0; j != hist.cols(); j++) {
-        if (this->Dyson) {
-          double
-            p = (i + 0.5)*this->dp,
-            t = (j + 0.5)*this->dt;
-
-          myfile << fixed << setprecision(6) << hist(i, j) + exp((this->mu - 0.5*p*p)*t);
-        } else {
-          myfile << fixed << setprecision(6) << hist(i, j);
-        }
-
-        if (j + 1 < hist.cols()) {
-          myfile << " ";
-        }
-      }
-      if (i + 1 < hist.rows()) {
-        myfile << endl;
-      }
-    }
-  } else if (this->fixedExternalMomentum && this->bins0[0] > 0) {
-    // to remove the error due the combination of a singular diagram and a discretized time
-    vector<double> singularityFix((int) this->maxLength/this->dt, 0);
-    if ( ! this->externalLegs && this->minDiagramOrder <= 1) {
-      for (unsigned int i = 0; i != this->maxLength/this->dt; ++i) {
-        singularityFix[i] = this->alpha*(
-          exp(-0.5*(2*i + 1)*this->dt)/sqrt(M_PI*0.5*(2*i + 1)*this->dt)
-          - (erf(sqrt((i + 1)*this->dt)) - erf(sqrt(i*this->dt)))/this->dt
-        );
-      }
-    }
-
-    // open file
-    myfile.open(path + "../data/" + fileName.substr(1) + ".txt", ios_base::app);
-
-    // times
-    for (unsigned int i = 0; i != this->maxLength/this->dt; ++i) {
-      myfile << fixed << setprecision(7) << (i + 0.5)*this->dt;
-      if (i == this->maxLength/this->dt - 1) {
-        myfile << "\n";
-      } else {
-        myfile << " ";
-      }
-    }
-
-    // calculate scale factor
-    unsigned int until = 0;
-    while ((double) this->bins0[until]/this->bins0[0] > 0.01) {
-      until++;
-    }
-    double Z = 0;
-    for (unsigned int i = 0; i != until; ++i) {
-      Z += sqrt(this->bins0[i]);
-    }
-    double scaleFactor = 0;
-    for (unsigned int i = 0; i != until; ++i) {
-      scaleFactor += exp(-(0.5*pow(this->FD.externalMomentum, 2) - this->mu)*(i + 0.5)*this->dt)
-                  /(sqrt(this->bins0[i]) * Z);
-    }
-
-    // greens function
-    for (unsigned int i = 0; i != this->maxLength/this->dt; ++i) {
-      myfile << fixed << setprecision(7) << abs(this->bins[i]*scaleFactor + singularityFix[i]);
-      if (i < this->maxLength/this->dt - 1) {
-        myfile << " ";
-      }
-    }
-  }
-
-  myfile.close();
-}
-
-void DiagrammaticMonteCarlo::normalizeHistogram (Array<double, Dynamic, Dynamic>& hist) {
-  // give correct dimensions
-  hist = ArrayXXd::Zero(this->hist.rows(), this->hist.cols());
-
-  // calculate scale factor
-  ArrayXd ps = ArrayXd::LinSpaced(this->hist.rows(), 0, this->maxMomenta - this->dp) + 0.5*this->dp;
-  ArrayXd ts = ArrayXd::LinSpaced(this->hist.cols(), 0, this->maxLength - this->dt) + 0.5*this->dt;
-
-  double sumG0 = 0;
-  for (unsigned int i = 0; i != ps.size(); i++) {
-    for (unsigned int j = 0; j != ts.size(); j++) {
-      sumG0 += exp((this->mu - 0.5*ps[i]*ps[i])*ts[j]);
-    }
-  }
-
-  double scaleFactor = sumG0/this->N0;
-
-  // to remove the error due the combination of a singular diagram and a discretized time
-  vector<double> singularityFix((int) this->maxLength/this->dt, 0);
-  if ( ! this->externalLegs && this->minDiagramOrder <= 1) {
-    for (unsigned int i = 0; i != this->maxLength/this->dt; ++i) {
-      singularityFix[i] = this->alpha*(
-        exp(-0.5*(2*i + 1)*this->dt)/sqrt(M_PI*0.5*(2*i + 1)*this->dt)
-        - (erf(sqrt((i + 1)*this->dt)) - erf(sqrt(i*this->dt)))/this->dt
-      );
-    }
-  }
-
-  // histogram corresponding to higher order diagrams
-  for (unsigned int i = 0; i != this->hist.rows(); i++) {
-    for (unsigned int j = 0; j != this->hist.cols(); j++) {
-      hist(i, j) = abs(this->hist(i, j)*scaleFactor + singularityFix[j]);
-    }
-  }
-}
-
-
-
 
 
 
@@ -429,7 +275,7 @@ Vector3d DiagrammaticMonteCarlo::calculateP0 (shared_ptr<Phonon> d) {
 }
 
 void DiagrammaticMonteCarlo::checkAcceptanceRatio (double a, string updateFunction) {
-  if (abs(a - 1) > pow(10.0, -7)) {
-    cout << "Acceptance ratio at " << updateFunction << ": " << setprecision(17) << a - 1 << endl;
+  if (abs(a - 1) > pow(10.0, -4)) {
+    cout << "Acceptance ratio at " << updateFunction << ": "  << "n=" << this->FD.Ds.size() << " -> " << setprecision(17) << a - 1 << endl;
   }
 }

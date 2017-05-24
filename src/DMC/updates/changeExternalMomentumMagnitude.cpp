@@ -22,13 +22,29 @@ void DiagrammaticMonteCarlo::changeExternalMomentumMagnitude (double param) {
     oldp = this->FD.externalMomentum,
     oldwInvp = sqrt(0.5*M_PI)*std*boost::math::erf(sqrt(0.5)*this->maxMomenta/std)*exp(0.5*pow(oldp/std, 2.0));
 
+  // contribution from boldification
+  double boldContribution = 1;
+  if (this->bold && this->boldIteration > 0) {
+    boldContribution = 0;
+
+    shared_ptr<Vertex> v = this->FD.start;
+    while (v != this->FD.end) {
+      boldContribution += this->additionalPhase(v->G[1]->momentum + dP, v->G[1]->end->position - v->position)
+                        - this->additionalPhase(v->G[1]);
+
+      v = v->G[1]->end;
+    }
+
+    boldContribution = exp(boldContribution);
+  }
+
   double
     exponent = -(dP.dot(meanP) + 0.5*dP.squaredNorm())*this->FD.length,
-    a = wInvp/oldwInvp * exp(exponent);
+    a = wInvp/oldwInvp * boldContribution * exp(exponent);
 
   double oldVal = 0;
   if (this->debug) {
-    oldVal = this->FD();
+    oldVal = this->evaluateDiagram();
   }
 
   // accept or reject update
@@ -42,10 +58,10 @@ void DiagrammaticMonteCarlo::changeExternalMomentumMagnitude (double param) {
   }
 
   if (this->debug) {
-    double val = this->FD();
+    double val = this->evaluateDiagram();
 
     if (accepted) {
-      this->checkAcceptanceRatio(exp(exponent)/(val/oldVal), "changeExternalMomentumMagnitude");
+      this->checkAcceptanceRatio(boldContribution * exp(exponent)/(val/oldVal), "changeExternalMomentumMagnitude");
     }
 
     if (a < 0 || ! isfinite(a)) {
@@ -60,9 +76,7 @@ void DiagrammaticMonteCarlo::changeExternalMomentumMagnitude (double param) {
            << "P=" << P.transpose() << endl
            << "--------------------------------------------------------------------" << endl;
     } else if (this->loud) {
-      cout << "changeExternalMomentumMagnitude: " << accepted << " " << a << " " << exp(exponent)/(val/oldVal) << endl;
+      cout << "changeExternalMomentumMagnitude: " << accepted << " " << a << " " << boldContribution * exp(exponent)/(val/oldVal) << endl;
     }
   }
-
-
 }

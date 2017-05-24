@@ -9,11 +9,11 @@ void DiagrammaticMonteCarlo::raiseOrder (double param) {
   double oldVal = 0;
   if (this->debug) {
     // old configuration value
-    oldVal = this->FD();
+    oldVal = this->evaluateDiagram();
   }
 
   unsigned int i1 = 0, i2 = 0;
-  double q, theta, phi, wInvQ, t1, t2, wInvt1, wInvt2, wInvG1;
+  double q, theta, phi, wInvQ, t1, t2, wInvt1, wInvt2, wInvG1, boldContribution = 1;
   Vector3d Q, meanP;
   shared_ptr<Electron> g1, g2;
 
@@ -37,6 +37,14 @@ void DiagrammaticMonteCarlo::raiseOrder (double param) {
 
     // the Z-axis defines theta
     Q << q*sin(theta)*cos(phi), q*sin(theta)*sin(phi), q*cos(theta);
+
+    // contribution from boldification
+    if (this->bold && this->boldIteration > 0) {
+      boldContribution = exp(
+                           this->additionalPhase(this->FD.Gs[0]->momentum - Q, t2)
+                           - this->additionalPhase(this->FD.Gs[0])
+                         );
+    }
 
     meanP = this->FD.Gs[0]->momentum;
   } else {
@@ -69,6 +77,7 @@ void DiagrammaticMonteCarlo::raiseOrder (double param) {
       lowerBound = i1,
       upperBound = this->FD.Gs.size() - 1;
 
+    // binary search
     do {
       i2 = 0.5*(upperBound + lowerBound);
 
@@ -104,6 +113,40 @@ void DiagrammaticMonteCarlo::raiseOrder (double param) {
       meanP += this->calculateMeanP(g1->end, g2->start)*(g2->start->position - g1->end->position);
       meanP /= (t2 - t1);
     }
+
+    // contribution from boldification
+    if (this->bold && this->boldIteration > 0) {
+      if (i1 == i2) {
+        boldContribution = exp(
+                             this->additionalPhase(g1->p, t1 - t1low)
+                             + this->additionalPhase(g1->momentum - Q, t2 - t1)
+                             + this->additionalPhase(g1->p, t1up - t2)
+                             - this->additionalPhase(g1)
+                           );
+      } else {
+
+        // contribution from lower electron which is to be split
+        boldContribution = this->additionalPhase(g1->p, t1 - t1low)
+                         + this->additionalPhase(g1->momentum - Q, t1up - t1)
+                         - this->additionalPhase(g1);
+
+        // contribution from upper electron which is to be split
+        boldContribution += this->additionalPhase(g2->momentum - Q, t2 - g2->start->position)
+                          + this->additionalPhase(g2->p, g2->end->position - t2)
+                          - this->additionalPhase(g2);
+
+        // rest of the electrons under the phonon
+        shared_ptr<Vertex> v = g1->end;
+        while (v != g2->start) {
+          boldContribution += this->additionalPhase(v->G[1]->momentum - Q, v->G[1]->end->position - v->position)
+                            - this->additionalPhase(v->G[1]);
+          
+          v = v->G[1]->end;
+        }
+
+        boldContribution = exp(boldContribution);
+      }
+    }
   }
 
   double
@@ -114,12 +157,14 @@ void DiagrammaticMonteCarlo::raiseOrder (double param) {
     exponential = exp(-dt*(this->FD.phononEnergy(q) + 0.5*q*q - Q.dot(meanP)));
 
   double a;
-  if (! isfinite(exponential)) {
+  if ( ! isfinite(exponential)) {
+    a = 1;
+  } else if ( ! isfinite(boldContribution)) {
     a = 1;
   } else if (sinTheta == 0 || wInvt2 == 0 || wInvQ == 0) {
     a = 0;
   } else {
-    a = exponential * alpha*sinTheta/(sqrt(8)*M_PI*M_PI) * (wInvG1*wInvt1*wInvt2*wInvQ)/wInvd;
+    a = boldContribution * exponential * alpha*sinTheta/(sqrt(8)*M_PI*M_PI) * (wInvG1*wInvt1*wInvt2*wInvQ)/wInvd;
   }
 
   // accept or reject update
@@ -144,10 +189,10 @@ void DiagrammaticMonteCarlo::raiseOrder (double param) {
   }
 
   if (this->debug) {
-    double val = this->FD();
+    double val = this->evaluateDiagram();
 
     if (accepted) {
-      this->checkAcceptanceRatio(exponential * alpha*sinTheta/(sqrt(8)*M_PI*M_PI)/(val/oldVal), "raiseOrder");
+      this->checkAcceptanceRatio(boldContribution * exponential * alpha*sinTheta/(sqrt(8)*M_PI*M_PI)/(val/oldVal), "raiseOrder");
     }
 
     if (a < 0 || ! isfinite(a)) {
@@ -164,7 +209,7 @@ void DiagrammaticMonteCarlo::raiseOrder (double param) {
            << "wInvt2=" << wInvt2 << endl
            << "--------------------------------------------------------------------" << endl;
     } else if (this->loud) {
-      cout << "raiseOrder: " << accepted << " " << a << " " << exponential * alpha*sinTheta/(sqrt(8)*M_PI*M_PI)/(val/oldVal) << endl;
+      cout << "raiseOrder: " << accepted << " " << a << " " << boldContribution * exponential * alpha*sinTheta/(sqrt(8)*M_PI*M_PI)/(val/oldVal) << endl;
     }
   }
 }

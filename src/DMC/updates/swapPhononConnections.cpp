@@ -8,7 +8,7 @@ void DiagrammaticMonteCarlo::swapPhononConnections (double param) {
 
   double oldVal = 0;
   if (this->debug) {
-    oldVal = this->FD();
+    oldVal = this->evaluateDiagram();
   }
 
   // select internal electron propagator on random
@@ -55,11 +55,20 @@ void DiagrammaticMonteCarlo::swapPhononConnections (double param) {
     Eafter = 0.5*(g->momentum + c1*d1->momentum - c2*d2->momentum).squaredNorm(),
     Ebefore = 0.5*g->momentum.squaredNorm();
 
-  double exponent = -t*(Eafter - Ebefore + e2 - e1);
+
+  // contribution from boldification
+  double boldContribution = 0;
+  if (this->bold && this->boldIteration > 0) {
+    boldContribution = this->additionalPhase(g->momentum + c1*d1->momentum - c2*d2->momentum, v2->position - v1->position)
+                     - this->additionalPhase(g);
+  }
+
+  double exponent = -t*(Eafter - Ebefore + e2 - e1) + boldContribution;
 
   // acceptance ration
   double a;
   if (exponent > 700) {
+    cout << "DMC::swapPhononConnections: exponent > 700 fix" << endl;
     a = 1;
   } else {
     a = exp(exponent);
@@ -86,7 +95,7 @@ void DiagrammaticMonteCarlo::swapPhononConnections (double param) {
   }
 
   if (this->debug) {
-    double val = this->FD();
+    double val = this->evaluateDiagram();
 
     if (accepted) {
       this->checkAcceptanceRatio(exp(exponent)/(val/oldVal), "swapPhononConnections");

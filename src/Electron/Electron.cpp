@@ -2,6 +2,7 @@
 
 Electron::Electron (Vector3d P) {
   this->momentum = P;
+  this->p = P.norm();
 }
 
 void Electron::setStart (shared_ptr<Vertex> v) {
@@ -39,14 +40,16 @@ void Electron::setEnd (shared_ptr<Vertex> v) {
 void Electron::addMomentum (Vector3d P) {
   this->momentum += P;
 
+  this->p = this->momentum.norm();
+
   if ( ! isfinite(P[0]) || ! isfinite(P[1]) || ! isfinite(P[2])) {
     cout << "Phonon::addMomentum P=" << P.transpose() << endl;
   }
 }
 
-double Electron::operator() () {
+double Electron::operator() (double mu, double dE) {
   double
-    E = 0.5*this->momentum.squaredNorm(),
+    E = 0.5*pow(this->p, 2.0) + dE - mu,
     t = this->end->position - this->start->position;
 
   return exp(-E*t);

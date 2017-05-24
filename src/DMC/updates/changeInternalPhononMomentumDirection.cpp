@@ -6,6 +6,11 @@ void DiagrammaticMonteCarlo::changeInternalPhononMomentumDirection (double param
     return;
   }
 
+  double oldVal = 0;
+  if (this->debug) {
+    oldVal = this->evaluateDiagram();
+  }
+
   // select internal phonon on random
   shared_ptr<Phonon> d = this->FD.Ds[this->Uint(0, this->FD.Ds.size() - 1)];
 
@@ -25,25 +30,29 @@ void DiagrammaticMonteCarlo::changeInternalPhononMomentumDirection (double param
     dQ = Q - oldQ,
     meanP = this->calculateMeanP(d->start, d->end);
 
-
   double
     sinOldTheta = sin(oldTheta),
     dt = d->end->position - d->start->position,
     dq2 = dQ.squaredNorm(),
     exponent = (dQ.dot(meanP) - 0.5*dq2)*dt;
 
+  // contribution from boldification
+  double boldContribution = 0;
+  if (this->bold && this->boldIteration > 0) {
+    shared_ptr<Vertex> v = d->start;
+    while (v != d->end) {
+      boldContribution += this->additionalPhase(v->G[1]->momentum - dQ, v->G[1]->end->position - v->position)
+                        - this->additionalPhase(v->G[1]);
+      
+      v = v->G[1]->end;
+    }
+  }
 
   double a;
   if (sinOldTheta == 0) {
     a = 1;
   } else {
-    a = sin(theta)/sinOldTheta * exp(exponent);
-  }
-
-
-  double oldVal = 0;
-  if (this->debug) {
-    oldVal = this->FD();
+    a = sin(theta)/sinOldTheta * exp(exponent + boldContribution);
   }
 
   // accept or reject update
@@ -60,19 +69,16 @@ void DiagrammaticMonteCarlo::changeInternalPhononMomentumDirection (double param
   }
 
   if (this->debug) {
-    double
-      val = this->FD(),
-      acc = val/oldVal;
+    double val = this->evaluateDiagram();
 
     if (accepted) {
-      this->checkAcceptanceRatio(acc/a, "changeInternalPhononMomentumDirection");
+      this->checkAcceptanceRatio(a / (val/oldVal), "changeInternalPhononMomentumDirection");
     }
 
     if (a < 0 || ! isfinite(a)) {
       cout << "--------------------------------------------------------------------" << endl
            << "overflow at DMC::changeInternalPhononMomentumDirection " << endl
            << "a=" << a << endl
-           << "acc=" << acc << endl
            << "accepted=" << accepted << endl
            << "order=" << this->FD.Ds.size() << endl
            << "val=" << val << endl
@@ -81,7 +87,7 @@ void DiagrammaticMonteCarlo::changeInternalPhononMomentumDirection (double param
            << "sin(theta)=" << sin(theta) << endl
            << "--------------------------------------------------------------------" << endl;
     } else if (this->loud) {
-      cout << "changeInternalPhononMomentumDirection: " << accepted << " " << a << " " << acc/a << endl;
+      cout << "changeInternalPhononMomentumDirection: " << accepted << " " << a << " " << a / (val/oldVal) << endl;
     }
   }
 }

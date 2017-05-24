@@ -41,11 +41,31 @@ void DiagrammaticMonteCarlo::shiftVertexPosition (double param) {
   double tOld = 0, oldVal = 0;
   if (this->debug) {
     tOld = v->position,
-    oldVal = this->FD();
+    oldVal = this->evaluateDiagram();
   }
 
-  // is always accepted
-  this->FD.setVertexPosition(v, t);
+  double boldContribution = 1;
+  bool accepted = false;
+  if (this->bold && this->boldIteration > 0) {
+    // contribution from boldification
+    boldContribution = exp(
+                         this->additionalPhase(v->G[0]->p, t - v->G[0]->start->position)
+                         + this->additionalPhase(v->G[1]->p, v->G[1]->end->position - t)
+                         - this->additionalPhase(v->G[0])
+                         - this->additionalPhase(v->G[1])
+                       );
+
+    // the rest of the acceptance ratio is unity
+    if (boldContribution > this->Udouble(0, 1)) {
+      this->FD.setVertexPosition(v, t);
+      accepted = true;
+    }
+
+  } else {
+    // is always accepted
+    this->FD.setVertexPosition(v, t);
+    accepted = true;
+  }
 
   if ( ! isfinite(t)) {
     cout
@@ -61,7 +81,7 @@ void DiagrammaticMonteCarlo::shiftVertexPosition (double param) {
   }
 
   if (this->debug) {
-    double val = this->FD();
+    double val = this->evaluateDiagram();
 
     double a;
     if (val == 0) {
@@ -69,10 +89,12 @@ void DiagrammaticMonteCarlo::shiftVertexPosition (double param) {
     } else if (oldVal == 0) {
       a = 1;
     } else {
-      a = val/oldVal * exp(dE*(t - tOld));
+      a = boldContribution * exp(dE*(tOld - t)) / (val/oldVal);
     }
 
-    this->checkAcceptanceRatio(a, "shiftVertexPosition");
+    if (accepted) {
+      this->checkAcceptanceRatio(a, "shiftVertexPosition");
+    }
 
     if (a < 0 || ! isfinite(a)) {
       cout << "--------------------------------------------------------------------" << endl
