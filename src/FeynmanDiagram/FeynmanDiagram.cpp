@@ -1,5 +1,9 @@
 #include "FeynmanDiagram.h"
 
+FeynmanDiagram::FeynmanDiagram () {
+  // default constructor
+}
+
 FeynmanDiagram::FeynmanDiagram (
   Vector3d ExternalMomentum,
   double length,
@@ -35,28 +39,9 @@ FeynmanDiagram::FeynmanDiagram (
 }
 
 double FeynmanDiagram::phononEnergy (double q) {
-  // OBS, need to recalculate "singularityFix" if this is other than one
+  // OBS, need to modify MC/DMC boundary if this becomes non-constant
   return 1;
 }
-
-// double FeynmanDiagram::operator() () {
-//   double val;
-
-//   //
-//   // need to change when diagram length becomes variable
-//   //
-//   val = exp(this->chemicalPotential*this->length);
-
-//   for (auto g : this->Gs) {
-//     val *= (*g)();
-//   }
-
-//   for (auto d : this->Ds) {
-//     val *= (*d)(this->couplingConstant, this->phononEnergy(d->q));
-//   }
-
-//   return val;
-// }
 
 void FeynmanDiagram::setLength (double length) {
   this->length = length;

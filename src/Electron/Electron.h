@@ -24,7 +24,9 @@ class Electron: public enable_shared_from_this<Electron> {
       setEnd (shared_ptr<Vertex>),
       addMomentum (Vector3d);
     
-    double operator() (double mu, double dE = 0);
+    double operator() (double, double dE = 0);
+
+    static double value (double, double, double, double dE = 0);
 };
 
 #endif

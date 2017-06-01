@@ -50,6 +50,7 @@ class FeynmanDiagram {
     unordered_multimap<double, shared_ptr<Electron> > electronHashTable;
 
     FeynmanDiagram (Vector3d, double, double, double);
+    FeynmanDiagram ();
 
     shared_ptr<Vertex> insertVertex (int, double);
     shared_ptr<Phonon> addInternalPhonon (shared_ptr<Vertex>, shared_ptr<Vertex>, Vector3d, double, double, double);
@@ -64,9 +65,7 @@ class FeynmanDiagram {
       setExternalMomentum (Vector3d, double, Vector3d),
       setNewStructure ();
 
-    double
-      phononEnergy (double),
-      operator() ();
+    static double phononEnergy (double);
 
     bool
       isIrreducibleDiagram (bool checkAnyway = false),

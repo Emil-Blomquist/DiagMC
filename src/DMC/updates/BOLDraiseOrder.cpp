@@ -1,6 +1,6 @@
 #include "../DiagrammaticMonteCarlo.h"
 
-void DiagrammaticMonteCarlo::raiseOrder (double param) {
+void DiagrammaticMonteCarlo::BOLDraiseOrder (double param) {
   // temp
   if (this->maxDiagramOrder && this->FD.Ds.size() == maxDiagramOrder) {
     return;
@@ -13,11 +13,11 @@ void DiagrammaticMonteCarlo::raiseOrder (double param) {
   }
 
   unsigned int i1 = 0, i2 = 0;
-  double q, theta, phi, wInvQ, t1, t2, wInvt1, wInvt2, wInvG1, boldContribution = 1;
+  double q, theta, phi, wInvQ, t1, t2, wInvt1, wInvt2, wInvG1, boldContribution = 0;
   Vector3d Q, meanP;
   shared_ptr<Electron> g1, g2;
 
-  if ( ! this->externalLegs && this->FD.Ds.size() == 0) {
+  if (this->FD.Ds.size() == 0) {
     // attach the phonon to the existing two end vertices
 
     t1 = 0;
@@ -39,12 +39,8 @@ void DiagrammaticMonteCarlo::raiseOrder (double param) {
     Q << q*sin(theta)*cos(phi), q*sin(theta)*sin(phi), q*cos(theta);
 
     // contribution from boldification
-    if (this->bold && this->boldIteration > 0) {
-      boldContribution = exp(
-                           this->additionalPhase(this->FD.Gs[0]->momentum - Q, t2)
-                           - this->additionalPhase(this->FD.Gs[0])
-                         );
-    }
+    boldContribution = this->additionalPhase(this->FD.Gs[0]->momentum - Q, t2)
+                     - this->additionalPhase(this->FD.Gs[0]);
 
     meanP = this->FD.Gs[0]->momentum;
   } else {
@@ -64,13 +60,10 @@ void DiagrammaticMonteCarlo::raiseOrder (double param) {
     // second vertex position
     double
       t2low = t1,
-      t2up = this->FD.length,
-      l = 0.01,
-      r = this->Udouble(0, 1),
-      dt2 = -log(1 - r + r*exp(-l*(t2up - t2low)))/l;
-
-    t2 = t2low + dt2;
-    wInvt2 = exp(l*dt2)*(1 - exp(-l*(t2up - t2low)))/l;
+      t2up = this->FD.length;
+    
+    t2 = this->Udouble(t2low, t2up);
+    wInvt2 = t2up - t2low;
 
     // find second electron line to split
     unsigned int
@@ -115,36 +108,30 @@ void DiagrammaticMonteCarlo::raiseOrder (double param) {
     }
 
     // contribution from boldification
-    if (this->bold && this->boldIteration > 0) {
-      if (i1 == i2) {
-        boldContribution = exp(
-                             this->additionalPhase(g1->p, t1 - t1low)
-                             + this->additionalPhase(g1->momentum - Q, t2 - t1)
-                             + this->additionalPhase(g1->p, t1up - t2)
-                             - this->additionalPhase(g1)
-                           );
-      } else {
+    if (i1 == i2) {
+      boldContribution = this->additionalPhase(g1->p, t1 - t1low)
+                       + this->additionalPhase(g1->momentum - Q, t2 - t1)
+                       + this->additionalPhase(g1->p, t1up - t2)
+                       - this->additionalPhase(g1);
+    } else {
 
-        // contribution from lower electron which is to be split
-        boldContribution = this->additionalPhase(g1->p, t1 - t1low)
-                         + this->additionalPhase(g1->momentum - Q, t1up - t1)
-                         - this->additionalPhase(g1);
+      // contribution from lower electron which is to be split
+      boldContribution = this->additionalPhase(g1->p, t1 - t1low)
+                       + this->additionalPhase(g1->momentum - Q, t1up - t1)
+                       - this->additionalPhase(g1);
 
-        // contribution from upper electron which is to be split
-        boldContribution += this->additionalPhase(g2->momentum - Q, t2 - g2->start->position)
-                          + this->additionalPhase(g2->p, g2->end->position - t2)
-                          - this->additionalPhase(g2);
+      // contribution from upper electron which is to be split
+      boldContribution += this->additionalPhase(g2->momentum - Q, t2 - g2->start->position)
+                        + this->additionalPhase(g2->p, g2->end->position - t2)
+                        - this->additionalPhase(g2);
 
-        // rest of the electrons under the phonon
-        shared_ptr<Vertex> v = g1->end;
-        while (v != g2->start) {
-          boldContribution += this->additionalPhase(v->G[1]->momentum - Q, v->G[1]->end->position - v->position)
-                            - this->additionalPhase(v->G[1]);
-          
-          v = v->G[1]->end;
-        }
-
-        boldContribution = exp(boldContribution);
+      // rest of the electrons under the phonon
+      shared_ptr<Vertex> v = g1->end;
+      while (v != g2->start) {
+        boldContribution += this->additionalPhase(v->G[1]->momentum - Q, v->G[1]->end->position - v->position)
+                          - this->additionalPhase(v->G[1]);
+        
+        v = v->G[1]->end;
       }
     }
   }
@@ -154,17 +141,15 @@ void DiagrammaticMonteCarlo::raiseOrder (double param) {
     sinTheta = sin(theta),
     alpha = this->alpha,
     dt = t2 - t1,
-    exponential = exp(-dt*(this->FD.phononEnergy(q) + 0.5*q*q - Q.dot(meanP)));
+    exponential = exp(boldContribution - dt*(this->FD.phononEnergy(q) + 0.5*q*q - Q.dot(meanP)));
 
   double a;
   if ( ! isfinite(exponential)) {
     a = 1;
-  } else if ( ! isfinite(boldContribution)) {
-    a = 1;
   } else if (sinTheta == 0 || wInvt2 == 0 || wInvQ == 0) {
     a = 0;
   } else {
-    a = boldContribution * exponential * alpha*sinTheta/(sqrt(8)*M_PI*M_PI) * (wInvG1*wInvt1*wInvt2*wInvQ)/wInvd;
+    a = exponential * alpha*sinTheta/(sqrt(8)*M_PI*M_PI) * (wInvG1*wInvt1*wInvt2*wInvQ)/wInvd;
   }
 
   // accept or reject update
@@ -188,28 +173,16 @@ void DiagrammaticMonteCarlo::raiseOrder (double param) {
     accepted = true;
   }
 
-
-  // cout << "--------------" << endl
-  //      << "raiseOrder" << endl
-  //      << "\tn=" << this->FD.Ds.size() << endl
-  //      << "\tt=" << this->FD.length << endl
-  //      << "\tp=" << this->FD.externalMomentum << endl
-  //      << "\ta=" << a << endl
-  //      << "\taccepted=" << accepted << endl
-  //      << "--------------" << endl;
-
-
-
   if (this->debug) {
     double val = this->evaluateDiagram();
 
     if (accepted) {
-      this->checkAcceptanceRatio(boldContribution * exponential * alpha*sinTheta/(sqrt(8)*M_PI*M_PI)/(val/oldVal), "raiseOrder");
+      this->checkAcceptanceRatio(exponential * alpha*sinTheta/(sqrt(8)*M_PI*M_PI)/(val/oldVal), "BOLDraiseOrder");
     }
 
     if (a < 0 || ! isfinite(a)) {
       cout << "--------------------------------------------------------------------" << endl
-           << "overflow at DMC::raiseOrder " << endl
+           << "overflow at DMC::BOLDraiseOrder " << endl
            << "accepted=" << accepted << endl
            << "a=" << a << endl
            << "a_diag=" << val/oldVal * (wInvG1*wInvt1*wInvt2*wInvQ)/wInvd << endl
@@ -221,7 +194,7 @@ void DiagrammaticMonteCarlo::raiseOrder (double param) {
            << "wInvt2=" << wInvt2 << endl
            << "--------------------------------------------------------------------" << endl;
     } else if (this->loud) {
-      cout << "raiseOrder: " << accepted << " " << a << " " << boldContribution * exponential * alpha*sinTheta/(sqrt(8)*M_PI*M_PI)/(val/oldVal) << endl;
+      cout << "BOLDraiseOrder: " << accepted << " " << a << " " << exponential * alpha*sinTheta/(sqrt(8)*M_PI*M_PI)/(val/oldVal) << endl;
     }
   }
 }

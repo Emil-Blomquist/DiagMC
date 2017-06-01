@@ -28,6 +28,8 @@ class Phonon: public enable_shared_from_this<Phonon> {
       setPhi (double);
 
     double operator() (double, double);
+    
+    static double value (double, double, double, double);
 };
 
 #endif

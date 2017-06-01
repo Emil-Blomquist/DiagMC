@@ -65,8 +65,12 @@ void Phonon::setPhi (double phi) {
   }
 }
 
-double Phonon::operator() (double alpha, double E) {
+double Phonon::operator() (double alpha, double omega) {
   double t = this->end->position - this->start->position;
 
-  return alpha/(sqrt(8)*M_PI*M_PI) * sin(this->theta) * exp(-E*t);
+  return this->value(omega, t, this->theta, alpha);
+}
+
+double Phonon::value (double omega, double t, double theta, double alpha) {
+  return alpha/(sqrt(8)*M_PI*M_PI) * sin(theta) * exp(-omega*t);
 }

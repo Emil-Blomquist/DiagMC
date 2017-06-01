@@ -86,22 +86,19 @@ void MonteCarlo::diagramOrder2 (double length, unsigned int index) {
       if (this->externalLegs) {
         // integrand value
         if (diagramType == 1) {
-          integrand = chemFac
-                    * this->G(P0, 0, t1)
+          integrand = this->G(P0, 0, t1)
                     * this->G(P0 - Q1, t1, t2) * this->D(Q1, theta1, t1, t2)
                     * this->G(P0, t2, t3)
                     * this->G(P0 - Q2, t3, t4) * this->D(Q2, theta2, t3, t4)
                     * this->G(P0, t4, length);
         } else if (diagramType == 2) {
-          integrand = chemFac
-                    * this->G(P0, 0, t1)
+          integrand = this->G(P0, 0, t1)
                     * this->G(P0 - Q1, t1, t2) * this->D(Q1, theta1, t1, t3)
                     * this->G(P0 - Q1 - Q2, t2, t3) * this->D(Q2, theta2, t2, t4)
                     * this->G(P0 - Q2, t3, t4)
                     * this->G(P0, t4, length);
         } else {
-          integrand = chemFac
-                    * this->G(P0, 0, t1)
+          integrand = this->G(P0, 0, t1)
                     * this->G(P0 - Q1, t1, t2) * this->D(Q1, theta1, t1, t4)
                     * this->G(P0 - Q1 - Q2, t2, t3) * this->D(Q2, theta2, t2, t3)
                     * this->G(P0 - Q1, t3, t4)
@@ -110,18 +107,15 @@ void MonteCarlo::diagramOrder2 (double length, unsigned int index) {
       } else {
         // integrand value
         if (diagramType == 1) {
-          integrand = chemFac
-                    * this->G(P0 - Q1, 0, t1) * this->D(Q1, theta1, 0, t1)
+          integrand = this->G(P0 - Q1, 0, t1) * this->D(Q1, theta1, 0, t1)
                     * this->G(P0, t1, t2)
                     * this->G(P0 - Q2, t2, length) * this->D(Q2, theta2, t2, length);
         } else if (diagramType == 2) {
-          integrand = chemFac
-                    * this->G(P0 - Q1, 0, t1) * this->D(Q1, theta1, 0, t2)
+          integrand = this->G(P0 - Q1, 0, t1) * this->D(Q1, theta1, 0, t2)
                     * this->G(P0 - Q1 - Q2, t1, t2) * this->D(Q2, theta2, t1, length)
                     * this->G(P0 - Q2, t2, length);
         } else {
-          integrand = chemFac
-                    * this->G(P0 - Q1, 0, t1) * this->D(Q1, theta1, 0, length)
+          integrand = this->G(P0 - Q1, 0, t1) * this->D(Q1, theta1, 0, length)
                     * this->G(P0 - Q1 - Q2, t1, t2) * this->D(Q2, theta2, t1, t2)
                     * this->G(P0 - Q1, t2, length);
         }

@@ -4,13 +4,16 @@ MonteCarlo::MonteCarlo (
   double alpha,
   double mu,
   unsigned long int numIterations,
-  double maxLength,
-  unsigned int valuesPerLength,
+  double tStart,
+  double tEnd,
   char **argv
 ) {
   // seed random generator
   unsigned seed1 = std::chrono::system_clock::now().time_since_epoch().count();
   this->mt.seed(seed1);
+  
+  // store current directory
+  this->argv = argv;
 
   // store time at which the calculation began
   time_t rawtime;
@@ -26,15 +29,24 @@ MonteCarlo::MonteCarlo (
   this->externalMomentum = externalMomentum;
   this->mu = mu;
   this->alpha = alpha;
-  this->tMax = maxLength;
+  this->tStart = tStart;
+  this->tEnd = tEnd;
   this->numIterations = numIterations;
 
+
+  this->dtOut = 0.02;
   this->externalLegs = false;
   this->irreducibleDiagrams = true;
+  this->maxOrder = 1;
+
+  // Doing bold scheme
+  if (true) {
+    this->importG("Glarge.txt");
+  }
 
   // create times vector
-  for (unsigned int i = 0; i !=  maxLength * (int) valuesPerLength; i++) {
-    this->times.push_back((i + 0.5)/valuesPerLength);
+  for (unsigned int i = tStart/dtOut; i <= tEnd/dtOut - 1; i++) {
+    this->times.push_back((i + 0.5)*dtOut);
   }
 
   // initiate container storing the values of the Greens function
@@ -51,20 +63,16 @@ void MonteCarlo::run () {
 
     // zeroth order
     if ( ! this->irreducibleDiagrams) {
-      this->values[i] = exp(-(0.5*this->externalMomentum.squaredNorm() - this->mu)*this->times[i]);
+      this->values[i] = this->G(this->externalMomentum, 0, this->times[i]);
     }
 
-    this->diagramOrder1(this->times[i], i);
-    this->diagramOrder2(this->times[i], i);
+    if (this->maxOrder >= 1) this->diagramOrder1(this->times[i], i);
+
+    if (this->maxOrder >= 2) this->diagramOrder2(this->times[i], i);
 
     this->write2file();
   }
-
 }
-
-
-
-
 
 
 
@@ -80,7 +88,9 @@ void MonteCarlo::write2file () {
          << "p=" << this->externalMomentum.norm()
          << " a=" << this->alpha
          << " mu=" << this->mu
-         << " t=" << this->tMax
+         << " tstart=" << this->tStart
+         << " tend=" << this->tEnd
+         << " dt=" << this->dtOut
          << " N=" << this->numIterations
          << " date=" << dateAndTimeString;
   string fileName = stream.str();
@@ -113,9 +123,23 @@ void MonteCarlo::write2file () {
 
 
 double MonteCarlo::G (Vector3d P, double t1, double t2) {
-  double E = 0.5*P.squaredNorm();
+  double
+    dG = 0,
+    dE = 0,
+    p = P.norm(),
+    E = 0.5*p*p;
 
-  return exp(-E*(t2 - t1));
+  if (this->dG.size()) {
+    unsigned int
+      pi = min(p/this->dp, this->dG.rows() - 1.0),
+      ti = (t2 - t1)/this->dt;
+
+    dG = this->dG(pi, ti);
+    dE = this->dE(pi, ti);
+  }
+
+  return exp((this->mu - E - dE)*(t2 - t1));
+  // return exp((this->mu - E)*(t2 - t1)) + dG;
 }
 
 double MonteCarlo::D (Vector3d Q, double theta, double t1, double t2) {

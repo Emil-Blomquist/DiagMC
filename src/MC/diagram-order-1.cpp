@@ -32,20 +32,17 @@ void MonteCarlo::diagramOrder1 (double length, unsigned int index) {
     };
 
     // chemical potential factor
-    double chemFac = exp(this->mu*length);
 
     if (this->externalLegs) {
       // integrand value
-      double integrand = chemFac
-                       * this->G(P0, 0, t1)
+      double integrand = this->G(P0, 0, t1)
                        * this->G(P0 - Q, t1, t2) * this->D(Q, theta, t1, t2)
                        * this->G(P0, t2, length);
 
       value += integrand * wInv_ts * wInv_Q;
     } else {
       // integrand value
-      double integrand = chemFac
-                       * this->G(P0 - Q, 0, length) * this->D(Q, theta, 0, length);
+      double integrand = this->G(P0 - Q, 0, length) * this->D(Q, theta, 0, length);
 
       value += integrand * wInv_Q;
     }

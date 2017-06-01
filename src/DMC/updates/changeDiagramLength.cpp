@@ -47,6 +47,20 @@ void DiagrammaticMonteCarlo::changeDiagramLength (double param) {
   }
 
 
+  //   shared_ptr<Electron> g = this->FD.Gs.back();
+  // cout << "--------------" << endl
+  //      << "changeDiagramLength" << endl
+  //      << "\tn=" << this->FD.Ds.size() << endl
+  //      << "\tt=" << this->FD.length << endl
+  //      << "\tp=" << this->FD.externalMomentum << endl
+  //      << "\tdt=" << dt << endl
+  //      << "\tboldContribution=" << boldContribution << endl
+  //      << "\taccepted=" << accepted << endl
+  //      << "\tadd1=" << this->additionalPhase(g->p, tmin + dt) << endl
+  //      << "\tadd2=" << this->additionalPhase(g) << endl
+  //      << "--------------" << endl;
+
+
   if ( ! isfinite(dt)) {
     cout
       << "-------------------------" << endl

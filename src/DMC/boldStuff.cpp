@@ -8,6 +8,14 @@ double DiagrammaticMonteCarlo::dEOf (shared_ptr<Electron> g) {
   return this->dE(pi, ti);
 }
 
+double DiagrammaticMonteCarlo::dEOf (double p, double t) {
+  unsigned int
+    pi = min(p/this->dp, this->dE.rows() - 1.0),
+    ti = t/this->dt;
+
+  return this->dE(pi, ti);
+}
+
 double DiagrammaticMonteCarlo::additionalPhase (shared_ptr<Electron> g) {
   double t = g->end->position - g->start->position;
 
@@ -37,8 +45,6 @@ double DiagrammaticMonteCarlo::additionalPhase (double p, double t) {
 }
 
 void DiagrammaticMonteCarlo::calculateEnergyDiff () {
-  // create dE (we do already have dG from DMC.write2file)
-  // Array<double, Dynamic, Dynamic> dE_low = Array<double, Dynamic, Dynamic>::Zero(this->dG.rows(), this->dG.cols());
   for (unsigned int i = 0; i != this->dE.rows(); i++) {
     double
       p = (i + 0.5)*this->dp,
@@ -48,14 +54,13 @@ void DiagrammaticMonteCarlo::calculateEnergyDiff () {
       double
         t = (j + 0.5)*this->dt,
         G0 = exp((this->mu - E0)*t),
-        dG = abs(this->dG(i, j)),
-        logOfG = (this->mu - E0)*t + (isfinite(dG/G0) ? log(1 + dG/G0) : 0);
+        logOfG = (this->mu - E0)*t + (isfinite(this->dG(i, j)/G0) ? log(1 + abs(this->dG(i, j)/G0)) : 0);
 
       this->dE(i, j) = this->mu - E0 - logOfG/t;
 
       if ( ! isfinite(this->dE(i, j))) {
-        cout << p << " " << t << fixed << setprecision(16) << ": " << log(G0 + dG) << " vs "
-             << (this->mu - 0.5*p*p)*t + log(1 + dG/G0) << " but " << dG/G0 << endl;
+        cout << p << " " << t << fixed << setprecision(16) << ": " << log(G0 + this->dG) << " vs "
+             << (this->mu - 0.5*p*p)*t + log(1 + this->dG/G0) << " but " << this->dG/G0 << endl;
       }
     }
   }

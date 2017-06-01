@@ -22,14 +22,14 @@ void DiagrammaticMonteCarlo::normalizedHistogram (Array<double, Dynamic, Dynamic
 
   double scaleFactor = sumG0/this->N0;
 
-  // to remove the error due the combination of a singular diagram and a discretized time
+  // to remove the error due to the combination of a singular diagram and a discretized time
   vector<double> singularityFix((int) round(this->maxLength/this->dt), 0);
   // if ( ! this->externalLegs && this->minDiagramOrder <= 1) {
   //   for (unsigned int i = 0; i != singularityFix.size(); ++i) {
   //     singularityFix[i] = this->alpha*(
-  //       exp(-0.5*(2*i + 1)*this->dt)/sqrt(M_PI*0.5*(2*i + 1)*this->dt)
-  //       - (erf(sqrt((i + 1)*this->dt)) - erf(sqrt(i*this->dt)))/this->dt
-  //     );
+  //                           exp(-0.5*(2*i + 1)*this->dt)/sqrt(M_PI*0.5*(2*i + 1)*this->dt)
+  //                           - (erf(sqrt((i + 1)*this->dt)) - erf(sqrt(i*this->dt)))/this->dt
+  //                         );
   //   }
   // }
 
@@ -39,4 +39,42 @@ void DiagrammaticMonteCarlo::normalizedHistogram (Array<double, Dynamic, Dynamic
       hist(i, j) = abs(this->hist(i, j)*scaleFactor + singularityFix[j]);
     }
   }
+}
+
+void DiagrammaticMonteCarlo::normalizedHistogram (ArrayXd& hist) {
+  // give correct dimensions
+  hist = ArrayXd::Zero(this->bins.size());
+
+  // calcualte scale factor
+  ArrayXd ts = ArrayXd::LinSpaced(this->bins.size(), 0, this->maxLength - this->dt) + 0.5*this->dt;
+
+  double
+    sumG0 = 0,
+    p = this->initialExternalMomentum.norm();
+
+  for (unsigned int j = 0; j != ts.size(); j++) {
+    sumG0 += exp((this->mu - 0.5*p*p)*ts[j]);
+
+    // add dG contribution if we are going bold
+    if (this->bold && this->boldIteration > 0) {
+      unsigned int pi = p/this->dp;
+      sumG0 += this->dG(pi, j);
+    }
+  }
+
+  double scaleFactor = sumG0/this->N0;
+
+  // to remove the error due to the combination of a singular diagram and a discretized time
+  ArrayXd singularityFix = ArrayXd::Zero((int) round(this->maxLength/this->dt));
+  // if ( ! this->externalLegs && this->minDiagramOrder <= 1) {
+  //   for (unsigned int i = 0; i != singularityFix.size(); ++i) {
+  //     singularityFix[i] = this->alpha*(
+  //                           exp(-0.5*(2*i + 1)*this->dt)/sqrt(M_PI*0.5*(2*i + 1)*this->dt)
+  //                           - (erf(sqrt((i + 1)*this->dt)) - erf(sqrt(i*this->dt)))/this->dt
+  //                         );
+  //   }
+  // }
+
+  // histogram corresponding to higher order diagrams
+  hist = abs(this->bins.cast<double>()*scaleFactor + singularityFix);
 }

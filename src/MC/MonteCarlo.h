@@ -25,12 +25,18 @@ class MonteCarlo {
     struct tm *timeinfo;
     string path;
 
+    char **argv;
+
     bool externalLegs, irreducibleDiagrams;
 
     Vector3d externalMomentum;
     unsigned long int numIterations;
-    double mu, alpha, tMax;
+    double mu, alpha, tStart, tEnd, dtOut, dt, dp, maxLength, maxMomenta;
     vector<double> times, values;
+
+    unsigned int maxOrder;
+
+    Array<double, Dynamic, Dynamic> Gfull, dG, dE;
 
     double
       Udouble (double, double),
@@ -40,7 +46,9 @@ class MonteCarlo {
       write2file (),
       run (),
       diagramOrder1 (double, unsigned int),
-      diagramOrder2 (double, unsigned int);
+      diagramOrder2 (double, unsigned int),
+      importG (string),
+      calculateEnergyDiff ();
 
     double
       phononDispersionRelation (Vector3d),
@@ -49,13 +57,13 @@ class MonteCarlo {
 
   public:
     MonteCarlo (
-      Vector3d, 
+      Vector3d,
       double,
       double,
       unsigned long int,
       double,
-      unsigned int,
-      char **argv
+      double,
+      char**
     );
 };
 

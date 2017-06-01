@@ -35,6 +35,8 @@ inline void ifftshift1D (T& vec) {
 void DiagrammaticMonteCarlo::doDyson (Array<double, Dynamic, Dynamic>& dG) {
   clock_t tStart = clock();
 
+  dG = ArrayXXd::Zero(this->hist.rows(), this->hist.cols());
+
   // define complex number
   const complex<double> I(0.0, 1.0); 
 
@@ -43,6 +45,8 @@ void DiagrammaticMonteCarlo::doDyson (Array<double, Dynamic, Dynamic>& dG) {
 
   // whole part of the self energy
   Array<double, Dynamic, Dynamic> SE_t_all;
+
+  // normalize our with respect to the current "G0" histogram
   this->normalizedHistogram(SE_t_all);
 
   // we want to go to at least t=500

@@ -48,9 +48,11 @@ void Electron::addMomentum (Vector3d P) {
 }
 
 double Electron::operator() (double mu, double dE) {
-  double
-    E = 0.5*pow(this->p, 2.0) + dE - mu,
-    t = this->end->position - this->start->position;
+  double t = this->end->position - this->start->position;
 
-  return exp(-E*t);
+  return this->value(this->p, t, mu, dE);
+}
+
+double Electron::value (double p, double t, double mu, double dE) {
+  return exp((mu - 0.5*p*p - dE)*t);
 }

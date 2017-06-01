@@ -33,14 +33,13 @@ class DiagrammaticMonteCarlo {
   private:
     mt19937_64 mt;
     bool debug, loud, externalLegs, reducibleDiagrams, fixedExternalMomentum, Dyson, skeletonDiagrams, bold;
-    unsigned long int numIterations, N0;
+    unsigned long int numIterations, N0, numMCIterations;
     double maxLength, mu, alpha, param, dt, dp, maxMomenta;
     struct tm *timeinfo;
     char **argv;
-    unsigned int minDiagramOrder, maxDiagramOrder, numBoldIterations, boldIteration;
+    unsigned int minDiagramOrder, maxDiagramOrder, numBoldIterations, boldIteration, MCvsDMCboundary;
 
-    vector<unsigned long int> bins, bins0;
-
+    Array<unsigned long int, Dynamic, 1> bins;
     Array<unsigned long int, Dynamic, Dynamic> hist;
     Array<double, Dynamic, Dynamic> dG, dE;
 
@@ -48,13 +47,18 @@ class DiagrammaticMonteCarlo {
     shared_ptr<Electron> electrons2beRemoved [2];
     shared_ptr<Phonon> phonon2beRemoved;
 
+    Vector3d initialExternalMomentum;
+
     double
       dEOf (shared_ptr<Electron>),
+      dEOf (double, double),
       additionalPhase (shared_ptr<Electron>),
       additionalPhase (Vector3d, double),
       additionalPhase (double, double),
       evaluateDiagram (),
-      Udouble (double, double);
+      Udouble (double, double),
+      Ndouble (double);
+
     int Uint (int, int);
 
     Vector3d
@@ -73,11 +77,22 @@ class DiagrammaticMonteCarlo {
       changeExternalMomentumMagnitude (double param = 1);
 
     void
+      BOLDchangeDiagramLength (double param = 1),
+      BOLDchangeDiagramLengthComplex (double param = 1),
+      BOLDraiseOrder (double param = 1),
+      BOLDlowerOrder (double param = 1);
+
+    void
       write2file (const unsigned long int = 0),
       doDyson (Array<double, Dynamic, Dynamic>&),
-      normalizedHistogram (Array<double, Dynamic, Dynamic>&),
+      normalizedHistogram (ArrayXXd&),
+      normalizedHistogram (ArrayXd&),
       checkAcceptanceRatio (double, string),
       calculateEnergyDiff ();
+
+    void importG (string);
+
+    double firstOrderSelfEnergyMC (double, Vector3d);
 
   public:
     FeynmanDiagram FD;
