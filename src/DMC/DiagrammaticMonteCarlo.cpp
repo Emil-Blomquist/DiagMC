@@ -40,7 +40,7 @@ DiagrammaticMonteCarlo::DiagrammaticMonteCarlo (
   this->numBoldIterations = 0;
 
   // number of iterations used for each MC calculation
-  this->numMCIterations = 1000000;
+  this->numMCIterations = 10000000;
 
   this->initialExternalMomentum = P;
   this->mu = mu;

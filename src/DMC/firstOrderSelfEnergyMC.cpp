@@ -47,7 +47,6 @@ void DiagrammaticMonteCarlo::firstOrderSelfEnergyMC () {
   if (worldSize > 1) {
     // parallelize over all processes
 
-
     unsigned int
       Nt = this->MCvsDMCboundary,
       numEach = Np*Nt/worldSize,
@@ -89,18 +88,17 @@ void DiagrammaticMonteCarlo::firstOrderSelfEnergyMC () {
       0,
       MPI_COMM_WORLD);
 
+    // store the S1
     if (worldRank == 0) {
-      cout << "[S1 COMPLETE]" << endl;
-
-      for (auto x : vector2receive) {
-        cout << x.pi << ", " << x.ti << ": " << x.val << endl;
+      this->S1mc = Array<double, Dynamic, Dynamic>::Zero(Np, Nt);
+      for (KeyValue kv : vector2receive) {
+        this->S1mc(kv.pi, kv.ti) = kv.val;
       }
+
+      cout << S1mc << endl;
     }
 
-
-
-
-    // }
+    printf("[S1 MC @ %u in %.2fs]\n", worldRank, (double)(clock() - tStart)/CLOCKS_PER_SEC);
   } else {
     // MC calculation
     this->S1mc = Array<double, Dynamic, Dynamic>::Zero(Np, this->MCvsDMCboundary);
