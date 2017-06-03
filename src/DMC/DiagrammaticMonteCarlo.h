@@ -1,6 +1,8 @@
 #ifndef DIAGRAMMATIC_MONTE_CARLO_H
 #define DIAGRAMMATIC_MONTE_CARLO_H
 
+#include <mpi.h> // MPI
+
 #include <iostream>
 #include <memory>
 #include <vector>
@@ -41,13 +43,20 @@ class DiagrammaticMonteCarlo {
 
     Array<unsigned long int, Dynamic, 1> bins;
     Array<unsigned long int, Dynamic, Dynamic> hist;
-    Array<double, Dynamic, Dynamic> dG, dE;
+    Array<double, Dynamic, Dynamic> dG, dE, S1mc;
 
     shared_ptr<Vertex> vertices2beRemoved [2];
     shared_ptr<Electron> electrons2beRemoved [2];
     shared_ptr<Phonon> phonon2beRemoved;
 
     Vector3d initialExternalMomentum;
+
+    // structure to be sent to rank 0 when calculating S1
+    struct KeyValue {
+      unsigned int pi;
+      unsigned int ti;
+      double val;
+    };
 
     double
       dEOf (shared_ptr<Electron>),
@@ -80,7 +89,8 @@ class DiagrammaticMonteCarlo {
       BOLDchangeDiagramLength (double param = 1),
       BOLDchangeDiagramLengthComplex (double param = 1),
       BOLDraiseOrder (double param = 1),
-      BOLDlowerOrder (double param = 1);
+      BOLDlowerOrder (double param = 1),
+      BOLDshiftVertexPosition (double param = 1);
 
     void
       write2file (const unsigned long int = 0),
@@ -90,7 +100,10 @@ class DiagrammaticMonteCarlo {
       checkAcceptanceRatio (double, string),
       calculateEnergyDiff ();
 
-    void importG (string);
+    void
+      firstOrderSelfEnergyMC (),
+      appendKeyValue (vector<KeyValue>&, unsigned int),
+      importG (string);
 
     double firstOrderSelfEnergyMC (double, Vector3d);
 

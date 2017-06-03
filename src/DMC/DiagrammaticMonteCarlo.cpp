@@ -26,7 +26,7 @@ DiagrammaticMonteCarlo::DiagrammaticMonteCarlo (
   // if we should sample only skeleton diagrams (reducibleDiagrams must be false)
   this->skeletonDiagrams = true;
   // if we should let the external momentum vary or not
-  this->fixedExternalMomentum = true;
+  this->fixedExternalMomentum = false;
   // if we want to use Dyson equation (fixedExternalMomentum must be false)
   this->Dyson = false;
   // wether or not we should employ boldification (fixedExternalMomentum must be false and Dyson must me set true)
@@ -35,9 +35,9 @@ DiagrammaticMonteCarlo::DiagrammaticMonteCarlo (
   // for when to bin the diagram
   this->minDiagramOrder = 1;
   // raise diagrm order will look at this (zero -> turned off)
-  this->maxDiagramOrder = 1;
+  this->maxDiagramOrder = 5;
   // how many iterations in the bold scheme shall be done
-  this->numBoldIterations = 1;
+  this->numBoldIterations = 0;
 
   // number of iterations used for each MC calculation
   this->numMCIterations = 1000000;
@@ -58,37 +58,11 @@ DiagrammaticMonteCarlo::DiagrammaticMonteCarlo (
   this->maxLength = maxLength;
   this->dt = 0.02;
 
-  this->maxMomenta = 10;
+  this->maxMomenta = 0.08;
   this->dp = 0.02;
 
-  // calculate MC/DMC boundary for S1
-  // doing this for p = dG = 0 so we get an indication
-  if (this->minDiagramOrder <= 1 && ! this->externalLegs) {
-    double threshold = pow(10, -3.0);
-    unsigned int i = 0;
-    do {
-      double
-        t_l = i*this->dt,
-        t = (i + 0.5)*this->dt,
-        t_u = (i + 1)*this->dt,
-        param1 = sqrt(FeynmanDiagram::phononEnergy(1) - this->mu),
-        meanValue = this->alpha/(param1*this->dt) * (erf(param1*sqrt(t_u)) - erf(param1*sqrt(t_l))),
-        trueValue = this->alpha/sqrt(M_PI*t) * exp(-pow(param1, 2.0)*t);
-
-        if (meanValue - trueValue < threshold) {
-          this->MCvsDMCboundary = i;
-          break;
-        }
-
-    } while (++i);
-  }
-
-
   // if we want to import a G this must be done before we initialize the Feynman diagram
-  this->importG("Glarge.txt");
-
-  // cout << firstOrderSelfEnergyMC(0.01*7, Vector3d{0, 0, 0}) << endl;
-
+  // this->importG("Glarge.txt");
 
   // initiate dE and dG (if needed) which are going to be overwritten for each iteration
   if ( ! this->fixedExternalMomentum) {
@@ -101,14 +75,12 @@ DiagrammaticMonteCarlo::DiagrammaticMonteCarlo (
     }
     
     if (this->Dyson && this->bold && ! this->dE.size()) {
-        this->dE = Array<double, Dynamic, Dynamic>::Zero(Np, Nt);
+      this->dE = Array<double, Dynamic, Dynamic>::Zero(Np, Nt);
     }
   }
 
   if (this->bold) {
-
-
-    for (this->boldIteration = 1; this->boldIteration != this->numBoldIterations + 1; this->boldIteration++) {
+    for (this->boldIteration = 0; this->boldIteration != this->numBoldIterations + 1; this->boldIteration++) {
       this->run();
 
       this->calculateEnergyDiff();
@@ -140,14 +112,13 @@ DiagrammaticMonteCarlo::DiagrammaticMonteCarlo (
       // }
       // cout << "])" << endl << endl;
 
-      cout << "---------" << endl;
+      // cout << "---------" << endl;
 
       // bold iteration is complete, compute dG to be used for future histogram normalizations
-      this->doDyson(this->dG);
+      // this->doDyson(this->dG);
     }
 
   } else {
-
     this->run();
   }
 }
@@ -157,7 +128,6 @@ void DiagrammaticMonteCarlo::run () {
   this->FD = FeynmanDiagram{this->initialExternalMomentum, this->dt, this->alpha, this->mu};
 
   // initiate/reset histogram
-
   this->N0 = 0;
   const unsigned int Nt = this->maxLength/this->dt;
   if ( ! this->fixedExternalMomentum) {
@@ -169,101 +139,105 @@ void DiagrammaticMonteCarlo::run () {
     this->bins = Array<unsigned long int, Dynamic, 1>::Zero(Nt, 1);
   }
 
-
   // save an empty file
-  this->write2file();
+  // this->write2file();
 
-  // to reach start connfiguration
-  const unsigned int untilStart = 10000000;
-
-  // to save data under the process
-  const unsigned int saveAfter = 500*1000000;
-
-  multimap<unsigned int, void (DiagrammaticMonteCarlo::*)(double)> updateMethods;
-
-  // specify the relative probability of choosing a specific update function
-  if (this->bold && this->boldIteration > 0) {
-    updateMethods = {
-      // {1, &DiagrammaticMonteCarlo::shiftVertexPosition},
-      // {1, &DiagrammaticMonteCarlo::swapPhononConnections},
-      // {1, &DiagrammaticMonteCarlo::changeInternalPhononMomentumDirection},
-      // {1, &DiagrammaticMonteCarlo::changeInternalPhononMomentumMagnitude},
-      {1, &DiagrammaticMonteCarlo::BOLDraiseOrder}, // <- These two must have the same probability
-      {1, &DiagrammaticMonteCarlo::BOLDlowerOrder}, // <-
-      {5, &DiagrammaticMonteCarlo::BOLDchangeDiagramLength},
-      {10, &DiagrammaticMonteCarlo::BOLDchangeDiagramLengthComplex},
-      {(this->fixedExternalMomentum ? 0 : 1), &DiagrammaticMonteCarlo::changeExternalMomentumMagnitude}
-    };
-  } else {
-    updateMethods = {
-      {1, &DiagrammaticMonteCarlo::shiftVertexPosition},
-      {1, &DiagrammaticMonteCarlo::swapPhononConnections},
-      {1, &DiagrammaticMonteCarlo::changeInternalPhononMomentumDirection},
-      {1, &DiagrammaticMonteCarlo::changeInternalPhononMomentumMagnitude},
-      {1, &DiagrammaticMonteCarlo::raiseOrder}, // <- These two must have the same probability
-      {1, &DiagrammaticMonteCarlo::lowerOrder}, // <-
-      {1, &DiagrammaticMonteCarlo::changeDiagramLength},
-      {1, &DiagrammaticMonteCarlo::changeDiagramLengthComplex},
-      {(this->fixedExternalMomentum ? 0 : 1), &DiagrammaticMonteCarlo::changeExternalMomentumMagnitude}
-    };
+  // MC instead of DMC for S1 at small times
+  if (this->minDiagramOrder <= 1 && ! this->externalLegs) {
+    this->firstOrderSelfEnergyMC();
   }
 
-  // vector which is going to contain the specified quantity of update functions
-  vector<void (DiagrammaticMonteCarlo::*)(double)> chooseUpdateMethod;
+  // // to reach start connfiguration
+  // const unsigned int untilStart = 10000000;
 
-  // populate vector
-  for (auto updateMethod = updateMethods.begin(); updateMethod != updateMethods.end(); updateMethod++) {
-    for (unsigned int i = 0; i != updateMethod->first; i++) {
-      chooseUpdateMethod.push_back(updateMethod->second);
-    }
-  }
+  // // to save data under the process
+  // const unsigned int saveAfter = 500*1000000;
 
-  // to start at a random position
-  for (unsigned int i = 0; i < untilStart; ++i) {
-    // choose update operation on random
-    auto updateMethod = chooseUpdateMethod[this->Uint(0, chooseUpdateMethod.size() - 1)];
-    // update diagram
-    (this->*updateMethod)(this->param);
-  }
+  // multimap<unsigned int, void (DiagrammaticMonteCarlo::*)(double)> updateMethods;
 
-  // main loop
-  for (unsigned long int i = 0; i < this->numIterations; ++i) {
-    auto updateMethod = chooseUpdateMethod[this->Uint(0, chooseUpdateMethod.size() - 1)];
-    (this->*updateMethod)(this->param);
+  // // specify the relative probability of choosing a specific update function
+  // if (this->bold && this->boldIteration > 0) {
+  //   updateMethods = {
+  //     {1, &DiagrammaticMonteCarlo::shiftVertexPosition},
+  //     {1, &DiagrammaticMonteCarlo::swapPhononConnections},
+  //     {1, &DiagrammaticMonteCarlo::changeInternalPhononMomentumDirection},
+  //     {1, &DiagrammaticMonteCarlo::changeInternalPhononMomentumMagnitude},
+  //     {1, &DiagrammaticMonteCarlo::BOLDraiseOrder}, // <- These two must have the same probability
+  //     {1, &DiagrammaticMonteCarlo::BOLDlowerOrder}, // <-
+  //     {5, &DiagrammaticMonteCarlo::BOLDchangeDiagramLength},
+  //     {10, &DiagrammaticMonteCarlo::BOLDchangeDiagramLengthComplex},
+  //     {(this->fixedExternalMomentum ? 0 : 1), &DiagrammaticMonteCarlo::changeExternalMomentumMagnitude}
+  //   };
+  // } else {
+  //   updateMethods = {
+  //     {1, &DiagrammaticMonteCarlo::shiftVertexPosition},
+  //     {1, &DiagrammaticMonteCarlo::swapPhononConnections},
+  //     {1, &DiagrammaticMonteCarlo::changeInternalPhononMomentumDirection},
+  //     {1, &DiagrammaticMonteCarlo::changeInternalPhononMomentumMagnitude},
+  //     {1, &DiagrammaticMonteCarlo::raiseOrder}, // <- These two must have the same probability
+  //     {1, &DiagrammaticMonteCarlo::lowerOrder}, // <-
+  //     {1, &DiagrammaticMonteCarlo::changeDiagramLength},
+  //     {1, &DiagrammaticMonteCarlo::changeDiagramLengthComplex},
+  //     {(this->fixedExternalMomentum ? 0 : 1), &DiagrammaticMonteCarlo::changeExternalMomentumMagnitude}
+  //   };
+  // }
 
-    if (i%saveAfter == saveAfter - 1) {
-      // save temporary result
-      this->write2file(i + 1);
-    }
+  // // vector which is going to contain the specified quantity of update functions
+  // vector<void (DiagrammaticMonteCarlo::*)(double)> chooseUpdateMethod;
 
-    // bin diagrams of desired order and desired structure
-    if (this->FD.Ds.size() >= this->minDiagramOrder) {
-      if (
-        this->reducibleDiagrams ||
-        ( this->skeletonDiagrams && this->FD.isSkeletonDiagram() ) ||
-        ( ! this->skeletonDiagrams && this->FD.isIrreducibleDiagram() )
-      ) {
-        unsigned int ti = this->FD.length/this->dt;
+  // // populate vector
+  // for (auto updateMethod = updateMethods.begin(); updateMethod != updateMethods.end(); updateMethod++) {
+  //   for (unsigned int i = 0; i != updateMethod->first; i++) {
+  //     chooseUpdateMethod.push_back(updateMethod->second);
+  //   }
+  // }
+
+  // // to start at a random position
+  // for (unsigned int i = 0; i < untilStart; ++i) {
+  //   // choose update operation on random
+  //   auto updateMethod = chooseUpdateMethod[this->Uint(0, chooseUpdateMethod.size() - 1)];
+  //   // update diagram
+  //   (this->*updateMethod)(this->param);
+  // }
+
+  // // main loop
+  // for (unsigned long int i = 0; i < this->numIterations; ++i) {
+  //   auto updateMethod = chooseUpdateMethod[this->Uint(0, chooseUpdateMethod.size() - 1)];
+  //   (this->*updateMethod)(this->param);
+
+  //   if (i%saveAfter == saveAfter - 1) {
+  //     // save temporary result
+  //     this->write2file(i + 1);
+  //   }
+
+  //   // bin diagrams of desired order and desired structure
+  //   if (this->FD.Ds.size() >= this->minDiagramOrder) {
+  //     if (
+  //       this->reducibleDiagrams ||
+  //       ( this->skeletonDiagrams && this->FD.isSkeletonDiagram() ) ||
+  //       ( ! this->skeletonDiagrams && this->FD.isIrreducibleDiagram() )
+  //     ) {
+  //       unsigned int ti = this->FD.length/this->dt;
         
-        if (this->FD.Ds.size() != 1 || this->MCvsDMCboundary <= ti) {
-          if (this->fixedExternalMomentum) {
-            this->bins[ti]++;
-          } else {
-            unsigned int pi = this->FD.externalMomentum/this->dp;
-            this->hist(pi, ti)++;
-          }
-        }
-      }
-    }
+  //       if (this->FD.Ds.size() != 1 || this->MCvsDMCboundary <= ti) {
+  //         if (this->fixedExternalMomentum) {
+  //           this->bins[ti]++;
+  //         } else {
+  //           unsigned int pi = this->FD.externalMomentum/this->dp;
+  //           this->hist(pi, ti)++;
+  //         }
+  //       }
+  //     }
+  //   }
 
-    // bin zeroth order diagrams used for normalization
-    if (this->FD.Ds.size() == 0) {
-      this->N0++;
-    }
-  }
+  //   // bin zeroth order diagrams used for normalization
+  //   if (this->FD.Ds.size() == 0) {
+  //     this->N0++;
+  //   }
+  // }
 
-  // save final result
-  this->write2file();
+  // // save final result
+  // this->write2file();
 }
 
 

@@ -1,3 +1,4 @@
+#include <mpi.h> // MPI
 #include <iostream>
 #include <time.h> // execution time
 
@@ -42,6 +43,25 @@ int main (int argc, char **argv) {
     }
   }
 
+
+
+  int worldRank, worldSize;
+  MPI_Init(NULL, NULL);
+  MPI_Comm_size(MPI_COMM_WORLD, &worldSize);
+  MPI_Comm_rank(MPI_COMM_WORLD, &worldRank);
+
+  // cout << worldRank << " out of " << worldSize << endl;
+
+
+
+
+  cout << "check the statistics of the first iteration of BOLD where dE = 0. Is the statistic as bad?" << endl;
+
+
+
+
+
+
   // cout << endl
   //      << "-7) Calculate with MC using dE the first order self energy" << endl
   //      << "-6) Since we are only doing first order, use irreducible instead of skeleton diagram" << endl
@@ -82,18 +102,13 @@ int main (int argc, char **argv) {
     };
   }
 
+  MPI_Finalize();
+
   printf("[Finished in %.2fs]\n", (double)(clock() - tStart)/CLOCKS_PER_SEC);
   return 0;
 }
 
 
-// #include <mpi.h> // MPI
-// int myrank, nprocs;
-// MPI_Init(NULL, NULL);
-// MPI_Comm_size(MPI_COMM_WORLD, &nprocs);
-// MPI_Comm_rank(MPI_COMM_WORLD, &myrank);
 
-// ... code ...
 
-// MPI_Finalize();
 

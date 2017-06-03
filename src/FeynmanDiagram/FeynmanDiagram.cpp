@@ -39,7 +39,8 @@ FeynmanDiagram::FeynmanDiagram (
 }
 
 double FeynmanDiagram::phononEnergy (double q) {
-  // OBS, need to modify MC/DMC boundary if this becomes non-constant
+  // OBS:  1) Not implemented in update functions 
+  //       2) need to modify MC/DMC boundary if this becomes non-constant
   return 1;
 }
 

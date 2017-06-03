@@ -49,6 +49,8 @@ void DiagrammaticMonteCarlo::doDyson (Array<double, Dynamic, Dynamic>& dG) {
   // normalize our with respect to the current "G0" histogram
   this->normalizedHistogram(SE_t_all);
 
+  cout << "We need to add the S1 MC contribution" << endl;
+
   // we want to go to at least t=500
   double L = (this->maxLength > 500 ? this->maxLength : 500);
   int

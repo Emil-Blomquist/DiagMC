@@ -1,11 +1,11 @@
 #include "../DiagrammaticMonteCarlo.h"
 
-void DiagrammaticMonteCarlo::shiftVertexPosition (double param) {
+void DiagrammaticMonteCarlo::BOLDshiftVertexPosition (double param) {
+  cout << "BOLDshiftVertexPosition: Do use the ordinary one instead. This one has pretty bad statistics" << endl;
+
+
   // requirement to lower: must be at least of order 1
-  if (
-    this->FD.Ds.size() == 0 ||
-    ( ! this->externalLegs && this->FD.Ds.size() == 1)
-  ) {
+  if ( this->FD.Ds.size() == 0 || this->FD.Ds.size() == 1) {
     return;
   }
 
@@ -19,7 +19,7 @@ void DiagrammaticMonteCarlo::shiftVertexPosition (double param) {
     t2 = v->G[1]->end->position;
 
   if (t2 - t1 <= 3*DBL_EPSILON) {
-    cout << "DMC::shiftVertexPosition dt≈0 ->return" << endl;
+    cout << "DMC::BOLDshiftVertexPosition dt≈0 ->return" << endl;
     return;
   }
 
@@ -30,13 +30,7 @@ void DiagrammaticMonteCarlo::shiftVertexPosition (double param) {
     dtdE = (t2 - t1)*dE;
 
   // sample new t
-  double t, r = this->Udouble(0, 1);
-  if (-dtdE > 100) {
-    // to avoid overflow due to exponential
-    t = t2 - log(r)/dE;
-  } else {
-    t = t1 - log(1 - r*(1 - exp(-dtdE)))/dE;
-  }
+  double t = this->Udouble(t1, t2);
 
   double tOld = 0, oldVal = 0;
   if (this->debug) {
@@ -44,23 +38,19 @@ void DiagrammaticMonteCarlo::shiftVertexPosition (double param) {
     oldVal = this->evaluateDiagram();
   }
 
-  double boldContribution = 0;
+
+  // contribution from boldification
+  double boldContribution = this->additionalPhase(v->G[0]->p, t - v->G[0]->start->position)
+                          + this->additionalPhase(v->G[1]->p, v->G[1]->end->position - t)
+                          - this->additionalPhase(v->G[0])
+                          - this->additionalPhase(v->G[1]);
+
+
+  // acceptance ratio
+  double a = exp(boldContribution + dE*(tOld - t));
+
   bool accepted = false;
-  if (this->bold && this->boldIteration > 0) {
-    // contribution from boldification
-    boldContribution = this->additionalPhase(v->G[0]->p, t - v->G[0]->start->position)
-                       + this->additionalPhase(v->G[1]->p, v->G[1]->end->position - t)
-                       - this->additionalPhase(v->G[0])
-                       - this->additionalPhase(v->G[1]);
-
-    // the rest of the acceptance ratio is unity
-    if (exp(boldContribution) > this->Udouble(0, 1)) {
-      this->FD.setVertexPosition(v, t);
-      accepted = true;
-    }
-
-  } else {
-    // is always accepted
+  if (a > this->Udouble(0, 1)) {
     this->FD.setVertexPosition(v, t);
     accepted = true;
   }
@@ -68,7 +58,7 @@ void DiagrammaticMonteCarlo::shiftVertexPosition (double param) {
   if ( ! isfinite(t)) {
     cout
       << "-------------------------" << endl
-      << "DMC::shiftVertexPosition: nan encountered" << endl
+      << "DMC::BOLDshiftVertexPosition: nan encountered" << endl
       << "t=" << t << endl
       << "dtdE=" << dtdE << endl
       << "dE=" << dE << endl
@@ -79,24 +69,19 @@ void DiagrammaticMonteCarlo::shiftVertexPosition (double param) {
   }
 
   if (this->debug) {
-    double val = this->evaluateDiagram();
+    double
+      val = this->evaluateDiagram(),
+      ratio = a / (val/oldVal);
 
-    double a;
-    if (val == 0) {
-      a = 0;
-    } else if (oldVal == 0) {
-      a = 1;
-    } else {
-      a =  exp(boldContribution + dE*(tOld - t)) / (val/oldVal);
-    }
 
     if (accepted) {
-      this->checkAcceptanceRatio(a, "shiftVertexPosition");
+      this->checkAcceptanceRatio(ratio, "BOLDshiftVertexPosition");
     }
 
     if (a < 0 || ! isfinite(a)) {
       cout << "--------------------------------------------------------------------" << endl
-           << "overflow at DMC::shiftVertexPosition " << endl
+           << "overflow at DMC::BOLDshiftVertexPosition " << endl
+           << "ratio=" << ratio << endl
            << "a=" << a << endl
            << "order=" << this->FD.Ds.size() << endl
            << "val=" << val << endl
@@ -105,7 +90,7 @@ void DiagrammaticMonteCarlo::shiftVertexPosition (double param) {
            << "exp=" << exp(dE*(t - tOld)) << endl
            << "--------------------------------------------------------------------" << endl;
     } else if (this->loud) {
-      cout << "shiftVertexPosition: " << a << endl;
+      cout << "BOLDshiftVertexPosition: " << a << endl;
     }
   }
 }

@@ -18,6 +18,7 @@ void DiagrammaticMonteCarlo::write2file (const unsigned long int iterationNum) {
          << ( ! this->fixedExternalMomentum ? " dp=" + to_string(this->dp) : "" )
          << " N=" << numIterations
          << ( this->bold ? " bolditr=" + to_string(this->boldIteration) : "" )
+         << ( this->bold ? " maxn=" + to_string(this->maxDiagramOrder) : "" )
          << " date=" << dateAndTimeString
          << " unique=" << param;
   string fileName = stream.str();
@@ -76,30 +77,11 @@ void DiagrammaticMonteCarlo::write2file (const unsigned long int iterationNum) {
       }
     }
   } else if (this->fixedExternalMomentum && this->N0) {
-    // // to remove the error due the combination of a singular diagram and a discretized time
-    // vector<double> singularityFix((int) round(this->maxLength/this->dt), 0);
-    // if ( ! this->externalLegs && this->minDiagramOrder <= 1) {
-    //   for (unsigned int i = 0; i != singularityFix.size(); ++i) {
-    //     singularityFix[i] = this->alpha*(
-    //       exp(-0.5*(2*i + 1)*this->dt)/sqrt(M_PI*0.5*(2*i + 1)*this->dt)
-    //       - (erf(sqrt((i + 1)*this->dt)) - erf(sqrt(i*this->dt)))/this->dt
-    //     );
-    //   }
-    // }
 
     // open file
     myfile.open(path + "../data/" + fileName.substr(1) + ".txt", ios_base::app);
 
-    // // times
-    // for (unsigned int i = 0; i != this->maxLength/this->dt; ++i) {
-    //   myfile << fixed << setprecision(7) << (i + 0.5)*this->dt;
-    //   if (i == this->maxLength/this->dt - 1) {
-    //     myfile << "\n";
-    //   } else {
-    //     myfile << " ";
-    //   }
-    // }
-
+    // times
     myfile << fixed << setprecision(6)
            << "np.linspace(0," << (this->maxLength/this->dt - 1)*this->dt << ", " << this->maxLength/this->dt << ") + " << 0.5*this->dt << endl;
 
@@ -109,8 +91,10 @@ void DiagrammaticMonteCarlo::write2file (const unsigned long int iterationNum) {
 
     this->normalizedHistogram(quantitiyOfInterest);
 
-
-
+    // add MC contribution for S1
+    for (unsigned int j = 0; j != this->S1mc.cols(); j++) {
+      quantitiyOfInterest(j) += this->S1mc(j);
+    }
 
     // histogram corresponding to higher order diagrams
     for (unsigned int j = 0; j != quantitiyOfInterest.size(); j++) {
@@ -129,32 +113,6 @@ void DiagrammaticMonteCarlo::write2file (const unsigned long int iterationNum) {
         myfile << " ";
       }
     }
-
-
-
-
-    // // calculate scale factor
-    // unsigned int until = 0;
-    // while ((double) this->bins0[until]/this->bins0[0] > 0.01) {
-    //   until++;
-    // }
-    // double Z = 0;
-    // for (unsigned int i = 0; i != until; ++i) {
-    //   Z += sqrt(this->bins0[i]);
-    // }
-    // double scaleFactor = 0;
-    // for (unsigned int i = 0; i != until; ++i) {
-    //   scaleFactor += exp(-(0.5*pow(this->FD.externalMomentum, 2) - this->mu)*(i + 0.5)*this->dt)
-    //               /(sqrt(this->bins0[i]) * Z);
-    // }
-
-    // // greens function
-    // for (unsigned int i = 0; i != this->maxLength/this->dt; ++i) {
-    //   myfile << fixed << setprecision(7) << abs(this->bins[i]*scaleFactor + singularityFix[i]);
-    //   if (i < this->maxLength/this->dt - 1) {
-    //     myfile << " ";
-    //   }
-    // }
   }
 
   myfile.close();

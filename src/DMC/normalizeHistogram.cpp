@@ -1,6 +1,6 @@
 #include "DiagrammaticMonteCarlo.h"
 
-void DiagrammaticMonteCarlo::normalizedHistogram (Array<double, Dynamic, Dynamic>& hist) {
+void DiagrammaticMonteCarlo::normalizedHistogram (ArrayXXd& hist) {
   // give correct dimensions
   hist = ArrayXXd::Zero(this->hist.rows(), this->hist.cols());
 
@@ -22,23 +22,8 @@ void DiagrammaticMonteCarlo::normalizedHistogram (Array<double, Dynamic, Dynamic
 
   double scaleFactor = sumG0/this->N0;
 
-  // to remove the error due to the combination of a singular diagram and a discretized time
-  vector<double> singularityFix((int) round(this->maxLength/this->dt), 0);
-  // if ( ! this->externalLegs && this->minDiagramOrder <= 1) {
-  //   for (unsigned int i = 0; i != singularityFix.size(); ++i) {
-  //     singularityFix[i] = this->alpha*(
-  //                           exp(-0.5*(2*i + 1)*this->dt)/sqrt(M_PI*0.5*(2*i + 1)*this->dt)
-  //                           - (erf(sqrt((i + 1)*this->dt)) - erf(sqrt(i*this->dt)))/this->dt
-  //                         );
-  //   }
-  // }
-
   // histogram corresponding to higher order diagrams
-  for (unsigned int i = 0; i != this->hist.rows(); i++) {
-    for (unsigned int j = 0; j != this->hist.cols(); j++) {
-      hist(i, j) = abs(this->hist(i, j)*scaleFactor + singularityFix[j]);
-    }
-  }
+  hist = this->hist.cast<double>()*scaleFactor;
 }
 
 void DiagrammaticMonteCarlo::normalizedHistogram (ArrayXd& hist) {
@@ -64,17 +49,6 @@ void DiagrammaticMonteCarlo::normalizedHistogram (ArrayXd& hist) {
 
   double scaleFactor = sumG0/this->N0;
 
-  // to remove the error due to the combination of a singular diagram and a discretized time
-  ArrayXd singularityFix = ArrayXd::Zero((int) round(this->maxLength/this->dt));
-  // if ( ! this->externalLegs && this->minDiagramOrder <= 1) {
-  //   for (unsigned int i = 0; i != singularityFix.size(); ++i) {
-  //     singularityFix[i] = this->alpha*(
-  //                           exp(-0.5*(2*i + 1)*this->dt)/sqrt(M_PI*0.5*(2*i + 1)*this->dt)
-  //                           - (erf(sqrt((i + 1)*this->dt)) - erf(sqrt(i*this->dt)))/this->dt
-  //                         );
-  //   }
-  // }
-
   // histogram corresponding to higher order diagrams
-  hist = abs(this->bins.cast<double>()*scaleFactor + singularityFix);
+  hist = this->bins.cast<double>()*scaleFactor;
 }
