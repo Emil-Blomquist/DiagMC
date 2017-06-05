@@ -1,12 +1,12 @@
 #include "DiagrammaticMonteCarlo.h"
 
 void DiagrammaticMonteCarlo::appendKeyValue (vector<KeyValue>& vec, unsigned int n) {
-  unsigned int
+  unsigned int 
     pi = n/this->MCvsDMCboundary,
     ti = n - pi*this->MCvsDMCboundary;
 
   double
-    p = (pi + 0.5)*this->dp,
+    p = (this->fixedExternalMomentum ? this->initialExternalMomentum.norm() : (pi + 0.5)*this->dp),
     t = (ti + 0.5)*this->dt,
     S1 = firstOrderSelfEnergyMC(t, Vector3d{0, 0, p});
 
@@ -15,10 +15,8 @@ void DiagrammaticMonteCarlo::appendKeyValue (vector<KeyValue>& vec, unsigned int
 }
 
 void DiagrammaticMonteCarlo::firstOrderSelfEnergyMC () {
-  int worldRank, worldSize;
-  MPI_Comm_size(MPI_COMM_WORLD, &worldSize);
-  MPI_Comm_rank(MPI_COMM_WORLD, &worldRank);
 
+  // to time the time needed
   clock_t tStart = clock();
 
   // calculate MC/DMC boundary for S1
@@ -41,35 +39,32 @@ void DiagrammaticMonteCarlo::firstOrderSelfEnergyMC () {
 
   } while (++i);
 
-  unsigned int Np = (fixedExternalMomentum ? 1 : this->maxMomenta/this->dp);
-
-
-  if (worldSize > 1) {
+  if (this->worldSize > 1) {
     // parallelize over all processes
 
     unsigned int
       Nt = this->MCvsDMCboundary,
-      numEach = Np*Nt/worldSize,
-      from = worldRank*numEach,
-      end = (worldRank + 1)*numEach;
+      numEach = this->Np*Nt/this->worldSize,
+      from = this->worldRank*numEach,
+      end = (this->worldRank + 1)*numEach;
 
-    vector<KeyValue> vector2send, vector2receive{Np*Nt};
+    vector<KeyValue> vector2send, vector2receive{this->Np*Nt};
 
     for (unsigned int n = from; n != end; n++) {
       this->appendKeyValue(vector2send, n);
     }
 
     // rest
-    unsigned int myRest = worldSize*numEach + worldRank;
-    if (myRest <= Np*Nt - 1) {
+    unsigned int myRest = this->worldSize*numEach + this->worldRank;
+    if (myRest <= this->Np*Nt - 1) {
       this->appendKeyValue(vector2send, myRest);
     }
 
     // calculate receive counts and corresponding displacements
-    vector<int> recvCounts(worldSize), recvDiscps(worldSize);
-    if (worldRank == 0) {
-      for (unsigned int rank = 0; rank != worldSize; rank++) {
-        int count = (numEach + (worldSize*numEach + rank <= Np*Nt - 1 ? 1 : 0)) * sizeof(KeyValue);
+    vector<int> recvCounts(this->worldSize), recvDiscps(this->worldSize);
+    if (this->worldRank == 0) {
+      for (unsigned int rank = 0; rank != this->worldSize; rank++) {
+        int count = (numEach + (this->worldSize*numEach + rank <= this->Np*Nt - 1 ? 1 : 0)) * sizeof(KeyValue);
 
         recvCounts[rank] = count;
         recvDiscps[rank] = (rank == 0 ? 0 : recvDiscps[rank - 1] + recvCounts[rank - 1]);
@@ -89,29 +84,26 @@ void DiagrammaticMonteCarlo::firstOrderSelfEnergyMC () {
       MPI_COMM_WORLD);
 
     // store the S1
-    if (worldRank == 0) {
-      this->S1mc = Array<double, Dynamic, Dynamic>::Zero(Np, Nt);
+    if (this->worldRank == 0) {
+      this->S1mc = ArrayXXd::Zero(this->Np, Nt);
       for (KeyValue kv : vector2receive) {
         this->S1mc(kv.pi, kv.ti) = kv.val;
       }
-
-      cout << S1mc << endl;
     }
 
-    printf("[S1 MC @ %u in %.2fs]\n", worldRank, (double)(clock() - tStart)/CLOCKS_PER_SEC);
+    printf("[S1 MC @ %u in %.2fs]\n", this->worldRank, (double)(clock() - tStart)/CLOCKS_PER_SEC);
   } else {
     // MC calculation
-    this->S1mc = Array<double, Dynamic, Dynamic>::Zero(Np, this->MCvsDMCboundary);
+    this->S1mc = Array<double, Dynamic, Dynamic>::Zero(this->Np, this->MCvsDMCboundary);
 
     for (unsigned int i = 0; i != this->S1mc.rows(); i++) {
-      double p = (i + 0.5)*this->dp;
+      double p = (this->fixedExternalMomentum ? this->initialExternalMomentum.norm() : (i + 0.5)*this->dp);
       for (unsigned int j = 0; j != this->S1mc.cols(); j++) {
         double t = (j + 0.5)*this->dt;
 
         this->S1mc(i, j) = firstOrderSelfEnergyMC(t, Vector3d{0, 0, p});
       }
     }
-
 
     printf("[S1 MC in %.2fs]\n", (double)(clock() - tStart)/CLOCKS_PER_SEC);
   }

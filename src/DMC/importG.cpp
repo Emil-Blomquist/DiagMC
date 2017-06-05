@@ -17,12 +17,9 @@ vector<string> split(const string &s, char delim) {
 }
 
 void DiagrammaticMonteCarlo::importG (string fileName) {
-
   // obtain path relative binary file
   string path = this->argv[0]; // program full path + name of binary file
   path.erase(path.find_last_of('/') + 1); // remove name of binary file
-
-
 
   bool firstLine = true;
   unsigned int i = 0;
@@ -30,6 +27,7 @@ void DiagrammaticMonteCarlo::importG (string fileName) {
   string line;
   ifstream myfile(path + "../Gs/" + fileName);
   if (myfile.is_open()) {
+
     while (getline(myfile, line)) {
 
       if (firstLine) {
@@ -57,23 +55,20 @@ void DiagrammaticMonteCarlo::importG (string fileName) {
             this->dp = stod(keyAndValue[1]);
           }
         }
+        this->Np = (this->fixedExternalMomentum ? 1 : this->maxMomenta/this->dp);
+        this->Nt = this->maxLength/this->dt;
 
-        // initiate dE and dG
-        unsigned int
-          Np = this->maxMomenta/this->dp,
-          Nt = this->maxLength/this->dt;
-
-        this->dG = Array<double, Dynamic, Dynamic>::Zero(Np, Nt);
-        this->dE = Array<double, Dynamic, Dynamic>::Zero(Np, Nt);
+        // set proper dimensions
+        this->dG = ArrayXXd::Zero(this->maxMomenta/this->dp, this->Nt);
       } else {
         double
           p = (i + 0.5)*this->dp,
           E0 = 0.5*p*p;
 
         vector<string> row = split(line, ' ');
-        for (unsigned int j = 0; j != this->dG.cols(); j++) {
+        for (unsigned int j = 0; j != dG.cols(); j++) {
           double t = (j + 0.5)*this->dt;
-          this->dG(i, j) = stod(row[j]) - exp((this->mu - E0)*t);
+          dG(i, j) = stod(row[j]) - exp((this->mu - E0)*t);
         }
 
         i++;
@@ -82,14 +77,8 @@ void DiagrammaticMonteCarlo::importG (string fileName) {
 
     myfile.close();
 
-    // cout << this->dG << endl;
-
-    this->calculateEnergyDiff();
-
-    // cout << this->dE << endl;
-
-
-
+    // calucalte nergy difference and store result in this->dE
+    this->calculateEnergyDiff(dG, this->dE);
   } else {
     cout << "Unable to open file" << endl; 
   }

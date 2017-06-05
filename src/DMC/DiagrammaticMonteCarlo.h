@@ -35,15 +35,18 @@ class DiagrammaticMonteCarlo {
   private:
     mt19937_64 mt;
     bool debug, loud, externalLegs, reducibleDiagrams, fixedExternalMomentum, Dyson, skeletonDiagrams, bold;
-    unsigned long int numIterations, N0, numMCIterations;
+    unsigned long long int numIterations, N0, numMCIterations, untilStart, currItr;
     double maxLength, mu, alpha, param, dt, dp, maxMomenta;
     struct tm *timeinfo;
     char **argv;
-    unsigned int minDiagramOrder, maxDiagramOrder, numBoldIterations, boldIteration, MCvsDMCboundary;
+    unsigned int Np, Nt, minDiagramOrder, maxDiagramOrder, numBoldIterations, boldIteration, MCvsDMCboundary;
 
-    Array<unsigned long int, Dynamic, 1> bins;
-    Array<unsigned long int, Dynamic, Dynamic> hist;
-    Array<double, Dynamic, Dynamic> dG, dE, S1mc;
+    unsigned int savePeriod;
+
+    int worldRank, worldSize;
+
+    Array<unsigned long long int, Dynamic, Dynamic> hist;
+    Array<double, Dynamic, Dynamic> S, dG, dE, S1mc;
 
     shared_ptr<Vertex> vertices2beRemoved [2];
     shared_ptr<Electron> electrons2beRemoved [2];
@@ -93,16 +96,25 @@ class DiagrammaticMonteCarlo {
       BOLDshiftVertexPosition (double param = 1);
 
     void
-      write2file (const unsigned long int = 0),
-      doDyson (Array<double, Dynamic, Dynamic>&),
-      normalizedHistogram (ArrayXXd&),
-      normalizedHistogram (ArrayXd&),
-      checkAcceptanceRatio (double, string),
-      calculateEnergyDiff ();
+      write2file (
+        Array<unsigned long long int, Dynamic, Dynamic>&,
+        unsigned long long int&,
+        unsigned long long int&),
+      doDyson (ArrayXXd&, ArrayXXd&),
+      normalizeHistogram (
+        Array<unsigned long long int, Dynamic, Dynamic>&,
+        unsigned long long int&,
+        ArrayXXd&),
+      calculateEnergyDiff (ArrayXXd&, ArrayXXd&),
+      checkAcceptanceRatio (double, string);
 
     void
       firstOrderSelfEnergyMC (),
-      appendKeyValue (vector<KeyValue>&, unsigned int),
+      appendKeyValue (vector<KeyValue>&, unsigned int), // <- gather MC calculation
+      sumHistograms (
+        Array<unsigned long long int, Dynamic, Dynamic>&,
+        unsigned long long int&,
+        unsigned long long int&),
       importG (string);
 
     double firstOrderSelfEnergyMC (double, Vector3d);
@@ -115,7 +127,7 @@ class DiagrammaticMonteCarlo {
       double,
       double,
       double,
-      unsigned long int,
+      unsigned long long int,
       // unsigned int,
       double param,
       char **argv

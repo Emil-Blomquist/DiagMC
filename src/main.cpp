@@ -18,7 +18,7 @@ int main (int argc, char **argv) {
     maxLength = 30,
     param = 0;
 
-  unsigned long int numIterations = 4000000000;
+  unsigned long long int numIterations = 4000000000;
 
   // input parameters
   int i = 1;
@@ -50,12 +50,13 @@ int main (int argc, char **argv) {
   MPI_Comm_size(MPI_COMM_WORLD, &worldSize);
   MPI_Comm_rank(MPI_COMM_WORLD, &worldRank);
 
-  // cout << worldRank << " out of " << worldSize << endl;
+  if (worldRank == 0) {
+    cout << endl;
+    cout << "nproc=4, Ntemp=499557654, how is that possible!?" << endl;
+    cout << "check the statistics of the first iteration of BOLD where dE = 0. Is the statistic as bad?" << endl;
+    cout << endl;
+  }
 
-
-
-
-  cout << "check the statistics of the first iteration of BOLD where dE = 0. Is the statistic as bad?" << endl;
 
 
 

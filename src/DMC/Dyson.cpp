@@ -32,7 +32,10 @@ inline void ifftshift1D (T& vec) {
   vec.insert(vec.end(), front.begin(), front.end());
 }
 
-void DiagrammaticMonteCarlo::doDyson (Array<double, Dynamic, Dynamic>& dG) {
+void DiagrammaticMonteCarlo::doDyson (
+  ArrayXXd& SE_t_all,
+  ArrayXXd& dG
+) {
   clock_t tStart = clock();
 
   dG = ArrayXXd::Zero(this->hist.rows(), this->hist.cols());
@@ -42,14 +45,6 @@ void DiagrammaticMonteCarlo::doDyson (Array<double, Dynamic, Dynamic>& dG) {
 
   // real Fourier transform
   FFT<double> fft;
-
-  // whole part of the self energy
-  Array<double, Dynamic, Dynamic> SE_t_all;
-
-  // normalize our with respect to the current "G0" histogram
-  this->normalizedHistogram(SE_t_all);
-
-  cout << "We need to add the S1 MC contribution" << endl;
 
   // we want to go to at least t=500
   double L = (this->maxLength > 500 ? this->maxLength : 500);

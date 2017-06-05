@@ -1,6 +1,10 @@
 #include "DiagrammaticMonteCarlo.h"
 
-void DiagrammaticMonteCarlo::write2file (const unsigned long int iterationNum) {
+void DiagrammaticMonteCarlo::write2file (
+  Array<unsigned long long int, Dynamic, Dynamic>& hist,
+  unsigned long long int& N0,
+  unsigned long long int& currNumItr
+) {
   // create date and time string
   char buffer[80];
   strftime(buffer, 80, "%Y-%m-%d %H:%M:%S", this->timeinfo);
@@ -16,7 +20,7 @@ void DiagrammaticMonteCarlo::write2file (const unsigned long int iterationNum) {
          << " dt=" << this->dt
          << ( ! this->fixedExternalMomentum ? " pmax=" + to_string(this->maxMomenta) : "" )
          << ( ! this->fixedExternalMomentum ? " dp=" + to_string(this->dp) : "" )
-         << " N=" << numIterations
+         << " N=" << this->numIterations
          << ( this->bold ? " bolditr=" + to_string(this->boldIteration) : "" )
          << ( this->bold ? " maxn=" + to_string(this->maxDiagramOrder) : "" )
          << " date=" << dateAndTimeString
@@ -34,18 +38,17 @@ void DiagrammaticMonteCarlo::write2file (const unsigned long int iterationNum) {
   ofstream myfile;
   myfile.open(path + "../data/" + fileName.substr(1) + ".txt");
   myfile << "--------" + fileName;
-  if (iterationNum) {
-    myfile << " Ntemp=" << iterationNum;
+  if (this->numIterations != currNumItr) {
+    myfile << " Ntemp=" << currNumItr;
   }
   myfile << " --------" << endl;
-  myfile.close();
 
-  if ( ! this->fixedExternalMomentum && this->N0) {
-    // open file
-    myfile.open(path + "../data/" + fileName.substr(1) + ".txt", ios_base::app);
+  if (this->N0) {
+    // append the data
 
     // the quantity of interest to us
     Array<double, Dynamic, Dynamic> quantitiyOfInterest;
+    this->normalizeHistogram(hist, N0, quantitiyOfInterest);
 
     // if (this->Dyson) {
     //   // will become dG
@@ -54,14 +57,21 @@ void DiagrammaticMonteCarlo::write2file (const unsigned long int iterationNum) {
     //   // will become G
     // }
 
-    // histogram corresponding to higher order diagrams
-    for (unsigned int i = 0; i != quantitiyOfInterest.rows(); i++) {
-      for (unsigned int j = 0; j != quantitiyOfInterest.cols(); j++) {
-        if (this->Dyson) {
-          double
-            p = (i + 0.5)*this->dp,
-            t = (j + 0.5)*this->dt;
+    if (this->fixedExternalMomentum) {
+      // write times
+      myfile << fixed << setprecision(6)
+             << "np.linspace(0,"
+             << (this->maxLength/this->dt - 1)*this->dt
+             << ", " << this->maxLength/this->dt << ") + "
+             << 0.5*this->dt << endl;
+    }
 
+    // write histogram
+    for (unsigned int i = 0; i != quantitiyOfInterest.rows(); i++) {
+      // double p = (this->fixedExternalMomentum ? initialExternalMomentum.norm() : (i + 0.5)*this->dp);
+      for (unsigned int j = 0; j != quantitiyOfInterest.cols(); j++) {
+        // double t = (j + 0.5)*this->dt;
+        if (this->Dyson) {
           // myfile << fixed << setprecision(6) << quantitiyOfInterest(i, j) + exp((this->mu - 0.5*p*p)*t);
           myfile << fixed << setprecision(6) << quantitiyOfInterest(i, j);
         } else {
@@ -74,43 +84,6 @@ void DiagrammaticMonteCarlo::write2file (const unsigned long int iterationNum) {
       }
       if (i + 1 < quantitiyOfInterest.rows()) {
         myfile << endl;
-      }
-    }
-  } else if (this->fixedExternalMomentum && this->N0) {
-
-    // open file
-    myfile.open(path + "../data/" + fileName.substr(1) + ".txt", ios_base::app);
-
-    // times
-    myfile << fixed << setprecision(6)
-           << "np.linspace(0," << (this->maxLength/this->dt - 1)*this->dt << ", " << this->maxLength/this->dt << ") + " << 0.5*this->dt << endl;
-
-
-    // the quantity of interest to us
-    Array<double, Dynamic, 1> quantitiyOfInterest;
-
-    this->normalizedHistogram(quantitiyOfInterest);
-
-    // add MC contribution for S1
-    for (unsigned int j = 0; j != this->S1mc.cols(); j++) {
-      quantitiyOfInterest(j) += this->S1mc(j);
-    }
-
-    // histogram corresponding to higher order diagrams
-    for (unsigned int j = 0; j != quantitiyOfInterest.size(); j++) {
-      if (this->Dyson) {
-        double
-          p = this->initialExternalMomentum.norm(),
-          t = (j + 0.5)*this->dt;
-
-        // myfile << fixed << setprecision(6) << quantitiyOfInterest(i, j) + exp((this->mu - 0.5*p*p)*t);
-        myfile << fixed << setprecision(6) << quantitiyOfInterest(j);
-      } else {
-        myfile << fixed << setprecision(6) << quantitiyOfInterest(j);
-      }
-
-      if (j + 1 < quantitiyOfInterest.size()) {
-        myfile << " ";
       }
     }
   }
