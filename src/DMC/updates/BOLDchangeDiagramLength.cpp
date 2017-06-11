@@ -5,8 +5,18 @@ void DiagrammaticMonteCarlo::BOLDchangeDiagramLength (double param) {
   shared_ptr<Electron> g = this->FD.Gs.back();
 
   double
-    tmin = g->start->position,
-    tofG = this->Udouble(0, this->maxLength - tmin);
+    l = this->lambdaOf(g),
+    r = this->Udouble(0, 1),
+    tmin = this->FD.end->G[0]->start->position;
+
+  // phonon contribution when there are no external legs
+  if (this->FD.Ds.size() > 0) {
+    l += this->FD.phononEnergy(this->FD.end->D[0]->q);
+  }
+
+  double
+    tofG = -log(1 - r + r*exp(-l*(this->maxLength - tmin)))/l,
+    tofGold = g->end->position - g->start->position;
 
   double oldVal = 0;
   if (this->debug) {
@@ -23,6 +33,7 @@ void DiagrammaticMonteCarlo::BOLDchangeDiagramLength (double param) {
                (this->mu - 0.5*pow(g->p, 2.0) - phononEnergy)*(tofG - (this->FD.length - tmin))
                + this->additionalPhase(g->p, tofG)
                - this->additionalPhase(g)
+               + l*(tofG - tofGold)
              );
 
   bool accepted = false;
@@ -35,7 +46,7 @@ void DiagrammaticMonteCarlo::BOLDchangeDiagramLength (double param) {
   if (this->debug) {
     double
       val = this->evaluateDiagram(),
-      ratio = a / (val/oldVal);
+      ratio = a * exp(-l*(tofG - tofGold)) / (val/oldVal);
 
     if (accepted) {
       this->checkAcceptanceRatio(ratio, "BOLDchangeDiagramLength");

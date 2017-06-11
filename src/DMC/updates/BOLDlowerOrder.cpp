@@ -65,9 +65,11 @@ void DiagrammaticMonteCarlo::BOLDlowerOrder (double param) {
 
     double
       t2low = v1->position,
-      t2up = this->FD.length;
+      t2up = this->FD.length,
+      l = 0.01,
+      dt2 = v2->position - t2low;
 
-    wInvt2 = t2up - t2low;
+    wInvt2 = exp(l*dt2)*(1 - exp(-l*(t2up - t2low)))/l;
 
     double std = (v2->position - v1->position < pow(10.0, -10.0) ? 100000 : 1/sqrt(v2->position - v1->position));
 

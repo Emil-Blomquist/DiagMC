@@ -39,14 +39,13 @@ class DiagrammaticMonteCarlo {
     double maxLength, mu, alpha, param, dt, dp, maxMomenta;
     struct tm *timeinfo;
     char **argv;
-    unsigned int Np, Nt, minDiagramOrder, maxDiagramOrder, numBoldIterations, boldIteration, MCvsDMCboundary;
-
-    unsigned int savePeriod;
+    unsigned int Np, Nt, minDiagramOrder, maxDiagramOrder, numBoldIterations, boldIteration, MCvsDMCboundary, numTempDMCsaves;
 
     int worldRank, worldSize;
 
     Array<unsigned long long int, Dynamic, Dynamic> hist;
-    Array<double, Dynamic, Dynamic> S, dG, dE, S1mc;
+    ArrayXXd dG, dE, S1mc;
+    ArrayXd lambdas;
 
     shared_ptr<Vertex> vertices2beRemoved [2];
     shared_ptr<Electron> electrons2beRemoved [2];
@@ -118,6 +117,13 @@ class DiagrammaticMonteCarlo {
       importG (string);
 
     double firstOrderSelfEnergyMC (double, Vector3d);
+
+    // imaginary-time distribution
+    void calculateLambdas (ArrayXXd&, ArrayXd&);
+    double
+      expFit(ArrayXd&, ArrayXd&, double, double),
+      lambdaOf(double),
+      lambdaOf(shared_ptr<Electron>);
 
   public:
     FeynmanDiagram FD;

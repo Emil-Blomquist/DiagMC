@@ -63,7 +63,7 @@ void DiagrammaticMonteCarlo::firstOrderSelfEnergyMC () {
     // calculate receive counts and corresponding displacements
     vector<int> recvCounts(this->worldSize), recvDiscps(this->worldSize);
     if (this->worldRank == 0) {
-      for (unsigned int rank = 0; rank != this->worldSize; rank++) {
+      for (int rank = 0; rank != this->worldSize; rank++) {
         int count = (numEach + (this->worldSize*numEach + rank <= this->Np*Nt - 1 ? 1 : 0)) * sizeof(KeyValue);
 
         recvCounts[rank] = count;

@@ -79,6 +79,10 @@ void DiagrammaticMonteCarlo::importG (string fileName) {
 
     // calucalte nergy difference and store result in this->dE
     this->calculateEnergyDiff(dG, this->dE);
+
+    // calculate the rate parameters of the exponential imaginary-time distributions
+    this->calculateLambdas(this->dE, this->lambdas);
+
   } else {
     cout << "Unable to open file" << endl; 
   }

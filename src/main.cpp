@@ -52,7 +52,6 @@ int main (int argc, char **argv) {
 
   if (worldRank == 0) {
     cout << endl;
-    cout << "nproc=4, Ntemp=499557654, how is that possible!?" << endl;
     cout << "check the statistics of the first iteration of BOLD where dE = 0. Is the statistic as bad?" << endl;
     cout << endl;
   }
@@ -103,9 +102,11 @@ int main (int argc, char **argv) {
     };
   }
 
-  MPI_Finalize();
 
-  printf("[Finished in %.2fs]\n", (double)(clock() - tStart)/CLOCKS_PER_SEC);
+  printf("[Program finished @ %i in %.2fs]\n", worldRank, (double)(clock() - tStart)/CLOCKS_PER_SEC);
+
+
+  MPI_Finalize();
   return 0;
 }
 

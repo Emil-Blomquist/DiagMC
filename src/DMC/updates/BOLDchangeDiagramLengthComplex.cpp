@@ -56,10 +56,13 @@ void DiagrammaticMonteCarlo::BOLDchangeDiagramLengthComplex (double param) {
     }
   }
 
-  double
+   double
+    l = this->lambdaOf(g) + phononEnergies,
+    r = this->Udouble(0, 1),
     lowerBound = g->start->position,
     upperBound = this->maxLength - (this->FD.length - g->end->position),
-    tofG = this->Udouble(0, upperBound - lowerBound),
+    tofG = -log(1 - r + r*exp(-l*(upperBound - lowerBound)))/l,
+    tofGold = g->end->position - g->start->position,
     dt = tofG - (g->end->position - g->start->position);
 
   double oldVal = 0;
@@ -71,6 +74,7 @@ void DiagrammaticMonteCarlo::BOLDchangeDiagramLengthComplex (double param) {
                (this->mu - 0.5*pow(g->p, 2.0) - phononEnergies)*(tofG - (g->end->position - g->start->position))
                + this->additionalPhase(g->p, tofG)
                - this->additionalPhase(g)
+               + l*(tofG - tofGold)
              );
 
   bool accepted = false;
@@ -103,7 +107,7 @@ void DiagrammaticMonteCarlo::BOLDchangeDiagramLengthComplex (double param) {
   if (this->debug) {
     double
       val = this->evaluateDiagram(),
-      ratio = a / (val/oldVal);
+      ratio = a * exp(-l*(tofG - tofGold)) / (val/oldVal);
 
     if (accepted) {
       this->checkAcceptanceRatio(ratio, "BOLDchangeDiagramLengthComplex");

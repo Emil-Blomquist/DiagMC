@@ -29,7 +29,7 @@ DiagrammaticMonteCarlo::DiagrammaticMonteCarlo (
   // if we should sample only skeleton diagrams (reducibleDiagrams must be false)
   this->skeletonDiagrams = true;
   // if we should let the external momentum vary or not
-  this->fixedExternalMomentum = true;
+  this->fixedExternalMomentum = false;
   // if we want to use Dyson equation (fixedExternalMomentum must be false)
   this->Dyson = false;
   // wether or not we should employ boldification (fixedExternalMomentum must be false and Dyson must me set true)
@@ -38,16 +38,16 @@ DiagrammaticMonteCarlo::DiagrammaticMonteCarlo (
   // for when to bin the diagram
   this->minDiagramOrder = 1;
   // raise diagrm order will look at this (zero -> turned off)
-  this->maxDiagramOrder = 10;
+  this->maxDiagramOrder = 4;
   // how many iterations in the bold scheme shall be done
-  this->numBoldIterations = 1;
+  this->numBoldIterations = 4;
 
   // number of iterations used for each MC calculation
   this->numMCIterations = 1000000;
   // to reach a random start connfiguration
   this->untilStart = 10000000;
   // how often in seconds we should save by writing to file
-  this->savePeriod = 10;
+  this->numTempDMCsaves = 10;
 
   this->initialExternalMomentum = P;
   this->mu = mu;
@@ -65,61 +65,58 @@ DiagrammaticMonteCarlo::DiagrammaticMonteCarlo (
   this->maxLength = maxLength;
   this->dt = 0.02;
 
-  this->maxMomenta = 0.08;
+  this->maxMomenta = 1;
   this->dp = 0.02;
 
   this->Np = (this->fixedExternalMomentum ? 1 : this->maxMomenta/this->dp);
   this->Nt = this->maxLength/this->dt;
 
   // if we want to import a G this must be done before we initialize the Feynman diagram
-  this->importG("Glarge.txt");
+  // this->importG("Glarge.txt");
+
+  // if (this->worldRank == 0) {
+
+  //   this->calculateLambdas(this->dE, this->lambdas);
+
+  //   // cout << this->lambdas << endl;
+
+  //   // for (unsigned int i = 0; i != this->lambdas.size(); i++) {
+  //   //   cout << this->lambdas[i] << ", ";
+  //   // } cout << endl;
+  // }
 
   if (this->bold) {
     for (this->boldIteration = (this->dG.size() ? 1 : 0); this->boldIteration != this->numBoldIterations + 1; this->boldIteration++) {
       this->run();
 
       if (this->boldIteration < this->numBoldIterations) {
-        // perform Dyson using this->S
-        this->doDyson(this->S, this->dG);
+
+        if (this->worldRank == 0) {
+          ArrayXXd S;
+          this->normalizeHistogram(this->hist, this->N0, S);
+
+          // perform Dyson using this->S
+          this->doDyson(S, this->dG);
+        } else {
+          // for the other ranks, create a buffer large enough to contain the data
+          this->dG = ArrayXXd::Zero(this->hist.rows(), this->hist.cols());
+        }
+
+        // broadcast dG to other ranks as well
+        MPI_Bcast(
+          this->dG.data(),
+          this->dG.size(),
+          MPI_DOUBLE,
+          0,
+          MPI_Comm MPI_COMM_WORLD);
 
         // calculate the energy difference and store in this->dE
-        this->calculateEnergyDiff(dG, this->dE);
+        this->calculateEnergyDiff(this->dG, this->dE);
+
+        // calculate the rate parameters of the exponential imaginary-time distributions
+        this->calculateLambdas(this->dE, this->lambdas);
       }
-
-
-
-      // Array<double, Dynamic, Dynamic> normHist = ArrayXXd::Zero(this->hist.rows(), this->hist.cols());
-      // this->normalizedHistogram(normHist);
-
-
-      // // normalized histogram 
-      // cout << "normHist" << this->boldIteration + 1 << " = np.array([";
-      // for (unsigned int i = 0; i != normHist.cols(); i++) {
-      //   cout << normHist(0, i);
-
-      //   if (i < normHist.cols() - 1) {
-      //     cout << ", ";
-      //   }
-      // }
-      // cout << "])" << endl << endl;
-
-
-      // cout << "dG" << this->boldIteration + 1 << " = np.array([";
-      // for (unsigned int i = 0; i != this->dG.cols(); i++) {
-      //   cout << this->dG(0, i);
-
-      //   if (i < this->dG.cols() - 1) {
-      //     cout << ", ";
-      //   }
-      // }
-      // cout << "])" << endl << endl;
-
-      // cout << "---------" << endl;
-
-      // bold iteration is complete, compute dG to be used for future histogram normalizations
-      // this->doDyson(this->dG);
     }
-
   } else {
     this->run();
   }
@@ -150,14 +147,14 @@ void DiagrammaticMonteCarlo::run () {
   multimap<unsigned int, void (DiagrammaticMonteCarlo::*)(double)> updateMethods;
   if (this->bold && this->boldIteration > 0) {
     updateMethods = {
-      {1, &DiagrammaticMonteCarlo::shiftVertexPosition},
+      {1, &DiagrammaticMonteCarlo::BOLDshiftVertexPosition},
       {1, &DiagrammaticMonteCarlo::swapPhononConnections},
       {1, &DiagrammaticMonteCarlo::changeInternalPhononMomentumDirection},
       {1, &DiagrammaticMonteCarlo::changeInternalPhononMomentumMagnitude},
       {1, &DiagrammaticMonteCarlo::BOLDraiseOrder}, // <- These two must have the same probability
       {1, &DiagrammaticMonteCarlo::BOLDlowerOrder}, // <-
-      {5, &DiagrammaticMonteCarlo::BOLDchangeDiagramLength},
-      {10, &DiagrammaticMonteCarlo::BOLDchangeDiagramLengthComplex},
+      {1, &DiagrammaticMonteCarlo::BOLDchangeDiagramLength},
+      {1, &DiagrammaticMonteCarlo::BOLDchangeDiagramLengthComplex},
       {(this->fixedExternalMomentum ? 0 : 1), &DiagrammaticMonteCarlo::changeExternalMomentumMagnitude}
     };
   } else {
@@ -193,10 +190,13 @@ void DiagrammaticMonteCarlo::run () {
   }
 
   // number of iterations for each process
-  unsigned long long int
-    localNumIterations = this->numIterations/this->worldSize,
-    rest = this->numIterations - localNumIterations*this->worldSize;
+  unsigned long long int localNumIterations = this->numIterations/this->worldSize;
+  long long int rest = this->numIterations - localNumIterations*this->worldSize;
   if (this->worldRank < rest) localNumIterations++;
+
+  // when to do a temporary save
+  const unsigned long long int numItrBetweenTempSaves = localNumIterations/(this->numTempDMCsaves + 1);
+  unsigned long long int numItrAfterPrevTempSave = 0;
 
   // main loop
   for (this->currItr = 0; this->currItr < localNumIterations; this->currItr++) {
@@ -229,15 +229,14 @@ void DiagrammaticMonteCarlo::run () {
     }
 
     // temporary saves
-    if (difftime(time(NULL), startTime) > this->savePeriod) {
+    if (numItrAfterPrevTempSave++ == numItrBetweenTempSaves) {
+      numItrAfterPrevTempSave = 0;
+
       if (this->worldSize > 1) {
         // sum up the contributions from each an every process
         Array<unsigned long long int, Dynamic, Dynamic> totHist;
         unsigned long long int totN0, totCurrItr;
         this->sumHistograms(totHist, totN0, totCurrItr);
-
-        // when all processes are synchronized, reset the timer
-        startTime = time(NULL);
 
         if (this->worldRank == 0) {
           // write to file using totN0 and totHist
@@ -247,31 +246,33 @@ void DiagrammaticMonteCarlo::run () {
       } else {
         // write to file using N0 and hist
         this->write2file(this->hist, N0, this->currItr);
-        startTime = time(NULL);
       }
     }
   }
+
+  cout << "[Finished @ " << this->worldRank << " in "  << difftime(time(NULL), startTime) << "s]" << endl;
 
   if (this->worldSize > 1) {
     // sum up the contributions from each an every process
     Array<unsigned long long int, Dynamic, Dynamic> totHist;
     unsigned long long int totN0, totCurrItr;
+
     this->sumHistograms(totHist, totN0, totCurrItr);
 
-    if (this->bold && this->boldIteration < this->numBoldIterations) {
-      // store self energy for future use
-      normalizeHistogram(totHist, totN0, this->S);
-    }
+    // if (this->bold && this->boldIteration < this->numBoldIterations) {
+    //   // store self energy for future use
+    //   normalizeHistogram(totHist, totN0, this->S);
+    // }
 
     if (this->worldRank == 0) {
       // write to file using totN0 and totHist
       this->write2file(totHist, totN0, totCurrItr);
     }
   } else {
-    if (this->bold && this->boldIteration < this->numBoldIterations) {
-      // store self energy for future use
-      normalizeHistogram(this->hist, this->N0, this->S);
-    }
+    // if (this->bold && this->boldIteration < this->numBoldIterations) {
+    //   // store self energy for future use
+    //   normalizeHistogram(this->hist, this->N0, this->S);
+    // }
 
     // write to file using N0 and hist
     this->write2file(this->hist, N0, this->currItr);

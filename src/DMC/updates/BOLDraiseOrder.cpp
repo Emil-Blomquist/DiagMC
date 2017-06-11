@@ -60,10 +60,13 @@ void DiagrammaticMonteCarlo::BOLDraiseOrder (double param) {
     // second vertex position
     double
       t2low = t1,
-      t2up = this->FD.length;
-    
-    t2 = this->Udouble(t2low, t2up);
-    wInvt2 = t2up - t2low;
+      t2up = this->FD.length,
+      l = 0.01,
+      r = this->Udouble(0, 1),
+      dt2 = -log(1 - r + r*exp(-l*(t2up - t2low)))/l;
+
+    t2 = t2low + dt2;
+    wInvt2 = exp(l*dt2)*(1 - exp(-l*(t2up - t2low)))/l;
 
     // find second electron line to split
     unsigned int
