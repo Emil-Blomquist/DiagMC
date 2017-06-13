@@ -1,20 +1,11 @@
-*.pyc
-**/*.pyc
-__pycache__
-**/__pycache__
-*.pdf
-**/*.pdf
-
 *.o
 **/*.o
 
-c++/output
+bin/*
+data/*
 
 DiagMC.sublime-project
 DiagMC.sublime-workspace
 
-bin/run
-
-/data/
-/plot/data/
-/c++/data/
+Gs/
+Ss/
