@@ -30,7 +30,7 @@ void DiagrammaticMonteCarlo::raiseOrder (double param) {
     double std = (t2 - t1 < pow(10.0, -10.0) ? 100000 : 1/sqrt(t2 - t1)); 
     normal_distribution<double> normal(0.0, std);
 
-    q = abs(normal(this->mt));
+    q = abs(normal(this->pcg));
     theta = this->Udouble(0, M_PI);
     phi = this->Udouble(0, 2*M_PI);
     wInvQ = 2*pow(M_PI, 2.0) * sqrt(0.5*M_PI*pow(std, 2.0)) * exp(0.5*pow(q/std, 2.0));
@@ -97,7 +97,7 @@ void DiagrammaticMonteCarlo::raiseOrder (double param) {
     double std = (t2 - t1 < pow(10.0, -10.0) ? 100000 : 1/sqrt(t2 - t1)); 
     normal_distribution<double> normal(0.0, std);
 
-    q = abs(normal(this->mt));
+    q = abs(normal(this->pcg));
     theta = this->Udouble(0, M_PI);
     phi = this->Udouble(0, 2*M_PI);
     wInvQ = 2*pow(M_PI, 2.0) * sqrt(0.5*M_PI*pow(std, 2.0)) * exp(0.5*pow(q/std, 2.0));

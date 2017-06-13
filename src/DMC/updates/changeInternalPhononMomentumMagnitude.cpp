@@ -27,7 +27,7 @@ void DiagrammaticMonteCarlo::changeInternalPhononMomentumMagnitude (double param
   normal_distribution<double> normal(0.0, std);
   
   double
-    q = abs(normal(this->mt)),
+    q = abs(normal(this->pcg)),
     wInvq = sqrt(0.5*M_PI*pow(std, 2.0)) * exp(0.5*pow(q/std, 2.0));
 
   Vector3d

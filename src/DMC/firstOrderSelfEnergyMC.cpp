@@ -1,6 +1,6 @@
 #include "DiagrammaticMonteCarlo.h"
 
-void DiagrammaticMonteCarlo::appendKeyValue (vector<KeyValue>& vec, unsigned int n) {
+void DiagrammaticMonteCarlo::appendKeyValue (vector<KeyValue>& vec, unsigned int n, double numSecsForEachMC) {
   unsigned int 
     pi = n/this->MCvsDMCboundary,
     ti = n - pi*this->MCvsDMCboundary;
@@ -8,13 +8,13 @@ void DiagrammaticMonteCarlo::appendKeyValue (vector<KeyValue>& vec, unsigned int
   double
     p = (this->fixedExternalMomentum ? this->initialExternalMomentum.norm() : (pi + 0.5)*this->dp),
     t = (ti + 0.5)*this->dt,
-    S1 = firstOrderSelfEnergyMC(t, Vector3d{0, 0, p});
+    S1 = calculateFirstOrderSelfEnergyMC(t, Vector3d{0, 0, p}, numSecsForEachMC);
 
   KeyValue keyValue {pi, ti, S1};
   vec.push_back(keyValue);
 }
 
-void DiagrammaticMonteCarlo::firstOrderSelfEnergyMC () {
+void DiagrammaticMonteCarlo::firstOrderSelfEnergyMC (double numSecsDoingMC) {
 
   // to time the time needed
   clock_t tStart = clock();
@@ -50,15 +50,28 @@ void DiagrammaticMonteCarlo::firstOrderSelfEnergyMC () {
 
     vector<KeyValue> vector2send, vector2receive{this->Np*Nt};
 
+    // how much time should be spent on each MC calculation
+    // (we dont care about the extra time needed for the rest elements)
+    double numSecsForEachMC = numSecsDoingMC/numEach;
+
+    if (this->worldRank == 0) {
+      cout << "numSecsForEachMC = " << numSecsForEachMC << endl;
+    }
+
     for (unsigned int n = from; n != end; n++) {
-      this->appendKeyValue(vector2send, n);
+      this->appendKeyValue(vector2send, n, numSecsForEachMC);
     }
 
     // rest
     unsigned int myRest = this->worldSize*numEach + this->worldRank;
     if (myRest <= this->Np*Nt - 1) {
-      this->appendKeyValue(vector2send, myRest);
+      this->appendKeyValue(vector2send, myRest, numSecsForEachMC);
     }
+
+    printf("[S1 MC @ %u in %.2fs]\n", this->worldRank, (double)(clock() - tStart)/CLOCKS_PER_SEC);
+
+    // syncronize all processes so that any network buffering wont occur
+    MPI_Barrier(MPI_COMM_WORLD);
 
     // calculate receive counts and corresponding displacements
     vector<int> recvCounts(this->worldSize), recvDiscps(this->worldSize);
@@ -89,10 +102,16 @@ void DiagrammaticMonteCarlo::firstOrderSelfEnergyMC () {
       for (KeyValue kv : vector2receive) {
         this->S1mc(kv.pi, kv.ti) = kv.val;
       }
-    }
 
-    printf("[S1 MC @ %u in %.2fs]\n", this->worldRank, (double)(clock() - tStart)/CLOCKS_PER_SEC);
+      printf("[S1 MC in %.2fs]\n", (double)(clock() - tStart)/CLOCKS_PER_SEC);
+    }
   } else {
+    // how much time should be spent on each MC calculation
+    // (we dont care about the extra time needed for the rest elements)
+    double numSecsForEachMC = numSecsDoingMC/(this->Np*this->MCvsDMCboundary);
+
+    cout << "numSecsForEachMC = " << numSecsForEachMC << endl;
+
     // MC calculation
     this->S1mc = Array<double, Dynamic, Dynamic>::Zero(this->Np, this->MCvsDMCboundary);
 
@@ -101,7 +120,7 @@ void DiagrammaticMonteCarlo::firstOrderSelfEnergyMC () {
       for (unsigned int j = 0; j != this->S1mc.cols(); j++) {
         double t = (j + 0.5)*this->dt;
 
-        this->S1mc(i, j) = firstOrderSelfEnergyMC(t, Vector3d{0, 0, p});
+        this->S1mc(i, j) = calculateFirstOrderSelfEnergyMC(t, Vector3d{0, 0, p}, numSecsForEachMC);
       }
     }
 
@@ -109,34 +128,54 @@ void DiagrammaticMonteCarlo::firstOrderSelfEnergyMC () {
   }
 }
 
-double DiagrammaticMonteCarlo::firstOrderSelfEnergyMC (double t, Vector3d P) {
+double DiagrammaticMonteCarlo::calculateFirstOrderSelfEnergyMC (double t, Vector3d P, double numSecsForEachMC) {
+  // a fixed number of iterations we do before looking at the time difference
+  // this since looking at the time difference is a rather complex computation
+  unsigned int numItrsPerTimesCheck = 100000;
+
+  // since we look at a time difference
+  const clock_t beginTime = clock();
+
+  // the total number of iterations, to divide with at the end
+  unsigned long long int numItrs = 0;
+
+  // to be divided by the total number of iterations
   double value = 0;
+  do {
 
-  for (long unsigned int i = 0; i != this->numMCIterations; i++) {
-    // sample momentum
-    double
-      std = 1/sqrt(t),
-      q = abs(this->Ndouble(std)),
-      theta = this->Udouble(0, M_PI),
-      phi = this->Udouble(0, 2*M_PI),
-      wInv_Q = 2*M_PI*M_PI * sqrt(0.5*M_PI*std*std) * exp(0.5*pow(q/std, 2.0));
+    // check the time after every X:s iterations
+    for (unsigned int i = 0; i != numItrsPerTimesCheck; i++) {
+      // sample momentum
+      double
+        std = 1/sqrt(t),
+        q = abs(this->Ndouble(std)),
+        theta = this->Udouble(0, M_PI),
+        phi = this->Udouble(0, 2*M_PI),
+        wInv_Q = 2*M_PI*M_PI * sqrt(0.5*M_PI*std*std) * exp(0.5*pow(q/std, 2.0));
 
-    Vector3d Q{
-      q*sin(theta)*cos(phi),
-      q*sin(theta)*sin(phi),
-      q*cos(theta)
-    };
+      Vector3d Q{
+        q*sin(theta)*cos(phi),
+        q*sin(theta)*sin(phi),
+        q*cos(theta)
+      };
 
-    double
-      pq = (P - Q).norm(),
-      omega = FeynmanDiagram::phononEnergy(q);
-    
-    // integrand value
-    double integrand = Electron::value(pq, t, this->mu, (this->dE.size() ? this->dEOf(pq, t) : 0))
-                     * Phonon::value(omega, t, theta, this->alpha);
+      double
+        pq = (P - Q).norm(),
+        omega = FeynmanDiagram::phononEnergy(q);
+      
+      // integrand value
+      double integrand = Electron::value(pq, t, this->mu, (this->dE.size() ? this->dEOf(pq, t) : 0))
+                       * Phonon::value(omega, t, theta, this->alpha);
 
-    value += integrand * wInv_Q;
+      value += integrand * wInv_Q;
+    }
+
+    numItrs += numItrsPerTimesCheck;
+  } while (float(clock() - beginTime)/CLOCKS_PER_SEC < numSecsForEachMC);
+
+  if (this->worldRank == 0 && t == 0.5*this->dt && P.norm() == 0.5*this->dp) {
+    cout << "which corresponds to about " << numItrs << " iterations" << endl;
   }
 
-  return value/this->numMCIterations;
+  return value/numItrs;
 }

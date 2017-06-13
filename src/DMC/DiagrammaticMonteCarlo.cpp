@@ -14,8 +14,9 @@ DiagrammaticMonteCarlo::DiagrammaticMonteCarlo (
   MPI_Comm_rank(MPI_COMM_WORLD, &this->worldRank);
 
   // seed random generator
-  unsigned long long int seed1 = chrono::system_clock::now().time_since_epoch().count() / this->worldSize * (this->worldRank + 1);
-  this->mt.seed(seed1);
+  unsigned long long int seed = chrono::system_clock::now().time_since_epoch().count() / this->worldSize * (this->worldRank + 1);
+  // this->mt.seed(seed1);
+  this->pcg.seed(seed);
 
   // will print overflow exceptions etc. (code is half as fast with this activated)
   this->debug = false;
@@ -29,37 +30,53 @@ DiagrammaticMonteCarlo::DiagrammaticMonteCarlo (
   // if we should sample only skeleton diagrams (reducibleDiagrams must be false)
   this->skeletonDiagrams = true;
   // if we should let the external momentum vary or not
-  this->fixedExternalMomentum = false;
-  // if we want to use Dyson equation (fixedExternalMomentum must be false)
-  this->Dyson = false;
+  this->fixedExternalMomentum = true;
+  // if we want to use Dyson equation (fixedExternalMomentum must be false (REALLY!?))
+  this->Dyson = false; // if we want to output using dyson or not
   // wether or not we should employ boldification (fixedExternalMomentum must be false and Dyson must me set true)
-  this->bold = true;
+  this->bold = false;
 
   // for when to bin the diagram
   this->minDiagramOrder = 1;
   // raise diagrm order will look at this (zero -> turned off)
-  this->maxDiagramOrder = 4;
+  this->maxDiagramOrder = 8;
   // how many iterations in the bold scheme shall be done
   this->numBoldIterations = 4;
 
   // number of iterations used for each MC calculation
-  this->numMCIterations = 1000000;
+  // this->numMCIterations = 100000;
   // to reach a random start connfiguration
   this->untilStart = 10000000;
   // how often in seconds we should save by writing to file
   this->numTempDMCsaves = 10;
 
+
+
+
+
+  // numSecsPerCorePerBoldItr = 10 * 60;
+  // fracToSpendOnMC = 0.1;
+
+  this->numSecsDoingMCperCorePerBoldItr = 30*60; // 30 min
+  this->numSecsDoingDMCperCorePerBoldItr = 10*60*60; // 10 h
+
+
+
+
+
   this->initialExternalMomentum = P;
   this->mu = mu;
   this->alpha = alpha;
-  this->numIterations = numIterations;
+  // this->numIterations = numIterations;
   this->param = this->Udouble(0, 1);
   this->argv = argv;
 
   // store time at which the calculation began
-  time_t rawtime;
-  time (&rawtime);
-  this->timeinfo = localtime(&rawtime);
+  char buffer[80];
+  time_t rawtime = time(nullptr);
+  strftime(buffer, 80, "%Y-%m-%d %H:%M:%S", localtime(&rawtime));
+  this->dateAndTimeString = buffer;
+
 
   // in order to create the histogram
   this->maxLength = maxLength;
@@ -73,20 +90,14 @@ DiagrammaticMonteCarlo::DiagrammaticMonteCarlo (
 
   // if we want to import a G this must be done before we initialize the Feynman diagram
   // this->importG("Glarge.txt");
-
-  // if (this->worldRank == 0) {
-
-  //   this->calculateLambdas(this->dE, this->lambdas);
-
-  //   // cout << this->lambdas << endl;
-
-  //   // for (unsigned int i = 0; i != this->lambdas.size(); i++) {
-  //   //   cout << this->lambdas[i] << ", ";
-  //   // } cout << endl;
-  // }
+  // this->importS("Slarge.txt");
 
   if (this->bold) {
-    for (this->boldIteration = (this->dG.size() ? 1 : 0); this->boldIteration != this->numBoldIterations + 1; this->boldIteration++) {
+    for (
+      this->boldIteration = (this->dG.size() ? this->boldIteration + 1 : 0);
+      this->boldIteration != this->numBoldIterations + 1;
+      this->boldIteration++
+    ) {
       this->run();
 
       if (this->boldIteration < this->numBoldIterations) {
@@ -122,162 +133,7 @@ DiagrammaticMonteCarlo::DiagrammaticMonteCarlo (
   }
 }
 
-void DiagrammaticMonteCarlo::run () {
-  // initiate/reset FeynmanDiagram
-  this->FD = FeynmanDiagram{this->initialExternalMomentum, this->dt, this->alpha, this->mu};
 
-  // initiate/reset histogram
-  this->N0 = 0;
-  this->hist = Array<unsigned long long int, Dynamic, Dynamic>::Zero(this->Np, this->Nt);
-
-  // save an empty file
-  if (this->worldRank == 0) {
-    this->write2file(this->hist, this->N0, this->currItr);
-  }
-
-  // used for temporary saving result
-  time_t startTime = time(NULL);
-
-  // MC instead of DMC for S1 at small times
-  if (this->minDiagramOrder <= 1 && ! this->externalLegs) {
-    this->firstOrderSelfEnergyMC();
-  }
-
-  // specify the relative probability of choosing a specific update function
-  multimap<unsigned int, void (DiagrammaticMonteCarlo::*)(double)> updateMethods;
-  if (this->bold && this->boldIteration > 0) {
-    updateMethods = {
-      {1, &DiagrammaticMonteCarlo::BOLDshiftVertexPosition},
-      {1, &DiagrammaticMonteCarlo::swapPhononConnections},
-      {1, &DiagrammaticMonteCarlo::changeInternalPhononMomentumDirection},
-      {1, &DiagrammaticMonteCarlo::changeInternalPhononMomentumMagnitude},
-      {1, &DiagrammaticMonteCarlo::BOLDraiseOrder}, // <- These two must have the same probability
-      {1, &DiagrammaticMonteCarlo::BOLDlowerOrder}, // <-
-      {1, &DiagrammaticMonteCarlo::BOLDchangeDiagramLength},
-      {1, &DiagrammaticMonteCarlo::BOLDchangeDiagramLengthComplex},
-      {(this->fixedExternalMomentum ? 0 : 1), &DiagrammaticMonteCarlo::changeExternalMomentumMagnitude}
-    };
-  } else {
-    updateMethods = {
-      {1, &DiagrammaticMonteCarlo::shiftVertexPosition},
-      {1, &DiagrammaticMonteCarlo::swapPhononConnections},
-      {1, &DiagrammaticMonteCarlo::changeInternalPhononMomentumDirection},
-      {1, &DiagrammaticMonteCarlo::changeInternalPhononMomentumMagnitude},
-      {1, &DiagrammaticMonteCarlo::raiseOrder}, // <- These two must have the same probability
-      {1, &DiagrammaticMonteCarlo::lowerOrder}, // <-
-      {1, &DiagrammaticMonteCarlo::changeDiagramLength},
-      {1, &DiagrammaticMonteCarlo::changeDiagramLengthComplex},
-      {(this->fixedExternalMomentum ? 0 : 1), &DiagrammaticMonteCarlo::changeExternalMomentumMagnitude}
-    };
-  }
-
-  // vector which is going to contain the specified quantity of update functions
-  vector<void (DiagrammaticMonteCarlo::*)(double)> chooseUpdateMethod;
-
-  // populate vector
-  for (auto updateMethod = updateMethods.begin(); updateMethod != updateMethods.end(); updateMethod++) {
-    for (unsigned int i = 0; i != updateMethod->first; i++) {
-      chooseUpdateMethod.push_back(updateMethod->second);
-    }
-  }
-  
-  // to reach a random start connfiguration
-  for (unsigned long long int i = 0; i < this->untilStart; ++i) {
-    // choose update operation on random
-    auto updateMethod = chooseUpdateMethod[this->Uint(0, chooseUpdateMethod.size() - 1)];
-    // update diagram
-    (this->*updateMethod)(this->param);
-  }
-
-  // number of iterations for each process
-  unsigned long long int localNumIterations = this->numIterations/this->worldSize;
-  long long int rest = this->numIterations - localNumIterations*this->worldSize;
-  if (this->worldRank < rest) localNumIterations++;
-
-  // when to do a temporary save
-  const unsigned long long int numItrBetweenTempSaves = localNumIterations/(this->numTempDMCsaves + 1);
-  unsigned long long int numItrAfterPrevTempSave = 0;
-
-  // main loop
-  for (this->currItr = 0; this->currItr < localNumIterations; this->currItr++) {
-    auto updateMethod = chooseUpdateMethod[this->Uint(0, chooseUpdateMethod.size() - 1)];
-    (this->*updateMethod)(this->param);
-
-    // bin diagrams of desired order and desired structure
-    if (this->FD.Ds.size() >= this->minDiagramOrder) {
-      if (
-        this->reducibleDiagrams ||
-        ( this->skeletonDiagrams && this->FD.isSkeletonDiagram() ) ||
-        ( ! this->skeletonDiagrams && this->FD.isIrreducibleDiagram() )
-      ) {
-        unsigned int ti = this->FD.length/this->dt;
-        
-        if (this->FD.Ds.size() != 1 || this->MCvsDMCboundary <= ti) {
-          if (this->fixedExternalMomentum) {
-            this->hist(0, ti)++;
-          } else {
-            unsigned int pi = this->FD.externalMomentum/this->dp;
-            this->hist(pi, ti)++;
-          }
-        }
-      }
-    }
-
-    // bin zeroth order diagrams used for normalization
-    if (this->FD.Ds.size() == 0) {
-      this->N0++;
-    }
-
-    // temporary saves
-    if (numItrAfterPrevTempSave++ == numItrBetweenTempSaves) {
-      numItrAfterPrevTempSave = 0;
-
-      if (this->worldSize > 1) {
-        // sum up the contributions from each an every process
-        Array<unsigned long long int, Dynamic, Dynamic> totHist;
-        unsigned long long int totN0, totCurrItr;
-        this->sumHistograms(totHist, totN0, totCurrItr);
-
-        if (this->worldRank == 0) {
-          // write to file using totN0 and totHist
-          this->write2file(totHist, totN0, totCurrItr);
-        }
-
-      } else {
-        // write to file using N0 and hist
-        this->write2file(this->hist, N0, this->currItr);
-      }
-    }
-  }
-
-  cout << "[Finished @ " << this->worldRank << " in "  << difftime(time(NULL), startTime) << "s]" << endl;
-
-  if (this->worldSize > 1) {
-    // sum up the contributions from each an every process
-    Array<unsigned long long int, Dynamic, Dynamic> totHist;
-    unsigned long long int totN0, totCurrItr;
-
-    this->sumHistograms(totHist, totN0, totCurrItr);
-
-    // if (this->bold && this->boldIteration < this->numBoldIterations) {
-    //   // store self energy for future use
-    //   normalizeHistogram(totHist, totN0, this->S);
-    // }
-
-    if (this->worldRank == 0) {
-      // write to file using totN0 and totHist
-      this->write2file(totHist, totN0, totCurrItr);
-    }
-  } else {
-    // if (this->bold && this->boldIteration < this->numBoldIterations) {
-    //   // store self energy for future use
-    //   normalizeHistogram(this->hist, this->N0, this->S);
-    // }
-
-    // write to file using N0 and hist
-    this->write2file(this->hist, N0, this->currItr);
-  }
-}
 
 
 
@@ -288,17 +144,20 @@ void DiagrammaticMonteCarlo::run () {
 
 double DiagrammaticMonteCarlo::Udouble (double from, double to) {
   uniform_real_distribution<double> distribution(from, to);
-  return distribution(this->mt);
+  // return distribution(this->mt);
+  return distribution(this->pcg);
 }
 
 double DiagrammaticMonteCarlo::Ndouble (double std) {
   normal_distribution<double> distribution(0.0, std);
-  return distribution(this->mt);
+  // return distribution(this->mt);
+  return distribution(this->pcg);
 }
 
 int DiagrammaticMonteCarlo::Uint (int fromIncluded, int toIncluded) {
   uniform_int_distribution<int> distribution(fromIncluded, toIncluded);
-  return distribution(this->mt);
+  // return distribution(this->mt);
+  return distribution(this->pcg);
 }
 
 Vector3d DiagrammaticMonteCarlo::calculateMeanP (shared_ptr<Vertex> v1, shared_ptr<Vertex> v2) {

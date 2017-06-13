@@ -38,7 +38,7 @@ void DiagrammaticMonteCarlo::doDyson (
 ) {
   clock_t tStart = clock();
 
-  dG = ArrayXXd::Zero(this->hist.rows(), this->hist.cols());
+  dG = ArrayXXd::Zero(SE_t_all.rows(), SE_t_all.cols());
 
   // define complex number
   const complex<double> I(0.0, 1.0); 
@@ -69,7 +69,7 @@ void DiagrammaticMonteCarlo::doDyson (
   ArrayXd SE_t_sing = this->alpha*exp(-param*t)/sqrt(M_PI*t);
   ArrayXcd SE_w_sing = this->alpha/sqrt(param + I*w);
 
-  for (unsigned int ip = 0; ip != this->hist.rows(); ip++) {
+  for (unsigned int ip = 0; ip != SE_t_all.rows(); ip++) {
     // bare propagator
     double
       p = (ip + 0.5)*this->dp,

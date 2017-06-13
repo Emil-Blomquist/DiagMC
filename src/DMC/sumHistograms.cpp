@@ -1,19 +1,23 @@
 #include "DiagrammaticMonteCarlo.h"
 
 void DiagrammaticMonteCarlo::sumHistograms (
+  unsigned long long int& itrNum,                                          
   Array<unsigned long long int, Dynamic, Dynamic>& totHist,
   unsigned long long int& totN0,
-  unsigned long long int& totCurrItr
+  unsigned long long int& totItrNum
 ) {
   if (this->worldRank == 0) {
     // create a large enough buffer
     totHist = Array<unsigned long long int, Dynamic, Dynamic>::Zero(this->Np, this->Nt);
   }
 
+  // syncronize all processes so that any network buffering wont occur
+  MPI_Barrier(MPI_COMM_WORLD);
+
   // collect total number of iterations
   MPI_Reduce(
-    &this->currItr,
-    &totCurrItr,
+    &itrNum,
+    &totItrNum,
     1,
     MPI::UNSIGNED_LONG_LONG,
     MPI_SUM,

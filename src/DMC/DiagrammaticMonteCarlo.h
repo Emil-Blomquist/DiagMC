@@ -22,6 +22,8 @@
 
 #include <tuple> // return value
 
+#include "../PCG/pcg_random.hpp"
+
 #include <Eigen/Dense>
 #include <unsupported/Eigen/FFT>
 
@@ -33,13 +35,22 @@ using namespace std;
 
 class DiagrammaticMonteCarlo {
   private:
-    mt19937_64 mt;
+    // mt19937_64 mt;
+    pcg64 pcg;
     bool debug, loud, externalLegs, reducibleDiagrams, fixedExternalMomentum, Dyson, skeletonDiagrams, bold;
-    unsigned long long int numIterations, N0, numMCIterations, untilStart, currItr;
+    // unsigned long long int numIterations, N0, numMCIterations, untilStart, currItr;
+    unsigned long long int N0, untilStart;
+
     double maxLength, mu, alpha, param, dt, dp, maxMomenta;
-    struct tm *timeinfo;
+    // struct tm *timeinfo;
+    string dateAndTimeString;
     char **argv;
-    unsigned int Np, Nt, minDiagramOrder, maxDiagramOrder, numBoldIterations, boldIteration, MCvsDMCboundary, numTempDMCsaves;
+    unsigned int
+      Np, Nt, minDiagramOrder, maxDiagramOrder,
+      numBoldIterations, boldIteration, MCvsDMCboundary,
+      numTempDMCsaves;
+
+    double numSecsDoingDMCperCorePerBoldItr, numSecsDoingMCperCorePerBoldItr;
 
     int worldRank, worldSize;
 
@@ -98,7 +109,8 @@ class DiagrammaticMonteCarlo {
       write2file (
         Array<unsigned long long int, Dynamic, Dynamic>&,
         unsigned long long int&,
-        unsigned long long int&),
+        unsigned long long int&,
+        double),
       doDyson (ArrayXXd&, ArrayXXd&),
       normalizeHistogram (
         Array<unsigned long long int, Dynamic, Dynamic>&,
@@ -108,15 +120,17 @@ class DiagrammaticMonteCarlo {
       checkAcceptanceRatio (double, string);
 
     void
-      firstOrderSelfEnergyMC (),
-      appendKeyValue (vector<KeyValue>&, unsigned int), // <- gather MC calculation
+      firstOrderSelfEnergyMC (double),
+      appendKeyValue (vector<KeyValue>&, unsigned int, double), // <- gather MC calculation
       sumHistograms (
+        unsigned long long int&,
         Array<unsigned long long int, Dynamic, Dynamic>&,
         unsigned long long int&,
         unsigned long long int&),
-      importG (string);
+      importG (string),
+      importS (string);
 
-    double firstOrderSelfEnergyMC (double, Vector3d);
+    double calculateFirstOrderSelfEnergyMC (double, Vector3d, double);
 
     // imaginary-time distribution
     void calculateLambdas (ArrayXXd&, ArrayXd&);

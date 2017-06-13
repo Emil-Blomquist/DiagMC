@@ -3,12 +3,15 @@
 void DiagrammaticMonteCarlo::write2file (
   Array<unsigned long long int, Dynamic, Dynamic>& hist,
   unsigned long long int& N0,
-  unsigned long long int& currNumItr
+  unsigned long long int& totItrNum,
+  double secsSpentDoingDMC
 ) {
-  // create date and time string
-  char buffer[80];
-  strftime(buffer, 80, "%Y-%m-%d %H:%M:%S", this->timeinfo);
-  string dateAndTimeString(buffer);
+
+  // expected total computation time needed per core
+  // double secsNeededPerCore = this->numSecsDoingDMCperCorePerBoldItr;
+  // if (this->minDiagramOrder <= 1 && ! this->externalLegs) {
+  //   secsNeededPerCore += this->numSecsDoingMCperCorePerBoldItr;
+  // }
 
   // create file name
   stringstream stream;
@@ -20,10 +23,12 @@ void DiagrammaticMonteCarlo::write2file (
          << " dt=" << this->dt
          << ( ! this->fixedExternalMomentum ? " pmax=" + to_string(this->maxMomenta) : "" )
          << ( ! this->fixedExternalMomentum ? " dp=" + to_string(this->dp) : "" )
-         << " N=" << this->numIterations
+         << ( this->minDiagramOrder <= 1 && ! this->externalLegs ? " MCsecs=" + to_string(this->numSecsDoingMCperCorePerBoldItr) : "" )
+         << " DMCsecs=" << this->numSecsDoingDMCperCorePerBoldItr
          << ( this->bold ? " bolditr=" + to_string(this->boldIteration) : "" )
          << ( this->bold ? " maxn=" + to_string(this->maxDiagramOrder) : "" )
-         << " date=" << dateAndTimeString
+         << " date=" << this->dateAndTimeString
+         << " numcores=" << this->worldSize
          << " unique=" << param;
   string fileName = stream.str();
 
@@ -38,10 +43,11 @@ void DiagrammaticMonteCarlo::write2file (
   ofstream myfile;
   myfile.open(path + "../data/" + fileName.substr(1) + ".txt");
   myfile << "--------" + fileName;
-  if (this->numIterations != currNumItr) {
-    myfile << " Ntemp=" << currNumItr;
+  if (secsSpentDoingDMC < this->numSecsDoingDMCperCorePerBoldItr) {
+    myfile << " percentageDMCcompleted=" <<  int(100*secsSpentDoingDMC/numSecsDoingDMCperCorePerBoldItr);
   }
-  myfile << " --------" << endl;
+  myfile << " N=" << totItrNum
+         << " --------" << endl;
 
   if (this->N0) {
     // append the data
