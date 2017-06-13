@@ -13,6 +13,8 @@ c++/output
 DiagMC.sublime-project
 DiagMC.sublime-workspace
 
+bin/run
+
 /data/
 /plot/data/
 /c++/data/
