@@ -90,16 +90,11 @@ void DiagrammaticMonteCarlo::run () {
   // first save has already occured, thus initialize to 0
   unsigned int tempSaveNum = 0;
 
+
+  // unsigned int diagramOrderHistogramLength = 1000;
+  // vector<unsigned long long int> diagramOrderHistogram(diagramOrderHistogramLength, 0);
+
   // main loop
-  // for (itrNum = 0; itrNum < localNumIterations; itrNum++) {
-
-
-  unsigned long long int totMeanTimes = 0;
-  double meanTime = 0;
-
-  unsigned int diagramOrderHistogramLength = 1000;
-  vector<unsigned long long int> diagramOrderHistogram(diagramOrderHistogramLength, 0);
-
   double secsSpentDoingDMC;
   do {
 
@@ -113,13 +108,9 @@ void DiagrammaticMonteCarlo::run () {
       // bin diagrams of desired order and desired structure
       if (this->FD.Ds.size() >= this->minDiagramOrder) {
 
-        if (this->FD.Ds.size() < diagramOrderHistogramLength) {
-          diagramOrderHistogram[this->FD.Ds.size()]++;
-        }
-
-        meanTime += this->FD.length;
-        totMeanTimes++;
-
+        // if (this->FD.Ds.size() < diagramOrderHistogramLength) {
+        //   diagramOrderHistogram[this->FD.Ds.size()]++;
+        // }
 
         if (
           this->reducibleDiagrams ||
@@ -157,37 +148,14 @@ void DiagrammaticMonteCarlo::run () {
       tempSaveNum = propTempSaveNum;
 
       if (true) {
-        // time_t rawTime;
-        // time(&rawTime);
         time_t rawTime = std::time(nullptr);
 
         char buffer[80];
         strftime(buffer, 80, "%Y-%m-%d %H:%M:%S", localtime(&rawTime));
         string dateAndTimeString(buffer);
 
-
         cout << this->worldRank << " @ " << itrNum << " (" << secsSpentDoingDMC << ")" << endl;
       }
-
-      cout << "[" << this->worldRank << "]" << endl;
-      cout << "meanT_" << this->worldRank << " = " << meanTime/totMeanTimes << endl;
-      cout << "\tNo_" << this->worldRank << " = np.array([";
-      for (unsigned int i = 0; i < diagramOrderHistogramLength; i++) {
-        cout << diagramOrderHistogram[i];
-        if (i < diagramOrderHistogramLength - 1) {
-          cout << ", ";
-        }
-      }
-      cout << "])" << endl;
-      cout << "\tN0_" << this->worldRank << " = " << this->N0 << endl;
-      cout << "\tN_" << this->worldRank << " = np.array([";
-      for (unsigned int i = 0; i < this->hist.size(); i++) {
-        cout << this->hist(0, i);
-        if (i < this->hist.size() - 1) {
-          cout << ", ";
-        }
-      }
-      cout << "])" << endl;
 
       if (this->worldSize > 1) {
         // sum up the contributions from each an every process
@@ -204,20 +172,6 @@ void DiagrammaticMonteCarlo::run () {
         // write to file using N0 and hist
         this->write2file(this->hist, this->N0, itrNum, secsSpentDoingDMC);
       }
-
-      if (true) {
-        // time_t rawTime;
-        // time(&rawTime);
-        time_t rawTime = std::time(nullptr);
-
-        char buffer[80];
-        strftime(buffer, 80, "%Y-%m-%d %H:%M:%S", localtime(&rawTime));
-        string dateAndTimeString(buffer);
-
-
-        cout << this->worldRank << " @ cont " << " (" << secsSpentDoingDMC << ")" << endl;
-      }
-
     }
 
 
