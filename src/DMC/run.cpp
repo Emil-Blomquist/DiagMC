@@ -173,6 +173,7 @@ void DiagrammaticMonteCarlo::run () {
         this->write2file(this->hist, this->N0, itrNum, secsSpentDoingDMC);
       }
     }
+    
 
 
 

@@ -144,13 +144,16 @@ class DiagrammaticMonteCarlo {
     FeynmanDiagram FD;
 
     DiagrammaticMonteCarlo (
-      Vector3d, 
       double,
       double,
       double,
-      unsigned long long int,
-      // unsigned int,
-      double param,
+      double,
+      double,
+      double,
+      double,
+      double,
+      double,
+      unsigned int,
       char **argv
     );
     

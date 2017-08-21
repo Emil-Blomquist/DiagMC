@@ -1,13 +1,16 @@
 #include "DiagrammaticMonteCarlo.h"
 
 DiagrammaticMonteCarlo::DiagrammaticMonteCarlo (
-  Vector3d P,
-  double maxLength,
+  double p,
   double alpha,
   double mu,
-  unsigned long long int numIterations,
-  // unsigned int numBins,
-  double param,
+  double maxLength,
+  double maxMomenta,
+  double dt,
+  double dp,
+  double numSecsdmc,
+  double numSecsmc,
+  unsigned int numTempSaves,
   char **argv
 ) {
   MPI_Comm_size(MPI_COMM_WORLD, &this->worldSize);
@@ -48,26 +51,16 @@ DiagrammaticMonteCarlo::DiagrammaticMonteCarlo (
   // to reach a random start connfiguration
   this->untilStart = 10000000;
   // how often in seconds we should save by writing to file
-  this->numTempDMCsaves = 9;
+  this->numTempDMCsaves = numTempSaves;
 
 
+  this->numSecsDoingMCperCorePerBoldItr = numSecsmc;
+  this->numSecsDoingDMCperCorePerBoldItr = numSecsdmc;
 
 
-
-  // numSecsPerCorePerBoldItr = 10 * 60;
-  // fracToSpendOnMC = 0.1;
-
-  this->numSecsDoingMCperCorePerBoldItr = 30; // 30 min
-  this->numSecsDoingDMCperCorePerBoldItr = 10*60;//10*60*60; // 10 h
-
-
-
-
-
-  this->initialExternalMomentum = P;
+  this->initialExternalMomentum = Vector3d{0, 0, p};
   this->mu = mu;
   this->alpha = alpha;
-  // this->numIterations = numIterations;
   this->param = this->Udouble(0, 1);
   this->argv = argv;
 
@@ -79,11 +72,11 @@ DiagrammaticMonteCarlo::DiagrammaticMonteCarlo (
 
 
   // in order to create the histogram
-  this->maxLength = maxLength;
-  this->dt = 0.01;
+  this->dt = dt;
+  this->maxLength = ceil(maxLength/dt)*dt;
 
-  this->maxMomenta = 1;
-  this->dp = 0.02;
+  this->dp = dp;
+  this->maxMomenta = ceil(maxMomenta/dp)*dp;
 
   this->Np = (this->fixedExternalMomentum ? 1 : this->maxMomenta/this->dp);
   this->Nt = this->maxLength/this->dt;
