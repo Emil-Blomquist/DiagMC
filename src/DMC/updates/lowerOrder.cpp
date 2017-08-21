@@ -36,7 +36,7 @@ void DiagrammaticMonteCarlo::lowerOrder (double param) {
     double std = (v2->position - v1->position < pow(10.0, -10.0) ? 100000 : 1/sqrt(v2->position - v1->position)); 
     normal_distribution<double> normal(0.0, std);
 
-    wInvQ = 2*pow(M_PI, 2.0) * sqrt(0.5*M_PI*pow(std, 2.0)) * exp(0.5*pow(d->q/std, 2.0));
+    wInvQ = 2*M_PI * 2 * sqrt(0.5*M_PI*pow(std, 2.0)) * exp(0.5*pow(d->q/std, 2.0));
 
     // contribution from boldification
     if (this->bold && this->boldIteration > 0) {
@@ -70,14 +70,14 @@ void DiagrammaticMonteCarlo::lowerOrder (double param) {
     double
       t2low = v1->position,
       t2up = this->FD.length,
-      l = 0.01,
+      l = 1,
       dt2 = v2->position - t2low;
 
     wInvt2 = exp(l*dt2)*(1 - exp(-l*(t2up - t2low)))/l;
 
     double std = (v2->position - v1->position < pow(10.0, -10.0) ? 100000 : 1/sqrt(v2->position - v1->position));
 
-    wInvQ = 2*pow(M_PI, 2.0) * sqrt(0.5*M_PI*pow(std, 2.0)) * exp(0.5*pow(d->q/std, 2.0));
+    wInvQ = 2*M_PI * 2 * sqrt(0.5*M_PI*pow(std, 2.0)) * exp(0.5*pow(d->q/std, 2.0));
 
     // contribution from boldification
     if (this->bold && this->boldIteration > 0) {
@@ -130,7 +130,7 @@ void DiagrammaticMonteCarlo::lowerOrder (double param) {
   if (wInvQ == 0 || sinTheta == 0 || wInvt2 == 0 || ! isfinite(exponential)) {
     a = 1;
   } else {
-    a = boldContribution * exponential * sqrt(8)*M_PI*M_PI/(alpha*sinTheta) * wInvd/(wInvG1*wInvt1*wInvt2*wInvQ);
+    a = boldContribution * exponential * sqrt(8)*M_PI*M_PI/alpha * wInvd/(wInvG1*wInvt1*wInvt2*wInvQ) / (0.5*sqrt(M_PI)/alpha);
   }
 
 

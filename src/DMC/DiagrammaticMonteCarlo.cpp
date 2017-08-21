@@ -24,11 +24,11 @@ DiagrammaticMonteCarlo::DiagrammaticMonteCarlo (
   this->loud = false;
 
   // if the diagram should have external legs or not
-  this->externalLegs = false;
+  this->externalLegs = true;
   // if we should only take into account irreducible diagrams
-  this->reducibleDiagrams = false;
+  this->reducibleDiagrams = true;
   // if we should sample only skeleton diagrams (reducibleDiagrams must be false)
-  this->skeletonDiagrams = true;
+  this->skeletonDiagrams = false;
   // if we should let the external momentum vary or not
   this->fixedExternalMomentum = true;
   // if we want to use Dyson equation (fixedExternalMomentum must be false (REALLY!?))
@@ -37,9 +37,9 @@ DiagrammaticMonteCarlo::DiagrammaticMonteCarlo (
   this->bold = false;
 
   // for when to bin the diagram
-  this->minDiagramOrder = 1;
+  this->minDiagramOrder = 0;
   // raise diagrm order will look at this (zero -> turned off)
-  this->maxDiagramOrder = 8;
+  this->maxDiagramOrder = 0;
   // how many iterations in the bold scheme shall be done
   this->numBoldIterations = 4;
 
@@ -48,7 +48,7 @@ DiagrammaticMonteCarlo::DiagrammaticMonteCarlo (
   // to reach a random start connfiguration
   this->untilStart = 10000000;
   // how often in seconds we should save by writing to file
-  this->numTempDMCsaves = 10;
+  this->numTempDMCsaves = 9;
 
 
 
@@ -57,8 +57,8 @@ DiagrammaticMonteCarlo::DiagrammaticMonteCarlo (
   // numSecsPerCorePerBoldItr = 10 * 60;
   // fracToSpendOnMC = 0.1;
 
-  this->numSecsDoingMCperCorePerBoldItr = 30*60; // 30 min
-  this->numSecsDoingDMCperCorePerBoldItr = 10*60*60; // 10 h
+  this->numSecsDoingMCperCorePerBoldItr = 30; // 30 min
+  this->numSecsDoingDMCperCorePerBoldItr = 10*60;//10*60*60; // 10 h
 
 
 
@@ -80,7 +80,7 @@ DiagrammaticMonteCarlo::DiagrammaticMonteCarlo (
 
   // in order to create the histogram
   this->maxLength = maxLength;
-  this->dt = 0.02;
+  this->dt = 0.01;
 
   this->maxMomenta = 1;
   this->dp = 0.02;

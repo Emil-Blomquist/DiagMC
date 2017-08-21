@@ -31,9 +31,9 @@ void DiagrammaticMonteCarlo::raiseOrder (double param) {
     normal_distribution<double> normal(0.0, std);
 
     q = abs(normal(this->pcg));
-    theta = this->Udouble(0, M_PI);
+    theta = acos(1 - 2*this->Udouble(0, 1));
     phi = this->Udouble(0, 2*M_PI);
-    wInvQ = 2*pow(M_PI, 2.0) * sqrt(0.5*M_PI*pow(std, 2.0)) * exp(0.5*pow(q/std, 2.0));
+    wInvQ = 2*M_PI * 2 * sqrt(0.5*M_PI*pow(std, 2.0)) * exp(0.5*pow(q/std, 2.0));
 
     // the Z-axis defines theta
     Q << q*sin(theta)*cos(phi), q*sin(theta)*sin(phi), q*cos(theta);
@@ -65,7 +65,7 @@ void DiagrammaticMonteCarlo::raiseOrder (double param) {
     double
       t2low = t1,
       t2up = this->FD.length,
-      l = 0.01,
+      l = 1,
       r = this->Udouble(0, 1),
       dt2 = -log(1 - r + r*exp(-l*(t2up - t2low)))/l;
 
@@ -98,9 +98,9 @@ void DiagrammaticMonteCarlo::raiseOrder (double param) {
     normal_distribution<double> normal(0.0, std);
 
     q = abs(normal(this->pcg));
-    theta = this->Udouble(0, M_PI);
+    theta = acos(1 - 2*this->Udouble(0, 1));
     phi = this->Udouble(0, 2*M_PI);
-    wInvQ = 2*pow(M_PI, 2.0) * sqrt(0.5*M_PI*pow(std, 2.0)) * exp(0.5*pow(q/std, 2.0));
+    wInvQ = 2*M_PI * 2 * sqrt(0.5*M_PI*pow(std, 2.0)) * exp(0.5*pow(q/std, 2.0));
 
     // the Z-axis defines theta
     Q << q*sin(theta)*cos(phi), q*sin(theta)*sin(phi), q*cos(theta);
@@ -164,7 +164,7 @@ void DiagrammaticMonteCarlo::raiseOrder (double param) {
   } else if (sinTheta == 0 || wInvt2 == 0 || wInvQ == 0) {
     a = 0;
   } else {
-    a = boldContribution * exponential * alpha*sinTheta/(sqrt(8)*M_PI*M_PI) * (wInvG1*wInvt1*wInvt2*wInvQ)/wInvd;
+    a = boldContribution * exponential * 0.5*sqrt(M_PI)/alpha * alpha/(sqrt(8)*M_PI*M_PI) * (wInvG1*wInvt1*wInvt2*wInvQ)/wInvd;
   }
 
   // accept or reject update

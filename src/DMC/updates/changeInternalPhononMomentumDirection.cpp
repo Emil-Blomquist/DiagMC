@@ -6,17 +6,18 @@ void DiagrammaticMonteCarlo::changeInternalPhononMomentumDirection (double param
     return;
   }
 
-  double oldVal = 0;
-  if (this->debug) {
-    oldVal = this->evaluateDiagram();
-  }
-
   // select internal phonon on random
   shared_ptr<Phonon> d = this->FD.Ds[this->Uint(0, this->FD.Ds.size() - 1)];
 
-  double
-    theta = this->Udouble(0, M_PI),
+  double oldTheta, oldVal = 0;
+  if (this->debug) {
     oldTheta = d->theta,
+    oldVal = this->evaluateDiagram();
+  }
+
+  double
+    r = this->Udouble(0, 1),
+    theta = acos(1 - 2*r),
     phi = this->Udouble(0, 2*M_PI),
     q = d->q;
 
@@ -31,7 +32,6 @@ void DiagrammaticMonteCarlo::changeInternalPhononMomentumDirection (double param
     meanP = this->calculateMeanP(d->start, d->end);
 
   double
-    sinOldTheta = sin(oldTheta),
     dt = d->end->position - d->start->position,
     dq2 = dQ.squaredNorm(),
     exponent = (dQ.dot(meanP) - 0.5*dq2)*dt;
@@ -48,12 +48,7 @@ void DiagrammaticMonteCarlo::changeInternalPhononMomentumDirection (double param
     }
   }
 
-  double a;
-  if (sinOldTheta == 0) {
-    a = 1;
-  } else {
-    a = sin(theta)/sinOldTheta * exp(exponent + boldContribution);
-  }
+  double a = exp(exponent + boldContribution);
 
   // accept or reject update
   bool accepted = false;
@@ -72,7 +67,7 @@ void DiagrammaticMonteCarlo::changeInternalPhononMomentumDirection (double param
     double val = this->evaluateDiagram();
 
     if (accepted) {
-      this->checkAcceptanceRatio(a / (val/oldVal), "changeInternalPhononMomentumDirection");
+      this->checkAcceptanceRatio(sin(theta)/sin(oldTheta)*a / (val/oldVal), "changeInternalPhononMomentumDirection");
     }
 
     if (a < 0 || ! isfinite(a)) {
@@ -87,7 +82,7 @@ void DiagrammaticMonteCarlo::changeInternalPhononMomentumDirection (double param
            << "sin(theta)=" << sin(theta) << endl
            << "--------------------------------------------------------------------" << endl;
     } else if (this->loud) {
-      cout << "changeInternalPhononMomentumDirection: " << accepted << " " << a << " " << a / (val/oldVal) << endl;
+      cout << "changeInternalPhononMomentumDirection: " << accepted << " " << a << " " << sin(theta)/sin(oldTheta)*a / (val/oldVal) << endl;
     }
   }
 }

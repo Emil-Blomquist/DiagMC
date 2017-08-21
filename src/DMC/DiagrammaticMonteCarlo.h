@@ -96,7 +96,8 @@ class DiagrammaticMonteCarlo {
       lowerOrder (double param = 1),
       changeDiagramLength (double param = 1),
       changeDiagramLengthComplex (double param = 1),
-      changeExternalMomentumMagnitude (double param = 1);
+      changeExternalMomentumMagnitude (double param = 1),
+      changeDiagramOrder (double param = 1);
 
     void
       BOLDchangeDiagramLength (double param = 1),

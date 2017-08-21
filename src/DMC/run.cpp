@@ -18,6 +18,8 @@ void DiagrammaticMonteCarlo::run () {
   time_t startTime = time(NULL);
 
   // MC instead of DMC for S1 at small times
+  // this value is overwritten
+  this->MCvsDMCboundary = 0;
   if (this->minDiagramOrder <= 1 && ! this->externalLegs) {
     this->firstOrderSelfEnergyMC(this->numSecsDoingMCperCorePerBoldItr);
   }
@@ -42,8 +44,7 @@ void DiagrammaticMonteCarlo::run () {
       {1, &DiagrammaticMonteCarlo::swapPhononConnections},
       {1, &DiagrammaticMonteCarlo::changeInternalPhononMomentumDirection},
       {1, &DiagrammaticMonteCarlo::changeInternalPhononMomentumMagnitude},
-      {1, &DiagrammaticMonteCarlo::raiseOrder}, // <- These two must have the same probability
-      {1, &DiagrammaticMonteCarlo::lowerOrder}, // <-
+      {2, &DiagrammaticMonteCarlo::changeDiagramOrder},
       {1, &DiagrammaticMonteCarlo::changeDiagramLength},
       {1, &DiagrammaticMonteCarlo::changeDiagramLengthComplex},
       {(this->fixedExternalMomentum ? 0 : 1), &DiagrammaticMonteCarlo::changeExternalMomentumMagnitude}
@@ -92,6 +93,13 @@ void DiagrammaticMonteCarlo::run () {
   // main loop
   // for (itrNum = 0; itrNum < localNumIterations; itrNum++) {
 
+
+  unsigned long long int totMeanTimes = 0;
+  double meanTime = 0;
+
+  unsigned int diagramOrderHistogramLength = 1000;
+  vector<unsigned long long int> diagramOrderHistogram(diagramOrderHistogramLength, 0);
+
   double secsSpentDoingDMC;
   do {
 
@@ -104,6 +112,15 @@ void DiagrammaticMonteCarlo::run () {
 
       // bin diagrams of desired order and desired structure
       if (this->FD.Ds.size() >= this->minDiagramOrder) {
+
+        if (this->FD.Ds.size() < diagramOrderHistogramLength) {
+          diagramOrderHistogram[this->FD.Ds.size()]++;
+        }
+
+        meanTime += this->FD.length;
+        totMeanTimes++;
+
+
         if (
           this->reducibleDiagrams ||
           ( this->skeletonDiagrams && this->FD.isSkeletonDiagram() ) ||
@@ -152,6 +169,26 @@ void DiagrammaticMonteCarlo::run () {
         cout << this->worldRank << " @ " << itrNum << " (" << secsSpentDoingDMC << ")" << endl;
       }
 
+      cout << "[" << this->worldRank << "]" << endl;
+      cout << "meanT_" << this->worldRank << " = " << meanTime/totMeanTimes << endl;
+      cout << "\tNo_" << this->worldRank << " = np.array([";
+      for (unsigned int i = 0; i < diagramOrderHistogramLength; i++) {
+        cout << diagramOrderHistogram[i];
+        if (i < diagramOrderHistogramLength - 1) {
+          cout << ", ";
+        }
+      }
+      cout << "])" << endl;
+      cout << "\tN0_" << this->worldRank << " = " << this->N0 << endl;
+      cout << "\tN_" << this->worldRank << " = np.array([";
+      for (unsigned int i = 0; i < this->hist.size(); i++) {
+        cout << this->hist(0, i);
+        if (i < this->hist.size() - 1) {
+          cout << ", ";
+        }
+      }
+      cout << "])" << endl;
+
       if (this->worldSize > 1) {
         // sum up the contributions from each an every process
         Array<unsigned long long int, Dynamic, Dynamic> totHist;
@@ -165,7 +202,20 @@ void DiagrammaticMonteCarlo::run () {
 
       } else {
         // write to file using N0 and hist
-        this->write2file(this->hist, N0, itrNum, secsSpentDoingDMC);
+        this->write2file(this->hist, this->N0, itrNum, secsSpentDoingDMC);
+      }
+
+      if (true) {
+        // time_t rawTime;
+        // time(&rawTime);
+        time_t rawTime = std::time(nullptr);
+
+        char buffer[80];
+        strftime(buffer, 80, "%Y-%m-%d %H:%M:%S", localtime(&rawTime));
+        string dateAndTimeString(buffer);
+
+
+        cout << this->worldRank << " @ cont " << " (" << secsSpentDoingDMC << ")" << endl;
       }
 
     }
