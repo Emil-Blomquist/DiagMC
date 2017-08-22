@@ -1,5 +1,6 @@
 #include <mpi.h> // MPI
 #include <iostream>
+#include <fstream>
 #include <time.h> // execution time
 
 #include "DMC/DiagrammaticMonteCarlo.h"
@@ -10,58 +11,33 @@ using namespace std;
 int main (int argc, char **argv) {
   clock_t tStart = clock();
 
-  // default parameters
-  double
-    p = 0,
-    alpha = 1,
-    mu = -1.1,
-    maxLength = 40,
-    maxMomenta = 1,
-    dt = 0.02,
-    dp = 0.02,
-    numSecsDMC = 10*60,
-    numSecsMC = 1*60;
-  
-  unsigned int numTempSaves = 9;
-
+  string pathToConfigFile = "";
 
   // input parameters
   int i = 1;
   while (i < argc) {
-    if (strcmp(argv[i], "-p") == 0) {
-      p = stod(argv[i + 1]);
-      i += 2;
-    } else if (strcmp(argv[i], "-a") == 0) {
-      alpha = stod(argv[i + 1]);
-      i += 2;
-    } else if (strcmp(argv[i], "-mu") == 0) {
-      mu = stod(argv[i + 1]);
-      i += 2;
-    } else if (strcmp(argv[i], "-max_t") == 0) {
-      maxLength = stod(argv[i + 1]);
-      i += 2;
-    } else if (strcmp(argv[i], "-max_p") == 0) {
-      maxMomenta = stod(argv[i + 1]);
-      i += 2;
-    }  else if (strcmp(argv[i], "-dt") == 0) {
-      dt = stod(argv[i + 1]);
-      i += 2;
-    }  else if (strcmp(argv[i], "-dp") == 0) {
-      dp = stod(argv[i + 1]);
-      i += 2;
-    }  else if (strcmp(argv[i], "-num_secs_dmc") == 0) {
-      numSecsDMC = stod(argv[i + 1]);
-      i += 2;
-    }  else if (strcmp(argv[i], "-num_secs_mc") == 0) {
-      numSecsMC = stod(argv[i + 1]);
-      i += 2;
-    }  else if (strcmp(argv[i], "-num_temp_saves") == 0) {
-      numTempSaves = stoul(argv[i + 1]);
+    if (strcmp(argv[i], "-config") == 0) {
+      pathToConfigFile = argv[i + 1];
       i += 2;
     } else {
       i++;
     }
   }
+
+  if (pathToConfigFile == "") {
+    cout << ">>>Unable to run DMC since no config file given<<<" << endl;
+    exit(EXIT_FAILURE);
+  } else {
+    string path = argv[0]; // program full path + name of binary file
+    path.erase(path.find_last_of('/') + 1); // remove name of binary file
+
+    ifstream configFile(path + "../" + pathToConfigFile);
+    if ( ! configFile.good()) {
+      cout << ">>>Unable to find the config file<<<" << endl;
+      exit(EXIT_FAILURE);
+    }
+  }
+
 
   int worldRank, worldSize;
   MPI_Init(NULL, NULL);
@@ -69,19 +45,7 @@ int main (int argc, char **argv) {
   MPI_Comm_rank(MPI_COMM_WORLD, &worldRank);
 
   if (true) {
-    DiagrammaticMonteCarlo DMC(
-      p,
-      alpha,
-      mu,
-      maxLength,
-      maxMomenta,
-      dt,
-      dp,
-      numSecsDMC,
-      numSecsMC,
-      numTempSaves,
-      argv
-    );
+    DiagrammaticMonteCarlo DMC(argv, pathToConfigFile);
   }
   // else {
   //   MonteCarlo{

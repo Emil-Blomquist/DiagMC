@@ -1,18 +1,11 @@
 #include "DiagrammaticMonteCarlo.h"
 
 DiagrammaticMonteCarlo::DiagrammaticMonteCarlo (
-  double p,
-  double alpha,
-  double mu,
-  double maxLength,
-  double maxMomenta,
-  double dt,
-  double dp,
-  double numSecsdmc,
-  double numSecsmc,
-  unsigned int numTempSaves,
-  char **argv
+  char **argv,
+  string pathToConfigFile
 ) {
+  this->argv = argv;
+
   MPI_Comm_size(MPI_COMM_WORLD, &this->worldSize);
   MPI_Comm_rank(MPI_COMM_WORLD, &this->worldRank);
 
@@ -21,48 +14,13 @@ DiagrammaticMonteCarlo::DiagrammaticMonteCarlo (
   // this->mt.seed(seed1);
   this->pcg.seed(seed);
 
-  // will print overflow exceptions etc. (code is half as fast with this activated)
-  this->debug = false;
-  // will print acceptance ratios etc. (debug must be true)
-  this->loud = false;
+  this->parseConfig(pathToConfigFile);
 
-  // if the diagram should have external legs or not
-  this->externalLegs = true;
-  // if we should only take into account irreducible diagrams
-  this->reducibleDiagrams = true;
-  // if we should sample only skeleton diagrams (reducibleDiagrams must be false)
-  this->skeletonDiagrams = false;
-  // if we should let the external momentum vary or not
-  this->fixedExternalMomentum = true;
-  // if we want to use Dyson equation (fixedExternalMomentum must be false (REALLY!?))
-  this->Dyson = false; // if we want to output using dyson or not
-  // wether or not we should employ boldification (fixedExternalMomentum must be false and Dyson must me set true)
-  this->bold = false;
-
-  // for when to bin the diagram
-  this->minDiagramOrder = 0;
-  // raise diagrm order will look at this (zero -> turned off)
-  this->maxDiagramOrder = 0;
-  // how many iterations in the bold scheme shall be done
-  this->numBoldIterations = 4;
-
-  // number of iterations used for each MC calculation
-  // this->numMCIterations = 100000;
   // to reach a random start connfiguration
   this->untilStart = 10000000;
-  // how often in seconds we should save by writing to file
-  this->numTempDMCsaves = numTempSaves;
 
-
-  this->numSecsDoingMCperCorePerBoldItr = numSecsmc;
-  this->numSecsDoingDMCperCorePerBoldItr = numSecsdmc;
-
-
-  this->initialExternalMomentum = Vector3d{0, 0, p};
-  this->mu = mu;
-  this->alpha = alpha;
+  // unique file name
   this->param = this->Udouble(0, 1);
-  this->argv = argv;
 
   // store time at which the calculation began
   char buffer[80];
@@ -70,14 +28,11 @@ DiagrammaticMonteCarlo::DiagrammaticMonteCarlo (
   strftime(buffer, 80, "%Y-%m-%d %H:%M:%S", localtime(&rawtime));
   this->dateAndTimeString = buffer;
 
+  // bins of same size 
+  this->maxLength = ceil(this->maxLength/dt)*this->dt;
+  this->maxMomenta = ceil(this->maxMomenta/dp)*this->dp;
 
   // in order to create the histogram
-  this->dt = dt;
-  this->maxLength = ceil(maxLength/dt)*dt;
-
-  this->dp = dp;
-  this->maxMomenta = ceil(maxMomenta/dp)*dp;
-
   this->Np = (this->fixedExternalMomentum ? 1 : this->maxMomenta/this->dp);
   this->Nt = this->maxLength/this->dt;
 

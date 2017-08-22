@@ -46,24 +46,22 @@ void DiagrammaticMonteCarlo::firstOrderSelfEnergyMC (double numSecsDoingMC) {
       Nt = this->MCvsDMCboundary,
       numEach = this->Np*Nt/this->worldSize,
       from = this->worldRank*numEach,
-      end = (this->worldRank + 1)*numEach;
+      end = (this->worldRank + 1)*numEach,
+      myRest = this->worldSize*numEach + this->worldRank;
 
     vector<KeyValue> vector2send, vector2receive{this->Np*Nt};
 
     // how much time should be spent on each MC calculation
     // (we dont care about the extra time needed for the rest elements)
-    double numSecsForEachMC = numSecsDoingMC/numEach;
+    double numSecsForEachMC = (!numEach ? numSecsDoingMC : numSecsDoingMC/numEach);
 
-    if (this->worldRank == 0) {
-      cout << "numSecsForEachMC = " << numSecsForEachMC << endl;
-    }
+    cout << "MC @ " << this->worldRank << ": " << end - from + ( myRest <= this->Np*Nt - 1 ? 1 : 0) << ", each " << numSecsForEachMC << "s" << endl;
 
     for (unsigned int n = from; n != end; n++) {
       this->appendKeyValue(vector2send, n, numSecsForEachMC);
     }
 
     // rest
-    unsigned int myRest = this->worldSize*numEach + this->worldRank;
     if (myRest <= this->Np*Nt - 1) {
       this->appendKeyValue(vector2send, myRest, numSecsForEachMC);
     }

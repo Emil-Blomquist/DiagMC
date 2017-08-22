@@ -140,21 +140,14 @@ class DiagrammaticMonteCarlo {
       lambdaOf(double),
       lambdaOf(shared_ptr<Electron>);
 
+    void parseConfig (string path);
+
   public:
     FeynmanDiagram FD;
 
     DiagrammaticMonteCarlo (
-      double,
-      double,
-      double,
-      double,
-      double,
-      double,
-      double,
-      double,
-      double,
-      unsigned int,
-      char **argv
+      char **argv,
+      string
     );
     
     void run ();
